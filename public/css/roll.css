@@ -1,0 +1,11 @@
+body {
+    background-color: black;
+    text-align: center;
+    color: white;
+}
+
+#vid{
+    display: block;
+    margin: 0 auto;
+    margin-top: 10%;
+}
