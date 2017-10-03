@@ -1,3 +1,6 @@
+var jsonfile = require('jsonfile');
+var changelog;
+
 //Globals
 var port = 8081;
 var players = [];
@@ -89,6 +92,16 @@ var treasureSpawns = [];
 init();
 
 function init(){
+    //load change log
+    jsonfile.readFile("data/changelog.json", function(err, obj) {
+        if(err){
+            console.log(err);
+            process.exit(1);
+        }
+        changelog = obj;
+    });
+
+
     if(mapSize < 20) mapSize = 20;
 
     //init map
@@ -420,12 +433,20 @@ function startServer(){
 
     });
 
+
+    app.get('/changelog', function (req, res) {
+        res.send(changelog);
+    });
     //**************************************************************************
     //Webpages
     //**************************************************************************
     app.get('/game', function (req, res) {
         console.log("Got a GET request for the Game page");
         res.sendFile( __dirname + "/public/game.html" );
+    });
+    app.get('/log', function (req, res) {
+        console.log("Got a GET request for the Change Log page");
+        res.sendFile( __dirname + "/public/log.html" );
     });
     app.get('/*', function (req, res) {
         //console.log("Got a GET request to get rick rolled");
