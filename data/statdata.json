@@ -1,21 +1,57 @@
 {
-     "hpStart"     :   10,
-     "hpMAX"       :   30,
-     "hpINC"       :   2,
+    "vision"       :    11,
+    "attackRange"  :    11,
 
-     "energyStart" :   10,
-     "energyMAX"   :   20,
-     "energyINC"   :   2,
-     "energyReg"   :   1,
+    "hpStart"      :    10,
+    "hpMAX"        :    30,
+    "hpINC"        :    2,
 
-     "radarStart"  :   9,
-     "radarMAX"    :   17,
-     "radarINC"    :   2,
+    "energyStart"  :    10,
+    "energyMAX"    :    20,
+    "energyINC"    :    2,
+    "energyReg"    :    1,
 
-     "attackStart" :   1,
-     "attackMAX"   :   4,
-     "attackINC"   :   1,
+    "radarStart"   :    9,
+    "radarMAX"     :    17,
+    "radarINC"     :    2,
 
-     "vision"      :   11,
-     "attackRange" :   11
+    "attackStart"  :    1,
+    "attackMAX"    :    4,
+    "attackINC"    :    1,
+
+    "loadoutStart" :    1,
+    "loadoutMAX"   :    2,
+    "loadoutINC"   :    1,
+
+    "cannonStart"  :    0,
+    "cannonMAX"    :    3,
+    "cannonINC"    :    1,
+
+    "blinkStart"   :    0,
+    "blinkMAX"     :    3,
+    "blinkINC"     :    1,
+
+    "stealthStart" :    0,
+    "stealthMAX"   :    3,
+    "stealthINC"   :    1,
+
+    "trapStart"    :    0,
+    "trapMAX"      :    3,
+    "trapINC"      :    1,
+
+    "engModStart"  :    0,
+    "engModMAX"    :    3,
+    "engModINC"    :    1,
+
+    "scannerStart" :    1,
+    "scannerMAX"   :    3,
+    "scannerINC"   :    1,
+
+    "railgunStart" :    0,
+    "railgunMAX"   :    3,
+    "railgunINC"   :    1,
+
+    "urCarryStart" :    3,
+    "urCarryMAX"   :    7,
+    "urCarryINC"   :    2,
  }
