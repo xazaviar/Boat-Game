@@ -1,0 +1,21 @@
+{
+     "hpStart"     :   10,
+     "hpMAX"       :   30,
+     "hpINC"       :   2,
+
+     "energyStart" :   10,
+     "energyMAX"   :   20,
+     "energyINC"   :   2,
+     "energyReg"   :   1,
+
+     "radarStart"  :   9,
+     "radarMAX"    :   17,
+     "radarINC"    :   2,
+
+     "attackStart" :   1,
+     "attackMAX"   :   4,
+     "attackINC"   :   1,
+
+     "vision"      :   11,
+     "attackRange" :   11
+ }

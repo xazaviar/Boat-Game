@@ -1,44 +1,142 @@
 var jsonfile = require('jsonfile');
 var changelog;
+var version = "Alpha v1.1";
 
 //Globals
 var port = 8081;
 var players = [];
-var mapSize = 30;
-var rockSpread = 4; //Int as percent
-var shopSpread = 1; //Int as percent
+var tokenSize = 450;
+
+//Map Building
+var mapSize = 48;
+var rockSpread = .04;   //decimal as percent
+var shopSpread = .007;  //decimal as percent
+var specialShops = 2;   //even number is preferred
 var map = [];
 var spawns = [];
+var spawnWid = 1.0/4;
+var spawnHei = 1.0/3;
+var zone3Wid = .2;
+var zone3Hei = .4;
+var zone2Wid = .2;
+var zone2Hei = .5;
+
+//Loot Data
+var lootSpawnValues = {
+    "zone1":[{"type":"GOLD",
+             "count": 25,
+             "chance": .03},
+            {"type":"GOLD",
+             "count": 50,
+             "chance": .15},
+            {"type":"GOLD",
+             "count": 75,
+             "chance": .17},
+            {"type":"GOLD",
+             "count": 100,
+             "chance": .30},
+            {"type":"GOLD",
+             "count": 125,
+             "chance": .17},
+            {"type":"GOLD",
+             "count": 150,
+             "chance": .15},
+            {"type":"GOLD",
+             "count": 175,
+             "chance": .02},
+            {"type":"GOLD",
+             "count": 200,
+             "chance": .01}
+         ],
+    "zone2":[{"type":"GOLD",
+             "count": 50,
+             "chance": .04},
+            {"type":"GOLD",
+             "count": 75,
+             "chance": .12},
+            {"type":"GOLD",
+             "count": 100,
+             "chance": .12},
+            {"type":"GOLD",
+             "count": 125,
+             "chance": .20},
+            {"type":"GOLD",
+             "count": 150,
+             "chance": .12},
+            {"type":"GOLD",
+             "count": 200,
+             "chance": .10},
+            {"type":"GOLD",
+             "count": 250,
+             "chance": .06},
+            {"type":"GOLD",
+             "count": 300,
+             "chance": .04},
+            {"type":"IRON",
+             "count": 1,
+             "chance": .10},
+            {"type":"IRON",
+             "count": 2,
+             "chance": .07},
+            {"type":"IRON",
+             "count": 3,
+             "chance": .03}
+         ],
+    "zone3":[{"type":"GOLD",
+             "count": 100,
+             "chance": .04},
+            {"type":"GOLD",
+             "count": 150,
+             "chance": .07},
+            {"type":"GOLD",
+             "count": 200,
+             "chance": .12},
+            {"type":"GOLD",
+             "count": 250,
+             "chance": .20},
+            {"type":"GOLD",
+             "count": 300,
+             "chance": .12},
+            {"type":"GOLD",
+             "count": 350,
+             "chance": .05},
+            {"type":"GOLD",
+             "count": 400,
+             "chance": .03},
+            {"type":"GOLD",
+             "count": 500,
+             "chance": .02},
+            {"type":"IRON",
+             "count": 1,
+             "chance": .08},
+            {"type":"IRON",
+             "count": 2,
+             "chance": .04},
+            {"type":"IRON",
+             "count": 3,
+             "chance": .03},
+            {"type":"URANIUM",
+             "count": 1,
+             "chance": .20}
+    ]
+}
+var lootSpreadMIN = .05; //decimal as percent
+var lootSpreadMAX = .10; //decimal as percent
+var lootSpawnRate = 1; //Treasures spawn per round
+var lootCount = 0;
+var lootSpawns = [];
 
 //Countdown Data
 var phase = 0; //0 -> setup , 1,2,3 -> action x
 var countdownMax = 100; //always 100
 var countdown = countdownMax;
-var cTick = 30; //countdownMax * tick = 5 secs
+var cTick = 30; //countdownMax * tick = 3 secs
 var aTick = 800; //action tick
 var combatCooldown = 3; //Number of rounds
-var dcCountdown = 2;
+var dcCountdown = 2; //d/c cooldown
 
 //Stat Data
-var hpStart     =   10;
-var hpMAX       =   30;
-var hpINC       =   2;
-
-var energyStart =   10;
-var energyMAX   =   20;
-var energyINC   =   2;
-var energyReg   =   1; //per round
-
-var radarStart  =   9;
-var radarMAX    =   17;
-var radarINC    =   2;
-
-var attackStart =   1;
-var attackMAX   =   4;
-var attackINC   =   1;
-
-var vision      =   11;
-var attackRange =   11;
+var statData;
 
 //Energy Usage
 var attackEnergyUsage = 1;
@@ -49,45 +147,6 @@ var scanEnergyUsage = 5;
 var lootActionUsage = 2;
 var scanActionUsage = 3;
 
-//Treasure Data
-//TODO: make harder to find higher value treasure
-// var treasureValMIN = 25;
-// var treasureValMAX = 200;
-var treasureValues = [
-    {"value": 25,
-     "chance": .03},
-    {"value": 50,
-     "chance": .10},
-    {"value": 75,
-     "chance": .12},
-    {"value": 100,
-     "chance": .30},
-    {"value": 125,
-     "chance": .12},
-    {"value": 150,
-     "chance": .10},
-    {"value": 175,
-     "chance": .05},
-    {"value": 200,
-     "chance": .05},
-    {"value": 225,
-     "chance": .05},
-    {"value": 250,
-     "chance": .03},
-    {"value": 275,
-     "chance": .02},
-    {"value": 300,
-     "chance": .01},
-    {"value": 325,
-     "chance": .01},
-    {"value": 500,
-     "chance": .01}
-]
-var treasureSpreadMIN = .05; //decimal as percent
-var treasureSpreadMAX = .10; //decimal as percent
-var treasureSpawnRate = 1; //Treasures spawn per round
-var treasureCount = 0;
-var treasureSpawns = [];
 
 init();
 
@@ -101,32 +160,17 @@ function init(){
         changelog = obj;
     });
 
-
-    if(mapSize < 20) mapSize = 20;
-
-    //init map
-    for(var x = 0; x < mapSize; x++){
-        map[x] = [];
-        for(var y = 0; y < mapSize; y++){
-            var r = parseInt(Math.random()*100);
-            if(r < shopSpread){
-                map[x][y] = "S";
-            }else if(r < rockSpread)
-                map[x][y] = "R";
-            else{
-                map[x][y] = "_";
-                spawns.push([x,y]);
-            }
+    //load game data
+    jsonfile.readFile("data/statdata.json", function(err, obj) {
+        if(err){
+            console.log(err);
+            process.exit(1);
         }
-    }
+        statData = obj;
+    });
 
-    //fill treasureSpawns
-    for(var i = 0; i < spawns.length; i++){
-        treasureSpawns.push([spawns[i][0],spawns[i][1]]);
-    }
-
-    //Spawn Treasures
-    roundCleanup();
+    //Build the map
+    buildMap();
 
     //Start server
     startServer();
@@ -156,6 +200,10 @@ function startServer(){
                 "name": name,
                 "gold": 0,
                 "totalGold":0,
+                "iron": 0,
+                "totalIron":0,
+                "uranium": 0,
+                "totalUranium":0,
                 "kills": 0,
                 "deaths": 0,
                 "hauls": 0,
@@ -169,23 +217,23 @@ function startServer(){
             "scanned": [],
             "activeAttacks": [],
             "stats": {
-                "hp": hpStart,
-                "hpMAX": hpStart,
+                "hp": statData.hpStart,
+                "hpMAX": statData.hpStart,
                 "hpUpgrades":0,
-                "hpUpgradesMAX": (hpMAX-hpStart)/hpINC,
+                "hpUpgradesMAX": (statData.hpMAX-statData.hpStart)/statData.hpINC,
 
-                "energy": energyStart,
-                "energyMAX": energyStart,
+                "energy": statData.energyStart,
+                "energyMAX": statData.energyStart,
                 "energyUpgrades":0,
-                "energyUpgradesMAX": (energyMAX-energyStart)/energyINC,
+                "energyUpgradesMAX": (statData.energyMAX-statData.energyStart)/statData.energyINC,
 
-                "radar": radarStart,
+                "radar": statData.radarStart,
                 "radarUpgrades":1,
-                "radarUpgradesMAX": (radarMAX-radarStart)/radarINC+1,
+                "radarUpgradesMAX": (statData.radarMAX-statData.radarStart)/statData.radarINC+1,
 
-                "attack": attackStart,
+                "attack": statData.attackStart,
                 "attackUpgrades":1,
-                "attackUpgradesMAX": (attackMAX-attackStart)/attackINC+1,
+                "attackUpgradesMAX": (statData.attackMAX-statData.attackStart)/statData.attackINC+1,
             }
         };
 
@@ -226,29 +274,12 @@ function startServer(){
             for(var x = 0; x < mapSize; x++){
                 sendMap[x] = [];
                 for(var y = 0; y < mapSize; y++){
-                    sendMap[x][y] = ""+map[x][y];
+                    if(isLoot(map[x][y]) && !isKnown(p.knownLocs,x,y)) sendMap[x][y] = "OPEN";
+                    else if(isLoot(map[x][y])) sendMap[x][y] = map[x][y].type;
+                    else
+                        sendMap[x][y] = ""+map[x][y].type;
                 }
             }
-
-            var mid = parseInt(p.stats.radar/2);
-            for(var x = 0; x < p.stats.radar; x++){
-                for(var y = 0; y < p.stats.radar; y++){
-                    var cX = p.loc[0] - (mid-x);
-                    var cY = p.loc[1] - (mid-y);
-
-                    if(cX < 0) cX += map.length;
-                    if(cY < 0) cY += map.length;
-                    if(cX >= map.length) cX -= map.length;
-                    if(cY >= map.length) cY -= map.length;
-
-                    if(!isNaN(sendMap[cX][cY]) && !isKnown(p.knownLocs,cX,cY)){
-                        sendMap[cX][cY] = "_";
-                    }
-
-                    //Check enemies within vision
-                }
-            }
-
 
             for(var i = 0; i < sendPlayers.length; i++){
                 if(!inScanned(p, sendPlayers[i].token) && !visionDistance(p.loc,sendPlayers[i].loc)){
@@ -264,7 +295,7 @@ function startServer(){
                 "user": p,
                 "players": sendPlayers,
                 "map": sendMap,
-                "game":{"countdown":countdown,"phase":phase},
+                "game":{"countdown":countdown,"phase":phase,"version":version},
                 "shop":{
                     "withinShop": withinShop(p.loc),
                     "hp":{"price":(p.stats.hpMAX-p.stats.hp)*(p.stats.hpMAX-p.stats.hp),"canBuy":!(p.stats.hp==p.stats.hpMAX)},
@@ -304,7 +335,7 @@ function startServer(){
                         inUse = inUse + lootEnergyUsage;
                         a++;
                     }else if(p.queue[a].type=="HOLD"){
-                        inUse = inUse - energyReg;
+                        inUse = inUse - statData.energyReg;
                     }
                 }
                 if(3-p.queue.length >= scanActionUsage && req.body.action.type==="SCAN" && p.stats.energy>=scanEnergyUsage+inUse){
@@ -343,21 +374,21 @@ function startServer(){
         }
 
         if(p!=null && p.stats.hp == 0){
-            if(p.stats.hpMAX>hpStart){
+            if(p.stats.hpMAX>statData.hpStart){
                 p.stats.hpUpgrades--;
-                p.stats.hpMAX = p.stats.hpMAX-hpINC;
+                p.stats.hpMAX = p.stats.hpMAX-statData.hpINC;
             }
-            if(p.stats.energyMAX>energyStart){
+            if(p.stats.energyMAX>statData.energyStart){
                 p.stats.energyUpgrades--;
-                p.stats.energyMAX = p.stats.energyMAX-energyINC;
+                p.stats.energyMAX = p.stats.energyMAX-statData.energyINC;
             }
-            if(p.stats.radar>radarStart){
+            if(p.stats.radar>statData.radarStart){
                 p.stats.radarUpgrades--;
-                p.stats.radar = p.stats.radar-radarINC;
+                p.stats.radar = p.stats.radar-statData.radarINC;
             }
-            if(p.stats.attack>attackStart){
+            if(p.stats.attack>statData.attackStart){
                 p.stats.attackUpgrades--;
-                p.stats.attack = p.stats.attack-attackINC;
+                p.stats.attack = p.stats.attack-statData.attackINC;
             }
             p.loc = spawn();
             p.info.gold = 0;
@@ -386,7 +417,7 @@ function startServer(){
             if(req.body.item==="hp+" && p.info.gold>=(p.stats.hpMAX-p.stats.hp)*(p.stats.hpMAX-p.stats.hp) && p.stats.hpMAX-p.stats.hp!=0){
                 p.info.gold = p.info.gold - (p.stats.hpMAX-p.stats.hp)*(p.stats.hpMAX-p.stats.hp);
                 p.stats.hp = p.stats.hpMAX;
-                p.battleLog.unshift("You have repaired your ship.");
+                p.battleLog.unshift("You repaired your ship.");
             }else if(req.body.item==="hp+" && p.info.gold<(p.stats.hpMAX-p.stats.hp)*(p.stats.hpMAX-p.stats.hp)){
                 p.battleLog.unshift("You need more gold.");
             }else if(req.body.item==="hp+" && p.stats.hpMAX==p.stats.hp){
@@ -395,32 +426,32 @@ function startServer(){
             else if(req.body.item==="hpU" && p.info.gold>=(p.stats.hpUpgrades+1)*100 && p.stats.hpUpgrades!=p.stats.hpUpgradesMAX){
                 p.info.gold = p.info.gold - (p.stats.hpUpgrades+1)*100;
                 p.stats.hpUpgrades++;
-                p.stats.hpMAX = p.stats.hpMAX + hpINC;
-                p.battleLog.unshift("You have purchased a health upgrade.");
+                p.stats.hpMAX = p.stats.hpMAX + statData.hpINC;
+                p.battleLog.unshift("You purchased a health upgrade.");
             }else if(req.body.item==="hpU" && p.info.gold<(p.stats.hpUpgrades+1)*100){
                 p.battleLog.unshift("You need more gold.");
             }
             else if(req.body.item==="enU" && p.info.gold>=(p.stats.energyUpgrades+1)*100 && p.stats.energyUpgrades!=p.stats.energyUpgradesMAX){
                 p.info.gold = p.info.gold - (p.stats.energyUpgrades+1)*100;
                 p.stats.energyUpgrades++;
-                p.stats.energyMAX = p.stats.energyMAX + energyINC;
-                p.battleLog.unshift("You have purchased an energy upgrade.");
+                p.stats.energyMAX = p.stats.energyMAX + statData.energyINC;
+                p.battleLog.unshift("You purchased an energy upgrade.");
             }else if(req.body.item==="enU" && p.info.gold<(p.stats.energyUpgrades+1)*100){
                 p.battleLog.unshift("You need more gold.");
             }
             else if(req.body.item==="radU" && p.info.gold>=(p.stats.radarUpgrades+1)*200 && p.stats.radarUpgrades!=p.stats.radarUpgradesMAX){
                 p.info.gold = p.info.gold - (p.stats.radarUpgrades+1)*200;
                 p.stats.radarUpgrades++;
-                p.stats.radar = p.stats.radar + radarINC;
-                p.battleLog.unshift("You have purchased a radar upgrade.");
+                p.stats.radar = p.stats.radar + statData.radarINC;
+                p.battleLog.unshift("You purchased a radar upgrade.");
             }else if(req.body.item==="radU" && p.info.gold<(p.stats.radarUpgrades+1)*200){
                 p.battleLog.unshift("You need more gold.");
             }
             else if(req.body.item==="atkU" && p.info.gold>=(p.stats.attackUpgrades+1)*200 && p.stats.attackUpgrades!=p.stats.attackUpgradesMAX){
                 p.info.gold = p.info.gold - (p.stats.attackUpgrades+1)*200;
                 p.stats.attackUpgrades++;
-                p.stats.attack = p.stats.attack + attackINC;
-                p.battleLog.unshift("You have purchased an attack upgrade.");
+                p.stats.attack = p.stats.attack + statData.attackINC;
+                p.battleLog.unshift("You purchased an attack upgrade.");
             }else if(req.body.item==="atkU" && p.info.gold<(p.stats.attackUpgrades+1)*200){
                 p.battleLog.unshift("You need more gold.");
             }
@@ -516,7 +547,7 @@ function actionPhase(){
             }else if(players[i].queue[0].type==="SCAN" && players[i].queue.length == 1){
                 scans.push(players[i]);
             }else if(players[i].queue[0].type==="HOLD" && players[i].stats.energy < players[i].stats.energyMAX){
-                players[i].stats.energy=players[i].stats.energy+energyReg*(players[i].info.inCombat>0?1:2);
+                players[i].stats.energy=players[i].stats.energy+statData.energyReg*(players[i].info.inCombat>0?1:2);
                 if (players[i].stats.energy > players[i].stats.energyMAX)
                     players[i].stats.energy = players[i].stats.energyMAX;
             }
@@ -574,7 +605,7 @@ function roundCleanup(){
 
             //Regen Energy
             if(players[i].stats.hp>0){
-                players[i].stats.energy = players[i].stats.energy + energyReg*(players[i].info.inCombat>0?1:2);
+                players[i].stats.energy = players[i].stats.energy + statData.energyReg*(players[i].info.inCombat>0?1:2);
                 if (players[i].stats.energy > players[i].stats.energyMAX)
                     players[i].stats.energy = players[i].stats.energyMAX;
             }
@@ -584,24 +615,7 @@ function roundCleanup(){
     }
 
     //Spawn Treasures
-    if(treasureCount < mapSize*mapSize*treasureSpreadMAX){
-        var spawn = parseInt(mapSize*mapSize*treasureSpreadMIN);
-        for(var i = treasureCount; i < spawn; i++){
-            var r = parseInt((Math.random()*1000)%treasureSpawns.length);
-            var val = chooseTreasureValue();
-            map[treasureSpawns[r][0]][treasureSpawns[r][1]] = val;
-            treasureCount++;
-            treasureSpawns.splice(r,1);
-        }
-        for(var i = 0; i < treasureSpawnRate; i++){
-            var r = parseInt((Math.random()*1000)%treasureSpawns.length);
-            var val = chooseTreasureValue();
-            map[treasureSpawns[r][0]][treasureSpawns[r][1]] = val;
-            treasureCount++;
-            treasureSpawns.splice(r,1);
-        }
-    }
-
+    spawnLoot();
 
 }
 
@@ -687,22 +701,34 @@ function attack(player, location){
 function loot(player){
     player.stats.energy = player.stats.energy - lootEnergyUsage;
 
-    var treasure = parseInt(map[player.loc[0]][player.loc[1]]);
-    if(!isNaN(treasure)){
+    var treasure = map[player.loc[0]][player.loc[1]];
+    if(isLoot(treasure)){
         var startGold = player.info.gold;
-        player.info.gold = player.info.gold + treasure;
-        player.info.totalGold = player.info.totalGold + treasure;
-        player.info.hauls++;
-        map[player.loc[0]][player.loc[1]] = "_";
-        treasureSpawns.push([player.loc[0],player.loc[1]]);
-        treasureCount--;
+        var startTotalGold = player.info.totalGold;
 
-        player.battleLog.unshift("You found "+treasure+"g!");
+        if(treasure.type==="GOLD"){
+            player.info.gold = player.info.gold + treasure.count;
+            player.info.totalGold = player.info.totalGold + treasure.count;
+            player.battleLog.unshift("You found "+treasure.count+"g!");
+        }else if(treasure.type==="IRON"){
+            player.info.iron = player.info.iron + treasure.count;
+            player.info.totalIron = player.info.totalIron + treasure.count;
+            player.battleLog.unshift("You found "+treasure.count+" iron!");
+        }else if(treasure.type==="URANIUM"){
+            player.info.uranium = player.info.uranium + treasure.count;
+            player.info.totalUranium = player.info.totalUranium + treasure.count;
+            player.battleLog.unshift("You found "+treasure.count+" uranium!");
+        }
+        player.info.hauls++;
+
+        map[player.loc[0]][player.loc[1]] = {"type":"OPEN"};
+        lootSpawns.push([player.loc[0],player.loc[1]]);
+        lootCount--;
 
         //Alert local people of looting
-        var mid = parseInt(vision/2);
-        for(var x = 0; x < vision; x++){
-            for(var y = 0; y < vision; y++){
+        var mid = parseInt(statData.vision/2);
+        for(var x = 0; x < statData.vision; x++){
+            for(var y = 0; y < statData.vision; y++){
                 var cX = player.loc[0] - (mid-x);
                 var cY = player.loc[1] - (mid-y);
 
@@ -722,16 +748,20 @@ function loot(player){
         if(parseInt(startGold/1000) < parseInt(player.info.gold/1000)){
             msg = ""+player.info.name+" has over "+(parseInt(player.info.gold/1000)*1000)+"g.";
         }
+        if(parseInt(startTotalGold/2000) < parseInt(player.info.totalGold/2000)){
+            msg = ""+player.info.name+" has amassed over "+(parseInt(player.info.totalGold/2000)*2000)+"g.";
+        }
 
         for(var i = 0; i < players.length; i++){
             for(var k = 0; k < players[i].knownLocs.length; k++){
                 if(players[i].knownLocs[k][0]==player.loc[0] && players[i].knownLocs[k][1]==player.loc[1]){
                     players[i].knownLocs.splice(k,1);
-                    break;
                 }
             }
             if(msg!=null) players[i].battleLog.unshift(msg);
         }
+    }else{
+        player.battleLog.unshift("You didn't find anything.");
     }
 }
 
@@ -750,7 +780,7 @@ function scan(player){
             if(cX >= map.length) cX -= map.length;
             if(cY >= map.length) cY -= map.length;
 
-            if(!isNaN(map[cX][cY]) && !isKnown(player.knownLocs,cX,cY)){
+            if(isLoot(map[cX][cY])){
                 player.knownLocs.push([cX,cY]);
             }
 
@@ -778,7 +808,21 @@ function withinShop(location){
             if(cX >= map.length) cX -= map.length;
             if(cY >= map.length) cY -= map.length;
 
-            if(map[cX][cY]==="S") return true;
+            if(map[cX][cY].type==="SHOP") return true;
+        }
+    }
+
+    for(var x = 0; x < 5; x++){
+        for(var y = 0; y < 5; y++){
+            var cX = location[0] - (2-x);
+            var cY = location[1] - (2-y);
+
+            if(cX < 0) cX += map.length;
+            if(cY < 0) cY += map.length;
+            if(cX >= map.length) cX -= map.length;
+            if(cY >= map.length) cY -= map.length;
+
+            if(map[cX][cY].type==="SSHOP") return true;
         }
     }
 
@@ -786,7 +830,10 @@ function withinShop(location){
 }
 
 function spotOccupied(location){
-    if(map[location[0]][location[1]]==="R" || map[location[0]][location[1]]==="S") return true;
+    if(map[location[0]][location[1]].type==="ROCK" ||
+       map[location[0]][location[1]].type==="SHOP" ||
+       map[location[0]][location[1]].type==="SSHOP")
+        return true;
     else for(var i = 0; i < players.length; i++)
         if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0) return true;
 
@@ -822,31 +869,17 @@ function generateToken(){
     //Create random 16 character token
     var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     var token = '';
-    for (var i = 0; i < 16; i++) {
+    for (var i = 0; i < tokenSize; i++) {
       token += chars[Math.round(Math.random() * (chars.length - 1))];
     }
 
     return token;
 }
 
-function chooseTreasureValue(){
-    var val = 0, sum = 0;
-    var r = Math.random();
-
-    for(var i = 0; i < treasureValues.length; i++){
-        if(r < treasureValues[i].chance+sum)
-            return treasureValues[i].value;
-        else
-            sum += treasureValues[i].chance;
-    }
-
-    return val;
-}
-
 function attackDistance(player, attack){
-    var mid = parseInt(attackRange/2);
-    for(var x = 0; x < attackRange; x++){
-        for(var y = 0; y < attackRange; y++){
+    var mid = parseInt(statData.attackRange/2);
+    for(var x = 0; x < statData.attackRange; x++){
+        for(var y = 0; y < statData.attackRange; y++){
             var cX = player[0] - (mid-x);
             var cY = player[1] - (mid-y);
 
@@ -865,9 +898,9 @@ function attackDistance(player, attack){
 }
 
 function visionDistance(player, spot){
-    var mid = parseInt(vision/2);
-    for(var x = 0; x < vision; x++){
-        for(var y = 0; y < vision; y++){
+    var mid = parseInt(statData.vision/2);
+    for(var x = 0; x < statData.vision; x++){
+        for(var y = 0; y < statData.vision; y++){
             var cX = player[0] - (mid-x);
             var cY = player[1] - (mid-y);
 
@@ -891,5 +924,96 @@ function inScanned(player, token){
             return true;
     }
 
+    return false;
+}
+
+function buildMap(){
+
+    //Correct mapSize
+    if(mapSize < 20) mapSize = 20;
+
+    //init map
+    var superShop = false;
+    for(var x = 0; x < mapSize; x++){
+        map[x] = [];
+        for(var y = 0; y < mapSize; y++){
+            var r = Math.random();
+
+            if(x == mapSize/2 && superShop) superShop = false;
+
+            if(r < .03 && !superShop && (x < (mapSize-parseInt(zone3Wid*mapSize))/2-3 && x > (mapSize-parseInt(zone3Wid*mapSize))/2-parseInt(zone2Wid*mapSize))){
+                map[x][y] = {"type":"SSHOP"};
+                superShop = true;
+            }else if(r < .01 && !superShop && (x > (mapSize+3-parseInt(zone3Wid*mapSize))/2+parseInt(zone3Wid*mapSize) && x < (mapSize-parseInt(zone3Wid*mapSize))/2+parseInt(zone3Wid*mapSize)+parseInt(zone2Wid*mapSize))){
+                map[x][y] = {"type":"SSHOP"};
+                superShop = true;
+            }else if(r < shopSpread && (x < (mapSize-parseInt(zone3Wid*mapSize))/2-3 || x > mapSize+3-((mapSize-parseInt(zone3Wid*mapSize))/2))){
+                map[x][y] = {"type":"SHOP"};
+            }else if(r < rockSpread){
+                map[x][y] = {"type":"ROCK"};
+            }else{
+                map[x][y] = {"type":"OPEN"};
+                if((x < parseInt(spawnWid/2*mapSize) || (x > mapSize-parseInt(spawnWid/2*mapSize))) &&
+                    y < mapSize-((mapSize-parseInt(spawnHei*mapSize))/2) && y > (mapSize-parseInt(spawnHei*mapSize))/2){
+                       spawns.push([x,y]);
+                       if(r > .5)
+                           lootSpawns.push([x,y]);
+                   }else{
+                       lootSpawns.push([x,y]);
+                   }
+            }
+        }
+    }
+
+    //Spawn Treasures
+    spawnLoot();
+}
+
+function spawnLoot(){
+    if(lootCount < mapSize*mapSize*lootSpreadMAX){
+        var spawn = parseInt(mapSize*mapSize*lootSpreadMIN);
+        for(var i = lootCount; i < spawn; i++){
+            var r = parseInt((Math.random()*100000)%lootSpawns.length);
+            var loot = chooseTreasureValue(lootSpawns[r][0],lootSpawns[r][1]);
+            map[lootSpawns[r][0]][lootSpawns[r][1]] = loot;
+            lootCount++;
+            lootSpawns.splice(r,1);
+        }
+        for(var i = 0; i < lootSpawnRate; i++){
+            var r = parseInt((Math.random()*100000)%lootSpawns.length);
+            var loot = chooseTreasureValue(lootSpawns[r][0],lootSpawns[r][1]);
+            map[lootSpawns[r][0]][lootSpawns[r][1]] = loot;
+            lootCount++;
+            lootSpawns.splice(r,1);
+        }
+    }
+}
+
+function chooseTreasureValue(x,y){
+    var val = 0, sum = 0;
+    var r = Math.random();
+    var zone = lootSpawnValues.zone1; //Zone 1
+
+    //Select zone
+    if(x > (mapSize-parseInt(mapSize*zone3Wid))/2 && x < mapSize - (mapSize-parseInt(mapSize*zone3Wid))/2)
+        zone = lootSpawnValues.zone3; //Zone 3
+    else if(x > (mapSize-parseInt(mapSize*zone3Wid))/2-parseInt(mapSize*zone2Wid) && x < mapSize - (mapSize-parseInt(mapSize*zone3Wid))/2+parseInt(mapSize*zone2Wid))
+        zone = lootSpawnValues.zone2; //Zone 2
+
+    for(var i = 0; i < zone.length; i++){
+        if(r < zone[i].chance+sum){
+            return {"type":zone[i].type,"count":zone[i].count};
+        }
+        else
+            sum += zone[i].chance;
+    }
+
+    return val;
+}
+
+function isLoot(loc){
+    if(loc.type==="GOLD") return true
+    else if(loc.type==="IRON") return true
+    else if(loc.type==="URANIUM") return true
     return false;
 }

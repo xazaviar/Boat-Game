@@ -12,6 +12,8 @@ var radarTick = 1;
 var radarINC = .1;
 var radarAngleChange = true;
 var radarFollow = 5;
+var mapView = false;
+var blink = false;
 
 //Colors
 //Monitor Colors
@@ -21,6 +23,8 @@ var colorsDefault = {
     "hudBackColor":     "#000000", //Default -> #000000
 
     "goldColor":        "#BBBB00", //Default -> #BBBB00
+    "ironColor":        "#333333", //Default -> #333333
+    "uraniumColor":     "#AA00AA", //Default -> #AA00AA
     "enemyColor":       "#FF0000", //Default -> #FF0000
     "shopColor":        "#999999", //Default -> #272727
     "rockColor":        "#00BB00", //Default -> #00BB00
@@ -115,6 +119,8 @@ function newData(){
         drawTimer();
         drawSideBar();
     });
+
+    blink = !blink;
 }
 
 function updateQueue(action){
@@ -260,6 +266,9 @@ function drawMonitor(){
         ctx.font = "30px Courier";
         ctx.fillText("Enter Name: "+name,c.width/8+35,c.height/4+60);
     }
+    else if(mapView){
+        drawMap();
+    }
     else{
         //Draw map
         var mid = parseInt(me.stats.radar/2);
@@ -273,13 +282,13 @@ function drawMonitor(){
                 if(cX >= map.length) cX -= map.length;
                 if(cY >= map.length) cY -= map.length;
 
-                if(map[cX][cY]==="R"){ //Rock
+                if(map[cX][cY]==="ROCK"){ //Rock
                     ctx.beginPath();
                     ctx.fillStyle= colors.rockColor;
                     ctx.fillRect(x*tileSize+tileSize/2-tileSize*.4,y*tileSize+tileSize/2-tileSize*.4,tileSize*.8,tileSize*.8);
                     ctx.stroke();
                 }
-                else if(map[cX][cY]==="S"){ //Shop
+                else if(map[cX][cY]==="SHOP"){ //Shop
 
                     //Draw Safe Zone
                     ctx.beginPath();
@@ -305,9 +314,61 @@ function drawMonitor(){
                     ctx.fill();
 
                 }
-                else if(map[cX][cY]!=="_"){ //Treasure
+                else if(map[cX][cY]==="SSHOP"){ //Super Shop
+
+                    //Draw Safe Zone
+                    ctx.beginPath();
+                    ctx.globalAlpha = 0.3;
+                    ctx.fillStyle = colors.shopColor;
+                    var sX=(x==0?0:x-2), sY=(y==0?0:y-2);
+                    var eX=(x==me.stats.radar-2?me.stats.radar:x+2);
+                    var eY=(y==me.stats.radar-2?me.stats.radar:y+2);
+
+                    ctx.fillRect(sX*tileSize, sY*tileSize, (eX-sX+1)*tileSize, (eY-sY+1)*tileSize);
+                    ctx.fill();
+
+                    //Draw Super Shop
+                    ctx.beginPath();
+                    ctx.globalAlpha = 1.0;
+                    ctx.fillStyle = colors.shopColor;
+                    ctx.save();
+                    ctx.translate(x*tileSize+tileSize/2, y*tileSize+tileSize/2);
+                    ctx.rotate(Math.PI / 4);
+                    ctx.translate(-(tileSize/2 / 2), -(tileSize/2 / 2));
+                    ctx.fillRect(0,0, tileSize/2, tileSize/2);
+                    ctx.rotate(3*Math.PI / 4);
+                    ctx.restore();
+                    ctx.fillRect(x*tileSize+tileSize/4,y*tileSize+tileSize/4, tileSize/2, tileSize/2);
+                    ctx.fill();
+
+                }
+                else if(map[cX][cY]=="GOLD"){ //Treasure
                     ctx.beginPath();
                     ctx.fillStyle=colors.goldColor;
+                    ctx.arc(x*tileSize+tileSize/2-tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x*tileSize+tileSize/2+tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2-tileSize/4+tileSize/10,tileSize/6,0,2*Math.PI);
+                    ctx.fill();
+                }
+                else if(map[cX][cY]=="IRON"){ //Iron
+                    ctx.beginPath();
+                    ctx.fillStyle=colors.ironColor;
+                    ctx.arc(x*tileSize+tileSize/2-tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x*tileSize+tileSize/2+tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2-tileSize/4+tileSize/10,tileSize/6,0,2*Math.PI);
+                    ctx.fill();
+                }
+                else if(map[cX][cY]=="URANIUM"){ //Uranium
+                    ctx.beginPath();
+                    ctx.fillStyle=colors.uraniumColor;
                     ctx.arc(x*tileSize+tileSize/2-tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
                     ctx.fill();
                     ctx.beginPath();
@@ -673,8 +734,9 @@ function drawMonitor(){
     ctx.beginPath();
     ctx.fillStyle = colors.hudColor;
     ctx.font = "12px Courier";
-    ctx.fillText("Alpha v1.0",0,c.height-30);
     ctx.fillText("Made by Xazaviar",0,c.height-15);
+    if(game!=null)
+        ctx.fillText(game.version,0,c.height-30);
     if(gameStart)
         ctx.fillText("press 'esc' for settings",c.width-175,c.height-15);
 
@@ -847,6 +909,143 @@ function drawSideBar(){
 
 }
 
+function drawMap(){
+    var c = document.getElementById("monitor");
+    var ctx = c.getContext("2d");
+    ctx.clearRect(0,0,c.width,c.height);
+
+    var tileSize = c.width/map.length;
+
+    for(var x = 0; x < map.length; x++){
+        for(var y = 0; y < map.length; y++){
+            if(map[x][y]==="ROCK"){ //Rock
+                ctx.beginPath();
+                ctx.fillStyle= colors.rockColor;
+                ctx.fillRect(x*tileSize+tileSize/2-tileSize*.4,y*tileSize+tileSize/2-tileSize*.4,tileSize*.8,tileSize*.8);
+                ctx.stroke();
+            }
+            else if(map[x][y]==="SHOP"){ //Shop
+
+                //Draw Safe Zone
+                ctx.beginPath();
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = colors.shopColor;
+                var sX=(x==0?0:x-1), sY=(y==0?0:y-1);
+                var eX=(x==me.stats.radar-1?me.stats.radar:x+1);
+                var eY=(y==me.stats.radar-1?me.stats.radar:y+1);
+
+                ctx.fillRect(sX*tileSize, sY*tileSize, (eX-sX+1)*tileSize, (eY-sY+1)*tileSize);
+                ctx.fill();
+
+                //Draw Shop
+                ctx.beginPath();
+                ctx.globalAlpha = 1.0;
+                ctx.fillStyle = colors.shopColor;
+                ctx.save();
+                ctx.translate(x*tileSize+tileSize/2, y*tileSize+tileSize/2);
+                ctx.rotate(Math.PI / 4);
+                ctx.translate(-(tileSize/2 / 2), -(tileSize/2 / 2));
+                ctx.fillRect(0,0, tileSize/2, tileSize/2);
+                ctx.restore();
+                ctx.fill();
+
+            }
+            else if(map[x][y]==="SSHOP"){ //Super Shop
+
+                //Draw Safe Zone
+                ctx.beginPath();
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = colors.shopColor;
+                var sX=(x==0?0:x-2), sY=(y==0?0:y-2);
+                var eX=(x==me.stats.radar-2?me.stats.radar:x+2);
+                var eY=(y==me.stats.radar-2?me.stats.radar:y+2);
+
+                ctx.fillRect(sX*tileSize, sY*tileSize, (eX-sX+1)*tileSize, (eY-sY+1)*tileSize);
+                ctx.fill();
+
+                //Draw Super Shop
+                ctx.beginPath();
+                ctx.globalAlpha = 1.0;
+                ctx.fillStyle = colors.shopColor;
+                ctx.save();
+                ctx.translate(x*tileSize+tileSize/2, y*tileSize+tileSize/2);
+                ctx.rotate(Math.PI / 4);
+                ctx.translate(-(tileSize/2 / 2), -(tileSize/2 / 2));
+                ctx.fillRect(0,0, tileSize/2, tileSize/2);
+                ctx.rotate(3*Math.PI / 4);
+                ctx.restore();
+                ctx.fillRect(x*tileSize+tileSize/4,y*tileSize+tileSize/4, tileSize/2, tileSize/2);
+                ctx.fill();
+
+            }
+            else if(map[x][y]=="GOLD"){ //Treasure
+                ctx.beginPath();
+                ctx.fillStyle=colors.goldColor;
+                ctx.arc(x*tileSize+tileSize/2-tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x*tileSize+tileSize/2+tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2-tileSize/4+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.fill();
+            }
+            else if(map[x][y]=="IRON"){ //Iron
+                ctx.beginPath();
+                ctx.fillStyle=colors.ironColor;
+                ctx.arc(x*tileSize+tileSize/2-tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x*tileSize+tileSize/2+tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2-tileSize/4+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.fill();
+            }
+            else if(map[x][y]=="URANIUM"){ //Uranium
+                ctx.beginPath();
+                ctx.fillStyle=colors.uraniumColor;
+                ctx.arc(x*tileSize+tileSize/2-tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x*tileSize+tileSize/2+tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2-tileSize/4+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.fill();
+            }
+
+            //Draw me
+            if(me.loc[0]==x && me.loc[1]==y && me.stats.hp>0){
+                if(blink){
+                    ctx.beginPath();
+                    ctx.fillStyle = colors.hudColor;
+                    ctx.strokeStyle = colors.hudColor;
+                    ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2,tileSize/4,0,2*Math.PI);
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.globalAlpha = 0.3;
+                    ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
+                    ctx.globalAlpha = 1.0;
+                    ctx.stroke();
+                }
+            }
+
+            //Draw enemies
+            for(var p in players){
+                if(players[p].loc[0]==x && players[p].loc[1]==y){
+                    ctx.beginPath();
+                    ctx.fillStyle = colors.enemyColor;
+                    ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2,tileSize/4,0,2*Math.PI);
+                    ctx.fill();
+                    break;
+                }
+            }
+        }
+    }
+}
+
 //******************************************************************************
 // Event Handler Functions
 //******************************************************************************
@@ -870,8 +1069,10 @@ function handleKeydown(e){
             name = name+""+String.fromCharCode(e.keyCode).toLowerCase();
         }
         drawMonitor();
+    }else if((e.keyCode == 77)){  //M
+        mapView = !mapView;
     }
-    else if(!shopMode && game.phase==0){
+    else if(!shopMode && !mapView && game.phase==0){
         if(e.keyCode == 65 || e.keyCode == 37){        //A
             updateQueue({"type":"MOVE","direction":"W"});
         }else if(e.keyCode == 68 || e.keyCode == 39){  //D
@@ -948,7 +1149,7 @@ function handleMousedown(e){
        }
     //    ctx.strokeRect(c.width/4+255,c.height/8+60+20*i+20,115,40);
    }
-   else if(!gameStart && !shopMode){
+   else if(!gameStart && !mapView && !shopMode){
         var mid = parseInt(me.stats.radar/2);
         var cX = me.loc[0] - (mid-hover[0]);
         var cY = me.loc[1] - (mid-hover[1]);
@@ -968,7 +1169,7 @@ function handleMousemove(e){
     e.stopPropagation();
     mX = parseInt(e.clientX - offsetX);
     mY = parseInt(e.clientY - offsetY);
-    if(!shopMode){
+    if(!shopMode && !mapView){
         drawMonitor();
     }
 }

@@ -24,11 +24,12 @@ body {
 
 }
 .change .date{
-
+    margin-left: 10px;
 }
 .change .version{
-
+    margin-left: 10px;
 }
 .change .description{
+    margin-left: 10px;
     word-wrap: break-word;
 }
