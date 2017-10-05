@@ -21,7 +21,7 @@
     "shipRepair5":{
         "gold":{
             "model": 3,
-            "mod": 500,
+            "mod": 600,
             "mod2": 0
         },
         "iron":{
@@ -116,19 +116,19 @@
     "radarUpgrades": {
         "gold":{
             "model": 1,
-            "mod": 300,
+            "mod": 400,
             "mod2": 0
         },
         "iron":{
             "model": 3,
-            "threshold":100,
-            "mod": 0,
+            "threshold":3,
+            "mod": 1,
             "mod2": 0
         },
         "uranium":{
             "model": 3,
-            "threshold":100,
-            "mod": 0,
+            "threshold":4,
+            "mod": 1,
             "mod2": 0
         }
     },

@@ -10,7 +10,7 @@ var tokenSize = 450;
 //Map Building
 var mapSize = 52;
 var rockSpread = .04;   //decimal as percent
-var shopSpread = .007;  //decimal as percent
+var shopSpread = .407;  //decimal as percent
 var specialShops = 2;   //even number is preferred
 var map = [];
 var spawns = [];
@@ -139,9 +139,9 @@ function startServer(){
             "token": token,
             "info":{
                 "name": name,
-                "gold": 0,
+                "gold": 100000,
                 "totalGold":0,
-                "iron": 0,
+                "iron": 1000,
                 "totalIron":0,
                 "uranium": 0,
                 "totalUranium":0,
@@ -641,6 +641,7 @@ function startServer(){
                     makePurchase(shop.hpU.price,p);
                     p.stats.hpUpgrades++;
                     p.stats.hpMAX = p.stats.hpMAX + statData.hpINC;
+                    p.stats.hp = p.stats.hp + statData.hpINC;
                     p.battleLog.unshift("You upgraded your health.");
                 }else if(req.body.item==="hpU" && !canPurchase(shop.hpU.price,inventory)){
                     p.battleLog.unshift("You need more resources.");
@@ -829,14 +830,6 @@ function startServer(){
                     p.battleLog.unshift("You need more resources.");
                 }
 
-                else if(req.body.item==="statDR" && canPurchase(shop.statDR.price,inventory) && shop.statDR.canBuy){
-                    makePurchase(shop.statDR.price,p);
-                    p.stats.staticDR = true;
-                    p.battleLog.unshift("You purchased the DR Module.");
-                }else if(req.body.item==="statDR" && !canPurchase(shop.statDR.price,inventory)){
-                    p.battleLog.unshift("You need more resources.");
-                }
-
                 else if(req.body.item==="quickHeal" && canPurchase(shop.quickHeal.price,inventory) && shop.quickHeal.canBuy){
                     makePurchase(shop.quickHeal.price,p);
                     p.stats.quickHeal = true;
@@ -866,6 +859,7 @@ function startServer(){
     app.get('/changelog', function (req, res) {
         res.send(changelog);
     });
+
     //**************************************************************************
     //Webpages
     //**************************************************************************
