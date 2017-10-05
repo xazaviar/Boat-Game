@@ -568,7 +568,7 @@ function drawMonitor(){
         }
 
         //Let them know they can access the Store
-        if(shop.withinShop){
+        if(shop.withinShop!=null){
             ctx.fillStyle = colors.shopColor;
             ctx.font = "20px Courier";
             ctx.fillText("Press 'o' to open shop menu",c.width/2-150,c.height/2-50);
@@ -576,62 +576,12 @@ function drawMonitor(){
 
 
         //Draw shop Screen
-        if(shopMode){
-            ctx.beginPath();
-            ctx.strokeStyle=colors.hudColor;
-            ctx.fillStyle=colors.hudBackColor;
-            ctx.globalAlpha = 1.0;
-            ctx.strokeRect(c.width/4,c.height/4,c.width/2,c.height/2);
-            ctx.fillRect(c.width/4,c.height/4,c.width/2,c.height/2);
-            ctx.stroke();
-
-            //Store Labels
-            ctx.fillStyle=colors.hudColor;
-            ctx.font = "40px Courier";
-            ctx.fillText("Store",c.width/4+5,c.height/4+45);
-
-            ctx.font = "18px Courier";
-            ctx.fillText("Press the key to do the following",c.width/4+5,c.height/4+85);
-
-
-            if(shop.hp.canBuy && me.info.gold < shop.hp.price) ctx.fillStyle=colors.needGoldColor;
-            else if(shop.hp.canBuy) ctx.fillStyle=colors.canBuyColor;
-            else ctx.fillStyle=colors.cantBuyColor;
-            ctx.fillText(" 1 : Buy Ship Repair",c.width/4+5,c.height/4+110);
-            ctx.fillText(shop.hp.price+"g",3*c.width/4-75,c.height/4+110);
-
-
-            if(shop.hpU.canBuy && me.info.gold < shop.hpU.price) ctx.fillStyle=colors.needGoldColor;
-            else if(shop.hpU.canBuy) ctx.fillStyle=colors.canBuyColor;
-            else ctx.fillStyle=colors.cantBuyColor;
-            ctx.fillText(" 2 : Buy Health Upgrade",c.width/4+5,c.height/4+135);
-            ctx.fillText(shop.hpU.price+"g",3*c.width/4-75,c.height/4+135);
-
-
-            if(shop.enU.canBuy && me.info.gold < shop.enU.price) ctx.fillStyle=colors.needGoldColor;
-            else if(shop.enU.canBuy) ctx.fillStyle=colors.canBuyColor;
-            else ctx.fillStyle=colors.cantBuyColor;
-            ctx.fillText(" 3 : Buy Energy upgrade",c.width/4+5,c.height/4+160);
-            ctx.fillText(shop.enU.price+"g",3*c.width/4-75,c.height/4+160);
-
-
-            if(shop.radU.canBuy && me.info.gold < shop.radU.price) ctx.fillStyle=colors.needGoldColor;
-            else if(shop.radU.canBuy) ctx.fillStyle=colors.canBuyColor;
-            else ctx.fillStyle=colors.cantBuyColor;
-            ctx.fillText(" 4 : Buy Radar Upgrade",c.width/4+5,c.height/4+185);
-            ctx.fillText(shop.radU.price+"g",3*c.width/4-75,c.height/4+185);
-
-            if(shop.atkU.canBuy && me.info.gold < shop.atkU.price) ctx.fillStyle=colors.needGoldColor;
-            else if(shop.atkU.canBuy) ctx.fillStyle=colors.canBuyColor;
-            else ctx.fillStyle=colors.cantBuyColor;
-            ctx.fillText(" 5 : Buy Attack Upgrade",c.width/4+5,c.height/4+210);
-            ctx.fillText(shop.atkU.price+"g",3*c.width/4-75,c.height/4+210);
-
-
-            ctx.fillStyle=colors.hudColor;
-            ctx.fillText("esc: Exit Store",c.width/4+5,c.height/4+235);
-
+        if(shopMode && shop.withinShop=="SHOP"){
+            drawShopMenu(c, ctx);
+        }else if(shopMode /*&& shop.withinShop=="SSHOP"*/){
+            drawSShopMenu(c, ctx);
         }
+
         //Draw grid hover
         else if(mX > -1 && mY > -1 && mX < c.width && mY < c.height && !settingsView){
             ctx.strokeStyle=colors.hudColor;
@@ -1046,6 +996,80 @@ function drawMap(){
     }
 }
 
+function drawShopMenu(c, ctx){
+    ctx.beginPath();
+    ctx.strokeStyle=colors.hudColor;
+    ctx.fillStyle=colors.hudBackColor;
+    ctx.globalAlpha = 1.0;
+    ctx.strokeRect(c.width/4,c.height/4,c.width/2,c.height/2);
+    ctx.fillRect(c.width/4,c.height/4,c.width/2,c.height/2);
+    ctx.stroke();
+
+    //Store Labels
+    ctx.fillStyle=colors.hudColor;
+    ctx.font = "40px Courier";
+    ctx.fillText("Store",c.width/4+5,c.height/4+45);
+
+    ctx.font = "18px Courier";
+    ctx.fillText("Press the key to do the following",c.width/4+5,c.height/4+85);
+
+
+    if(shop.hp.canBuy && me.info.gold < shop.hp.priceG) ctx.fillStyle=colors.needGoldColor;
+    else if(shop.hp.canBuy) ctx.fillStyle=colors.canBuyColor;
+    else ctx.fillStyle=colors.cantBuyColor;
+    ctx.fillText(" 1 : Buy Ship Repair",c.width/4+5,c.height/4+110);
+    ctx.fillText(shop.hp.priceG+"g",3*c.width/4-75,c.height/4+110);
+
+
+    if(shop.hpU.canBuy && me.info.gold < shop.hpU.priceG) ctx.fillStyle=colors.needGoldColor;
+    else if(shop.hpU.canBuy) ctx.fillStyle=colors.canBuyColor;
+    else ctx.fillStyle=colors.cantBuyColor;
+    ctx.fillText(" 2 : Buy Health Upgrade",c.width/4+5,c.height/4+135);
+    ctx.fillText(shop.hpU.priceG+"g",3*c.width/4-75,c.height/4+135);
+
+
+    if(shop.enU.canBuy && me.info.gold < shop.enU.priceG) ctx.fillStyle=colors.needGoldColor;
+    else if(shop.enU.canBuy) ctx.fillStyle=colors.canBuyColor;
+    else ctx.fillStyle=colors.cantBuyColor;
+    ctx.fillText(" 3 : Buy Energy upgrade",c.width/4+5,c.height/4+160);
+    ctx.fillText(shop.enU.priceG+"g",3*c.width/4-75,c.height/4+160);
+
+
+    if(shop.radU.canBuy && me.info.gold < shop.radU.priceG) ctx.fillStyle=colors.needGoldColor;
+    else if(shop.radU.canBuy) ctx.fillStyle=colors.canBuyColor;
+    else ctx.fillStyle=colors.cantBuyColor;
+    ctx.fillText(" 4 : Buy Radar Upgrade",c.width/4+5,c.height/4+185);
+    ctx.fillText(shop.radU.priceG+"g",3*c.width/4-75,c.height/4+185);
+
+    if(shop.atkU.canBuy && me.info.gold < shop.atkU.priceG) ctx.fillStyle=colors.needGoldColor;
+    else if(shop.atkU.canBuy) ctx.fillStyle=colors.canBuyColor;
+    else ctx.fillStyle=colors.cantBuyColor;
+    ctx.fillText(" 5 : Buy Attack Upgrade",c.width/4+5,c.height/4+210);
+    ctx.fillText(shop.atkU.priceG+"g",3*c.width/4-75,c.height/4+210);
+
+
+    ctx.fillStyle=colors.hudColor;
+    ctx.fillText("esc: Exit Store",c.width/4+5,c.height/4+235);
+}
+
+function drawSShopMenu(c, ctx){
+    ctx.beginPath();
+    ctx.strokeStyle=colors.hudColor;
+    ctx.fillStyle=colors.hudBackColor;
+    ctx.globalAlpha = 1.0;
+    ctx.strokeRect(c.width/8,c.height/4,3*c.width/4,c.height/2);
+    ctx.fillRect(c.width/8,c.height/4,3*c.width/4,c.height/2);
+    ctx.stroke();
+
+    //Store Labels
+    ctx.fillStyle=colors.hudColor;
+    ctx.font = "40px Courier";
+    ctx.fillText("Special Store",c.width/8+5,c.height/4+45);
+
+    ctx.font = "18px Courier";
+    ctx.fillText("Press the key to do the following",c.width/8+5,c.height/4+85);
+}
+
 //******************************************************************************
 // Event Handler Functions
 //******************************************************************************
@@ -1089,7 +1113,7 @@ function handleKeydown(e){
             updateQueue({"type":"HOLD"});
         }else if(e.keyCode == 89 && me.stats.hp == 0){  //Y
             requestRespawn();
-        }else if((e.keyCode == 79) && shop.withinShop){  //O or escape
+        }else if(e.keyCode == 79 /*&& shop.withinShop!=null*/){  //O
             shopMode = true;
         }
     }
@@ -1108,7 +1132,7 @@ function handleKeydown(e){
             shopMode = false;
         }
     }
-    else if((e.keyCode == 79 || e.keyCode == 27) && shop.withinShop){  //O or escape
+    else if(e.keyCode == 79 /*&& shop.withinShop!=null*/){  //O
         shopMode = true;
     }
 
