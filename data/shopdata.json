@@ -40,7 +40,7 @@
     "insurance": {
         "gold":{
             "model": 5,
-            "mod": 5,
+            "mod": 2,
             "mod2": 1000
         },
         "iron":{
@@ -135,7 +135,7 @@
 
 
 
-    "loadoutUpgrade": {
+    "loadoutUpgrades": {
         "gold":{
             "model": 3,
             "mod": 5000,
@@ -154,7 +154,7 @@
             "mod2": 0
         }
     },
-    "cannonUpgrade": {
+    "cannonUpgrades": {
         "gold":{
             "model": 1,
             "mod": 1000,
@@ -173,7 +173,7 @@
             "mod2": 0
         }
     },
-    "blinkUpgrade": {
+    "blinkUpgrades": {
         "gold":{
             "model": 1,
             "mod": 1000,
@@ -192,7 +192,7 @@
             "mod2": 0
         }
     },
-    "stealthUpgrade": {
+    "stealthUpgrades": {
         "gold":{
             "model": 1,
             "mod": 1000,
@@ -211,7 +211,7 @@
             "mod2": 0
         }
     },
-    "trapUpgrade": {
+    "trapUpgrades": {
         "gold":{
             "model": 1,
             "mod": 1000,
@@ -230,7 +230,7 @@
             "mod2": 0
         }
     },
-    "engModUpgrade": {
+    "engModUpgrades": {
         "gold":{
             "model": 1,
             "mod": 1000,
@@ -249,7 +249,7 @@
             "mod2": 0
         }
     },
-    "scannerUpgrade": {
+    "scannerUpgrades": {
         "gold":{
             "model": 1,
             "mod": 1000,
@@ -268,7 +268,7 @@
             "mod2": 0
         }
     },
-    "railgunUpgrade": {
+    "railgunUpgrades": {
         "gold":{
             "model": 1,
             "mod": 1000,
@@ -287,7 +287,7 @@
             "mod2": 0
         }
     },
-    "urCarryUpgrade": {
+    "urCarryUpgrades": {
         "gold":{
             "model": 1,
             "mod": 500,
@@ -306,7 +306,7 @@
             "mod2": 0
         }
     },
-    "insuranceUpgrade": {
+    "insuranceUpgrades": {
         "gold":{
             "model": 1,
             "mod": 1000,
@@ -438,5 +438,25 @@
             "mod": 0,
             "mod2": 0
         }
+    },
+    "quickHeal": {
+        "gold":{
+            "model": 2,
+            "mod": 5,
+            "mod2": 1000
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
     }
+
 }

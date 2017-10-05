@@ -1014,38 +1014,38 @@ function drawShopMenu(c, ctx){
     ctx.fillText("Press the key to do the following",c.width/4+5,c.height/4+85);
 
 
-    if(shop.hp.canBuy && me.info.gold < shop.hp.priceG) ctx.fillStyle=colors.needGoldColor;
-    else if(shop.hp.canBuy) ctx.fillStyle=colors.canBuyColor;
+    if(shop.hpF.canBuy && me.info.gold < shop.hpF.price.gold) ctx.fillStyle=colors.needGoldColor;
+    else if(shop.hpF.canBuy) ctx.fillStyle=colors.canBuyColor;
     else ctx.fillStyle=colors.cantBuyColor;
     ctx.fillText(" 1 : Buy Ship Repair",c.width/4+5,c.height/4+110);
-    ctx.fillText(shop.hp.priceG+"g",3*c.width/4-75,c.height/4+110);
+    ctx.fillText(shop.hpF.price.gold+"g",3*c.width/4-75,c.height/4+110);
 
 
-    if(shop.hpU.canBuy && me.info.gold < shop.hpU.priceG) ctx.fillStyle=colors.needGoldColor;
+    if(shop.hpU.canBuy && me.info.gold < shop.hpU.price.gold) ctx.fillStyle=colors.needGoldColor;
     else if(shop.hpU.canBuy) ctx.fillStyle=colors.canBuyColor;
     else ctx.fillStyle=colors.cantBuyColor;
     ctx.fillText(" 2 : Buy Health Upgrade",c.width/4+5,c.height/4+135);
-    ctx.fillText(shop.hpU.priceG+"g",3*c.width/4-75,c.height/4+135);
+    ctx.fillText(shop.hpU.price.gold+"g",3*c.width/4-75,c.height/4+135);
 
 
-    if(shop.enU.canBuy && me.info.gold < shop.enU.priceG) ctx.fillStyle=colors.needGoldColor;
+    if(shop.enU.canBuy && me.info.gold < shop.enU.price.gold) ctx.fillStyle=colors.needGoldColor;
     else if(shop.enU.canBuy) ctx.fillStyle=colors.canBuyColor;
     else ctx.fillStyle=colors.cantBuyColor;
     ctx.fillText(" 3 : Buy Energy upgrade",c.width/4+5,c.height/4+160);
-    ctx.fillText(shop.enU.priceG+"g",3*c.width/4-75,c.height/4+160);
+    ctx.fillText(shop.enU.price.gold+"g",3*c.width/4-75,c.height/4+160);
 
 
-    if(shop.radU.canBuy && me.info.gold < shop.radU.priceG) ctx.fillStyle=colors.needGoldColor;
+    if(shop.radU.canBuy && me.info.gold < shop.radU.price.gold) ctx.fillStyle=colors.needGoldColor;
     else if(shop.radU.canBuy) ctx.fillStyle=colors.canBuyColor;
     else ctx.fillStyle=colors.cantBuyColor;
     ctx.fillText(" 4 : Buy Radar Upgrade",c.width/4+5,c.height/4+185);
-    ctx.fillText(shop.radU.priceG+"g",3*c.width/4-75,c.height/4+185);
+    ctx.fillText(shop.radU.price.gold+"g",3*c.width/4-75,c.height/4+185);
 
-    if(shop.atkU.canBuy && me.info.gold < shop.atkU.priceG) ctx.fillStyle=colors.needGoldColor;
+    if(shop.atkU.canBuy && me.info.gold < shop.atkU.price.gold) ctx.fillStyle=colors.needGoldColor;
     else if(shop.atkU.canBuy) ctx.fillStyle=colors.canBuyColor;
     else ctx.fillStyle=colors.cantBuyColor;
     ctx.fillText(" 5 : Buy Attack Upgrade",c.width/4+5,c.height/4+210);
-    ctx.fillText(shop.atkU.priceG+"g",3*c.width/4-75,c.height/4+210);
+    ctx.fillText(shop.atkU.price.gold+"g",3*c.width/4-75,c.height/4+210);
 
 
     ctx.fillStyle=colors.hudColor;
@@ -1119,7 +1119,7 @@ function handleKeydown(e){
     }
     else if(shopMode){
         if(e.keyCode == 49){        //1
-            makePurchase("hp+");
+            makePurchase("hpF");
         }else if(e.keyCode == 50){  //2
             makePurchase("hpU");
         }else if(e.keyCode == 51){  //3
