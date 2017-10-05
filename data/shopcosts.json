@@ -1,0 +1,442 @@
+{
+    "shipRepair":{
+        "gold":{
+            "model": 2,
+            "mod": 5,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":10,
+            "mod": 1,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "shipRepair5":{
+        "gold":{
+            "model": 3,
+            "mod": 500,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold": 1,
+            "mod": 1,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "insurance": {
+        "gold":{
+            "model": 5,
+            "mod": 5,
+            "mod2": 1000
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "healthUpgrades":{
+        "gold":{
+            "model": 1,
+            "mod": 200,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "energyUpgrades":{
+        "gold":{
+            "model": 1,
+            "mod": 200,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "attackUpgrades": {
+        "gold":{
+            "model": 1,
+            "mod": 300,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "radarUpgrades": {
+        "gold":{
+            "model": 1,
+            "mod": 300,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+
+
+
+    "loadoutUpgrade": {
+        "gold":{
+            "model": 3,
+            "mod": 5000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "cannonUpgrade": {
+        "gold":{
+            "model": 1,
+            "mod": 1000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 1,
+            "threshold":1,
+            "mod": 1,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":2,
+            "mod": 1,
+            "mod2": 0
+        }
+    },
+    "blinkUpgrade": {
+        "gold":{
+            "model": 1,
+            "mod": 1000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 1,
+            "threshold":1,
+            "mod": 1,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":2,
+            "mod": 1,
+            "mod2": 0
+        }
+    },
+    "stealthUpgrade": {
+        "gold":{
+            "model": 1,
+            "mod": 1000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 1,
+            "threshold":1,
+            "mod": 1,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":2,
+            "mod": 1,
+            "mod2": 0
+        }
+    },
+    "trapUpgrade": {
+        "gold":{
+            "model": 1,
+            "mod": 1000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 1,
+            "threshold":1,
+            "mod": 1,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":2,
+            "mod": 1,
+            "mod2": 0
+        }
+    },
+    "engModUpgrade": {
+        "gold":{
+            "model": 1,
+            "mod": 1000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 1,
+            "threshold":1,
+            "mod": 1,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":2,
+            "mod": 1,
+            "mod2": 0
+        }
+    },
+    "scannerUpgrade": {
+        "gold":{
+            "model": 1,
+            "mod": 1000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":3,
+            "mod": 1,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "railgunUpgrade": {
+        "gold":{
+            "model": 1,
+            "mod": 1000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 1,
+            "threshold":1,
+            "mod": 1,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":2,
+            "mod": 1,
+            "mod2": 0
+        }
+    },
+    "urCarryUpgrade": {
+        "gold":{
+            "model": 1,
+            "mod": 500,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "insuranceUpgrade": {
+        "gold":{
+            "model": 1,
+            "mod": 1000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "staticHp": {
+        "gold":{
+            "model": 3,
+            "mod": 6000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "staticEng": {
+        "gold":{
+            "model": 3,
+            "mod": 6000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "staticAtk": {
+        "gold":{
+            "model": 3,
+            "mod": 6000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "staticRdr": {
+        "gold":{
+            "model": 3,
+            "mod": 6000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "staticDR": {
+        "gold":{
+            "model": 3,
+            "mod": 8000,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "uranium": {
+        "gold":{
+            "model": 3,
+            "mod": 500,
+            "mod2": 0
+        },
+        "iron":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        },
+        "uranium":{
+            "model": 3,
+            "threshold":100,
+            "mod": 0,
+            "mod2": 0
+        }
+    }
+}

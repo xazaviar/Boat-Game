@@ -14,8 +14,8 @@ var shopSpread = .007;  //decimal as percent
 var specialShops = 2;   //even number is preferred
 var map = [];
 var spawns = [];
-var spawnWid = 1.0/4;
-var spawnHei = 1.0/3;
+var spawnWid = .25;
+var spawnHei = .33;
 var zone3Wid = .2;
 var zone3Hei = .4;
 var zone2Wid = .2;
@@ -42,14 +42,37 @@ var dcCountdown = 2; //d/c cooldown
 var statData;
 
 //Energy Usage
-var attackEnergyUsage = 1;
-var lootEnergyUsage = 3;
-var scanEnergyUsage = 5;
+var attackEnergyUsage       = 1;
+var lootEnergyUsage         = 3;
+var scanEnergyUsage         = 5;
+
+var cannonEnergyUsage       = 10;
+var cannonUraniumUsage      = 1;
+
+var blinkEnergyUsage        = 10; //Changes by lvl
+var blinkUraniumUsage       = 1;
+
+var stealthEnergyUsage      = 5;
+var stealhUraniumUsage      = 1;
+
+var trapEnergyUsage         = 5;
+var trapUraniumUsage        = 1;
+
+var railgunEnergyUsage      = 10;
+var railgunUraniumUsage     = 1;
 
 //Action Usage
-var lootActionUsage = 2;
-var scanActionUsage = 3;
+var lootActionUsage         = 2;
+var scanActionUsage         = 3;
+var cannonActionUsage       = 2;
+var blinkActionUsage        = 1;
+var stealthActionUsage      = 3;
+var destealthActionUsage    = 1;
+var trapActionUsage         = 2;
+var railgunActionUsage      = 2;
 
+//TODO: SHOP MODEL IMPORT
+var shopData;
 
 init();
 
@@ -146,8 +169,41 @@ function startServer(){
                 "attackUpgrades":1,
                 "attackUpgradesMAX": (statData.attackMAX-statData.attackStart)/statData.attackINC+1,
 
-                
-            }
+                "loadoutSize": statData.loadoutStart,
+
+                "cannon": statData.cannonStart,
+                "cannonUpgrades":0,
+                "cannonUpgradeMAX": (statData.cannonMAX-statData.cannonStart)/statData.cannonINC,
+
+                "blink": statData.blinkStart,
+                "blinkUpgrades":0,
+                "blinkUpgradeMAX": (statData.blinkMAX-statData.blinkStart)/statData.blinkINC,
+
+                "stealth": statData.stealthStart,
+                "stealthUpgrades":0,
+                "stealthUpgradeMAX": (statData.stealthMAX-statData.stealthStart)/statData.stealthINC,
+
+                "trap": statData.trapStart,
+                "trapUpgrades":0,
+                "trapUpgradeMAX": (statData.trapMAX-statData.trapStart)/statData.trapINC,
+
+                "engMod": statData.engModStart,
+                "engModUpgrades":0,
+                "engModUpgradeMAX": (statData.engModMAX-statData.engModStart)/statData.engModINC,
+
+                "scanner": statData.scannerStart,
+                "scannerUpgrades":1,
+                "scannerUpgradeMAX": (statData.scannerMAX-statData.scannerStart)/statData.scannerINC+1,
+
+                "railgun": statData.railgunStart,
+                "railgunUpgrades":0,
+                "railgunUpgradeMAX": (statData.railgunMAX-statData.railgunStart)/statData.railgunINC,
+
+                "urCarry": statData.urCarryStart,
+                "urCarryUpgrades":1,
+                "urCarryUpgradeMAX": (statData.urCarryMAX-statData.urCarryStart)/statData.urCarryINC+1
+            },
+            "abilitySlots": []
         };
 
 
@@ -211,11 +267,36 @@ function startServer(){
                 "game":{"countdown":countdown,"phase":phase,"version":version},
                 "shop":{
                     "withinShop": withinShop(p.loc),
-                    "hp":{"price":(p.stats.hpMAX-p.stats.hp)*(p.stats.hpMAX-p.stats.hp),"canBuy":!(p.stats.hp==p.stats.hpMAX)},
-                    "hpU":{"price":(p.stats.hpUpgrades+1)*100,"canBuy":!(p.stats.hpUpgrades==p.stats.hpUpgradesMAX)},
-                    "enU":{"price":(p.stats.energyUpgrades+1)*100,"canBuy":!(p.stats.energyUpgrades==p.stats.energyUpgradesMAX)},
-                    "radU":{"price":(p.stats.radarUpgrades+1)*200,"canBuy":!(p.stats.radarUpgrades==p.stats.radarUpgradesMAX)},
-                    "atkU":{"price":(p.stats.attackUpgrades+1)*200,"canBuy":!(p.stats.attackUpgrades==p.stats.attackUpgradesMAX)}
+                    "hp":{
+                        "priceG":(p.stats.hpMAX-p.stats.hp)*(p.stats.hpMAX-p.stats.hp),
+                        "priceI":0,
+                        "priceU":0,
+                        "canBuy":!(p.stats.hp==p.stats.hpMAX)
+                    },
+                    "hpU":{
+                        "priceG":(p.stats.hpUpgrades+1)*100,
+                        "priceI":0,
+                        "priceU":0,
+                        "canBuy":!(p.stats.hpUpgrades==p.stats.hpUpgradesMAX)
+                    },
+                    "enU":{
+                        "priceG":(p.stats.energyUpgrades+1)*100,
+                        "priceI":0,
+                        "priceU":0,
+                        "canBuy":!(p.stats.energyUpgrades==p.stats.energyUpgradesMAX)
+                    },
+                    "radU":{
+                        "priceG":(p.stats.radarUpgrades+1)*200,
+                        "priceI":0,
+                        "priceU":0,
+                        "canBuy":!(p.stats.radarUpgrades==p.stats.radarUpgradesMAX)
+                    },
+                    "atkU":{
+                        "priceG":(p.stats.attackUpgrades+1)*200,
+                        "priceI":0,
+                        "priceU":0,
+                        "canBuy":!(p.stats.attackUpgrades==p.stats.attackUpgradesMAX)
+                    }
                 }
             }
 
@@ -326,7 +407,9 @@ function startServer(){
             }
         }
 
-        if(p!=null && withinShop(p.loc)!=null){
+        //Regular shop
+        var shop = withinShop(p.loc);
+        if(p!=null && shop==="SHOP"){
             if(req.body.item==="hp+" && p.info.gold>=(p.stats.hpMAX-p.stats.hp)*(p.stats.hpMAX-p.stats.hp) && p.stats.hpMAX-p.stats.hp!=0){
                 p.info.gold = p.info.gold - (p.stats.hpMAX-p.stats.hp)*(p.stats.hpMAX-p.stats.hp);
                 p.stats.hp = p.stats.hpMAX;
@@ -371,6 +454,11 @@ function startServer(){
             else{
                 p.battleLog.unshift("You can't purchase that.");
             }
+        }
+
+        //Super Shop
+        else if(p!=null && shop==="SSHOP"){
+
         }
 
         res.send('');
@@ -929,4 +1017,20 @@ function isLoot(loc){
     else if(loc.type==="IRON") return true
     else if(loc.type==="URANIUM") return true
     return false;
+}
+
+function calculatePrice(model, lvl, mod, mod2, threshold){
+    if(lvl >= threshold)
+        if(model==1)
+            return lvl * mod;
+        else if(model==2)
+            return lvl * lvl * mod;
+        else if(model==3)
+            return mod;
+        else if(model==4)
+            return lvl * mod + mod2;
+        else if(model==5)
+            return lvl * lvl * mod + mod2;
+
+    return 0;
 }
