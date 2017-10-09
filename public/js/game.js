@@ -40,6 +40,7 @@ var colorsDefault = {
     "lootColor":        "#990099", //Default -> #990099
     "scanColor":        "#00AA00", //Default -> #00AA00
     "holdColor":        "#000080", //Default -> #000080
+    "abilityColor":     "#FFA500", //Default -> #FFA500
 
     "hpColor":          "#FF0000", //Default -> #FF0000
     "energyColor":      "#0000FF", //Default -> #0000FF
@@ -664,7 +665,10 @@ function drawMonitor(){
                             if(eloc[0]==cX && eloc[1]==cY){
                                 ctx.beginPath();
                                 ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
-                                ctx.fill();
+                                if(players[i].stealthed)
+                                    ctx.fill();
+                                else
+                                    ctx.stroke();
                                 ctx.font = "14px Courier";
                                 ctx.fillText(players[i].name,x*tileSize+tileSize/2-(players[i].name.length*4),y*tileSize+tileSize/2-tileSize/4);
 
@@ -809,7 +813,10 @@ function drawMonitor(){
         if(me.stats.hp>0){
             ctx.fillStyle=colors.hudColor;
             ctx.arc(c.width/2,c.height/2,tileSize/5,0,2*Math.PI);
-            ctx.fill();
+            if(me.info.stealthed)
+                ctx.stroke();
+            else
+                ctx.fill();
         }
         else{
             ctx.fillStyle=colors.enemyColor;
@@ -829,7 +836,8 @@ function drawMonitor(){
         //Draw shop Screen
         if(shopMode && shop.withinShop=="SHOP"){
             drawShopMenu(c, ctx);
-        }else if(shopMode /*&& shop.withinShop=="SSHOP"*/){
+        }
+        else if(shopMode /*&& shop.withinShop=="SSHOP"*/){
             drawSShopMenu(c, ctx);
         }
 
@@ -1012,6 +1020,21 @@ function drawSideBar(){
         }else if(me.queue[i].type==="HOLD"){
             ctx.fillStyle = colors.holdColor;
             text = "HOLD";
+        }else if(me.queue[i].type==="QUICKHEAL"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "SHIP REPAIR";
+        }else if(me.queue[i].type==="BLINK"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "BLINK";
+        }else if(me.queue[i].type==="ENERGY"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "ENERGY REGEN";
+        }else if(me.queue[i].type==="STEALTH"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "STEALTH";
+        }else if(me.queue[i].type==="DESTEALTH"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "DESTEALTH";
         }
         ctx.beginPath();
         ctx.fillRect(40,i*45+70,220,35);
@@ -1649,6 +1672,10 @@ function handleKeydown(e){
         }else if(e.keyCode == 79 && shop.withinShop!=null && !settingsView){  //O
             shopMode = true;
             mapView = false;
+        }else if(e.keyCode == 81){          //Q
+            doSpecialAction(0);
+        }else if(e.keyCode == 69){          //E
+            doSpecialAction(1);
         }
     }
     else if(shopMode){
@@ -1912,4 +1939,13 @@ function toggleSaving(){
     }else{
         document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
     }
+}
+
+function doSpecialAction(slot){
+    if(me.abilitySlots[slot]==="HEAL")
+        updateQueue({"type":"QUICKHEAL"});
+    if(me.abilitySlots[slot]==="ENG")
+        updateQueue({"type":"ENERGY"});
+    if(me.abilitySlots[slot]==="HIDE")
+        updateQueue({"type":"STEALTH"});
 }

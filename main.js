@@ -45,15 +45,18 @@ var statData;
 var attackEnergyUsage       = 1;
 var lootEnergyUsage         = 3;
 var scanEnergyUsage         = 5;
+var quickHealEnergyUsage    = 10;
+
+var energyModUraniumUsage   = 1;
 
 var cannonEnergyUsage       = 10;
 var cannonUraniumUsage      = 1;
 
-var blinkEnergyUsage        = 10; //Changes by lvl
+var blinkEnergyUsage        = 12; //Changes by lvl
 var blinkUraniumUsage       = 1;
 
 var stealthEnergyUsage      = 5;
-var stealhUraniumUsage      = 1;
+var stealthUraniumUsage     = 1;
 
 var trapEnergyUsage         = 5;
 var trapUraniumUsage        = 1;
@@ -70,6 +73,7 @@ var stealthActionUsage      = 3;
 var destealthActionUsage    = 1;
 var trapActionUsage         = 2;
 var railgunActionUsage      = 2;
+var quickHealActionUsage    = 1;
 
 //TODO: SHOP MODEL IMPORT
 var shopData;
@@ -151,7 +155,8 @@ function startServer(){
                 "hauls": 0,
                 "inCombat": 0,
                 "connected": 0,
-                "hasInsurance": false
+                "hasInsurance": false,
+                "stealthed": false
             },
             "loc": sp,
             "queue": [],
@@ -419,28 +424,64 @@ function startServer(){
 
         if(p!=null && phase==0 ){
             if(p.queue.length < 3 && p.stats.hp>0){
-                var inUse = 0;
+                var inUse = 0, inUseUR = 0;
                 for(var a = 0; a < p.queue.length; a++){
                     if(p.queue[a].type=="ATTACK")
                         inUse= inUse + attackEnergyUsage;
                     else if(p.queue[a].type=="LOOT"){
                         inUse = inUse + lootEnergyUsage;
                         a++;
-                    }else if(p.queue[a].type=="HOLD"){
+                    }
+                    else if(p.queue[a].type=="HOLD"){
                         inUse = inUse - statData.energyReg;
                     }
+                    else if(p.queue[a].type=="BLINK"){
+                        inUse = inUse + blinkEnergyUsage;
+                        inUseUR = inUseUR + blinkUraniumUsage;
+                    }
+                    else if(p.queue[a].type=="ENERGY"){
+                        inUseUR = inUseUR + energyModUraniumUsage;
+                    }
+                    else if(p.queue[a].type=="CANNON"){
+                        inUse = inUse + cannonEnergyUsage;
+                        inUseUR = inUseUR + cannonUraniumUsage;
+                        a++;
+                    }
+                    else if(p.queue[a].type=="RAILGUN"){
+                        inUse = inUse + railgunEnergyUsage;
+                        inUseUR = inUseUR + railgunUraniumUsage;
+                        a++;
+                    }
+                    else if(p.queue[a].type=="TRAP"){
+                        inUse = inUse + trapEnergyUsage;
+                        inUseUR = inUseUR + trapUraniumUsage;
+                        a++;
+                    }
                 }
+
                 if(3-p.queue.length >= scanActionUsage && req.body.action.type==="SCAN" && p.stats.energy>=scanEnergyUsage+inUse){
                     for(var a = 0; a < scanActionUsage; a++)
                         p.queue.push(req.body.action);
-                }else if(3-p.queue.length >= lootActionUsage && req.body.action.type==="LOOT" && p.stats.energy>=lootEnergyUsage+inUse){
+                }
+                if(3-p.queue.length >= stealthActionUsage && req.body.action.type==="STEALTH" && p.stats.energy>=stealthEnergyUsage+inUse){
+                    for(var a = 0; a < stealthActionUsage; a++)
+                        p.queue.push(req.body.action);
+                }
+                else if(3-p.queue.length >= lootActionUsage && req.body.action.type==="LOOT" && p.stats.energy>=lootEnergyUsage+inUse){
                     for(var a = 0; a < lootActionUsage; a++)
                         p.queue.push(req.body.action);
-                }else if(req.body.action.type==="ATTACK" && p.stats.energy>=attackEnergyUsage+inUse /*&& withinShop(p.loc)==null*/ && attackDistance(p.loc,req.body.action.location))
+                }
+                else if(req.body.action.type==="ATTACK" && p.stats.energy>=attackEnergyUsage+inUse /*&& withinShop(p.loc)==null*/ && attackDistance(p.loc,req.body.action.location))
                     p.queue.push(req.body.action);
                 else if(req.body.action.type==="ATTACK" && !attackDistance(p.loc,req.body.action.location))
                     p.battleLog.unshift("Out of range.");
                 else if(req.body.action.type==="MOVE" || req.body.action.type==="HOLD")
+                    p.queue.push(req.body.action);
+                else if(req.body.action.type==="QUICKHEAL" && isEquipped(p,"HEAL") && p.stats.energy>=quickHealEnergyUsage+inUse)
+                    p.queue.push(req.body.action);
+                else if(req.body.action.type==="BLINK" && isEquipped(p,"BLNK") && p.stats.energy>=blinkEnergyUsage+inUse && p.info.uranium>=blinkUraniumUsage+inUseUR)
+                    p.queue.push(req.body.action);
+                else if(req.body.action.type==="ENERGY" && isEquipped(p,"ENG") && p.info.uranium>=energyModUraniumUsage+inUseUR)
                     p.queue.push(req.body.action);
                 else
                     p.battleLog.unshift("You can't perform that action.");
@@ -1014,7 +1055,7 @@ function setupPhase(){
 }
 
 function actionPhase(){
-    var moves = [], attacks = [], loots = [], scans = [];
+    var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[], stealths=[];
     var actAttacks = [];
 
     //Grab all actions
@@ -1031,6 +1072,12 @@ function actionPhase(){
                 loots.push(players[i]);
             }else if(players[i].queue[0].type==="SCAN" && players[i].queue.length == 1){
                 scans.push(players[i]);
+            }else if(players[i].queue[0].type==="STEALTH" && players[i].queue.length == 1){
+                stealths.push(players[i]);
+            }else if(players[i].queue[0].type==="QUICKHEAL"){
+                heals.push(players[i]);
+            }else if(players[i].queue[0].type==="ENERGY"){
+                engMods.push(players[i]);
             }else if(players[i].queue[0].type==="HOLD" && players[i].stats.energy < players[i].stats.energyMAX){
                 players[i].stats.energy=players[i].stats.energy+statData.energyReg*(players[i].info.inCombat>0?1:2);
                 if (players[i].stats.energy > players[i].stats.energyMAX)
@@ -1054,10 +1101,16 @@ function actionPhase(){
         move(moves[i].player,moves[i].direction);
     for(var i = 0; i < attacks.length; i++)
         attack(attacks[i].player,attacks[i].location);
+    for(var i = 0; i < heals.length; i++)
+        quickHeal(heals[i]);
+    for(var i = 0; i < engMods.length; i++)
+        energyMod(engMods[i]);
     for(var i = 0; i < loots.length; i++)
         loot(loots[i]);
     for(var i = 0; i < scans.length; i++)
         scan(scans[i]);
+    for(var i = 0; i < stealths.length; i++)
+        stealth(stealths[i]);
 
 
     //Increment timer
@@ -1267,6 +1320,29 @@ function scan(player){
     }
 }
 
+function quickHeal(p){
+    p.stats.hp = p.stats.hpMAX;
+    p.stats.quickHeal = false;
+    removeFromStorage(p,"HEAL");
+    if(p.abilitySlots[0]==="HEAL") p.abilitySlots[0] = "NONE";
+    if(p.abilitySlots[1]==="HEAL") p.abilitySlots[1] = "NONE";
+}
+
+function energyMod(p){
+    p.info.uranium -= energyModUraniumUsage;
+
+    p.stats.energy += p.stats.engMod*5;
+    if(p.stats.energy > p.stats.energyMAX) p.stats.energy=p.stats.energyMAX
+}
+
+function stealth(p){
+    p.info.uranium -= stealthUraniumUsage;
+    p.stats.energy -= stealthEnergyUsage;
+    p.info.stealthed = true;
+
+    //Remove from scanned
+
+}
 
 //******************************************************************************
 // Utility Functions
