@@ -675,9 +675,11 @@ function startServer(){
                     makePurchase(shop.loadout.price,p);
                     p.stats.loadoutSize = p.stats.loadoutSize+statData.loadoutINC;
                     p.battleLog.unshift("You increased your loadout.");
-                }else if(req.body.item==="loadout" && !canPurchase(shop.loadout.price,inventory)){
+                }
+                else if(req.body.item==="loadout" && !canPurchase(shop.loadout.price,inventory)){
                     p.battleLog.unshift("You need more resources.");
-                }else if(req.body.item==="loadout" && !shop.loadout.canBuy){
+                }
+                else if(req.body.item==="loadout" && !shop.loadout.canBuy){
                     p.battleLog.unshift("You have already maxed your loadout.");
                 }
 
@@ -1550,10 +1552,10 @@ function makePurchase(costs, p){
     p.info.uranium -= costs.uranium;
 }
 
-function incrementStorageItem(p, item, val){
+function incrementStorageItem(p, mod, val){
     for(var i in p.storage){
-        if(p.storage[i].name===item){
-            p.storage[i].val==val;
+        if(p.storage[i].name===mod){
+            p.storage[i].val=val;
             break;
         }
     }
@@ -1582,6 +1584,114 @@ function death(p, killer){
         p.info.uranium = 0;
 
         //Equips
+        if(p.stats.scanner>1){
+            p.stats.scanner--;
+            p.stats.scannerUpgrades--;
+        }
+        if(isEquipped(p,"CAN")){
+            p.stats.cannonUpgrades--;
+            p.stats.cannon = p.stats.cannon - statData.cannonINC;
+            incrementStorageItem(p,"CAN",p.stats.cannon);
+            if(p.stats.cannon == 0){
+                removeFromStorage(p,"CAN");
+                if(p.abilitySlots[0]==="CAN") p.abilitySlots[0] = "NONE";
+                if(p.abilitySlots[1]==="CAN") p.abilitySlots[1] = "NONE";
+            }
+        }
+        if(isEquipped(p,"BLNK")){
+            p.stats.blinkUpgrades--;
+            p.stats.blink = p.stats.blink - statData.blinkINC;
+            incrementStorageItem(p,"BLNK",p.stats.blink);
+            if(p.stats.blink == 0){
+                removeFromStorage(p,"BLNK");
+                if(p.abilitySlots[0]==="BLNK") p.abilitySlots[0] = "NONE";
+                if(p.abilitySlots[1]==="BLNK") p.abilitySlots[1] = "NONE";
+            }
+        }
+        if(isEquipped(p,"ENG")){
+            p.stats.engModUpgrades--;
+            p.stats.engMod = p.stats.engMod - statData.engModINC;
+            incrementStorageItem(p,"ENG",p.stats.engMod);
+            if(p.stats.engMod == 0){
+                removeFromStorage(p,"ENG");
+                if(p.abilitySlots[0]==="ENG") p.abilitySlots[0] = "NONE";
+                if(p.abilitySlots[1]==="ENG") p.abilitySlots[1] = "NONE";
+            }
+        }
+        if(isEquipped(p,"TRAP")){
+            p.stats.trapUpgrades--;
+            p.stats.trap = p.stats.trap - statData.trapINC;
+            incrementStorageItem(p,"TRAP",p.stats.trap);
+            if(p.stats.trap == 0){
+                removeFromStorage(p,"TRAP");
+                if(p.abilitySlots[0]==="TRAP") p.abilitySlots[0] = "NONE";
+                if(p.abilitySlots[1]==="TRAP") p.abilitySlots[1] = "NONE";
+            }
+        }
+        if(isEquipped(p,"HIDE")){
+            p.stats.stealthUpgrades--;
+            p.stats.stealth = p.stats.stealth - statData.stealthINC;
+            incrementStorageItem(p,"HIDE",p.stats.stealth);
+            if(p.stats.stealth == 0){
+                removeFromStorage(p,"HIDE");
+                if(p.abilitySlots[0]==="HIDE") p.abilitySlots[0] = "NONE";
+                if(p.abilitySlots[1]==="HIDE") p.abilitySlots[1] = "NONE";
+            }
+        }
+        if(isEquipped(p,"RAIL")){
+            p.stats.railgunUpgrades--;
+            p.stats.railgun = p.stats.railgun - statData.railgunINC;
+            incrementStorageItem(p,"RAIL",p.stats.railgun);
+            if(p.stats.railgun == 0){
+                removeFromStorage(p,"RAIL");
+                if(p.abilitySlots[0]==="RAIL") p.abilitySlots[0] = "NONE";
+                if(p.abilitySlots[1]==="RAIL") p.abilitySlots[1] = "NONE";
+            }
+        }
+        if(isEquipped(p,"HEAL")){
+            p.stats.quickHeal = false;
+            removeFromStorage(p,"HEAL");
+            if(p.abilitySlots[0]==="HEAL") p.abilitySlots[0] = "NONE";
+            if(p.abilitySlots[1]==="HEAL") p.abilitySlots[1] = "NONE";
+
+        }
+        if(isEquipped(p,"ATK+")){
+            p.stats.staticAtk = false;
+            removeFromStorage(p,"ATK+");
+            if(p.abilitySlots[0]==="ATK+") p.abilitySlots[0] = "NONE";
+            if(p.abilitySlots[1]==="ATK+") p.abilitySlots[1] = "NONE";
+
+        }
+        if(isEquipped(p,"PWR+")){
+            p.stats.staticEng = false;
+            removeFromStorage(p,"PWR+");
+            if(p.abilitySlots[0]==="PWR+") p.abilitySlots[0] = "NONE";
+            if(p.abilitySlots[1]==="PWR+") p.abilitySlots[1] = "NONE";
+            p.stats.energyMAX = statData.energyStart+(statData.energyINC*(p.stats.energyUpgrades));
+            if(p.stats.energy > p.stats.energyMAX) p.stats.energy = p.stats.energyMAX;
+
+        }
+        if(isEquipped(p,"HP+")){
+            p.stats.staticHp = false;
+            removeFromStorage(p,"HP+");
+            if(p.abilitySlots[0]==="HP+") p.abilitySlots[0] = "NONE";
+            if(p.abilitySlots[1]==="HP+") p.abilitySlots[1] = "NONE";
+            p.stats.hpMAX = statData.hpStart+(statData.hpINC*(p.stats.hpUpgrades));
+            if(p.stats.hp > p.stats.hpMAX) p.stats.hp = p.stats.hpMAX;
+        }
+        if(isEquipped(p,"RDR+")){
+            p.stats.staticRdr = false;
+            removeFromStorage(p,"RDR+");
+            if(p.abilitySlots[0]==="RDR+") p.abilitySlots[0] = "NONE";
+            if(p.abilitySlots[1]==="RDR+") p.abilitySlots[1] = "NONE";
+            p.stats.radar = statData.radarStart+(statData.radarINC*(p.stats.radarUpgrades-1));
+        }
+        if(isEquipped(p,"DR")){
+            p.stats.staticDR = false;
+            removeFromStorage(p,"DR");
+            if(p.abilitySlots[0]==="DR") p.abilitySlots[0] = "NONE";
+            if(p.abilitySlots[1]==="DR") p.abilitySlots[1] = "NONE";
+        }
 
 
         //Statics
@@ -1603,7 +1713,12 @@ function death(p, killer){
         }
     }else{
         p.info.hasInsurance = false;
-        dropGold = p.info.gold-parseInt(p.stats.insurance);
+        dropGold = p.info.gold-parseInt(p.info.gold*p.stats.insurance*.2);
+        dropIron = p.info.iron-parseInt(p.info.iron*p.stats.insurance*.2);
+        dropUranium = p.info.uranium-parseInt(p.info.uranium*p.stats.insurance*.2);
+        p.info.gold = parseInt(p.info.gold*p.stats.insurance*.2);
+        p.info.iron = parseInt(p.info.iron*p.stats.insurance*.2);
+        p.info.uranium = parseInt(p.info.uranium*p.stats.insurance*.2);
     }
 
     map[p.loc[0]][p.loc[1]] = {"type":"GOLD","count":dropGold};
@@ -1615,9 +1730,18 @@ function death(p, killer){
     //Alert the world of a kill
     var msg = ""+killer.info.name+" has killed "+p.info.name+".";
     for(var m = 0; m < players.length; m++){
-        if(players[m].token === player.token)
+        if(players[m].token === killer.token)
             killer.battleLog.unshift("You have killed "+p.info.name);
         else
             players[m].battleLog.unshift(msg);
+    }
+}
+
+function removeFromStorage(p,mod){
+    for(var i in p.storage){
+        if(p.storage[i].name===mod){
+            p.storage.splice(i,1);
+            break;
+        }
     }
 }
