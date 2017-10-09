@@ -1,9 +1,12 @@
 var offsetX;
 var offsetY;
+var offsetX2;
+var offsetY2;
 var tick = 50;
 var mX, mY;
 var hover = [-1,-1];
 var shopMode = false;
+var cTab = 0;
 var subMode = true;
 var gameStart = true;
 var settingsView = false;
@@ -14,6 +17,8 @@ var radarAngleChange = true;
 var radarFollow = 5;
 var mapView = false;
 var blink = false;
+var tabs;
+var statInfo = false;
 
 //Colors
 //Monitor Colors
@@ -46,8 +51,7 @@ var colorsDefault = {
     "needMoreColor":    "#FF0000", //Default -> #00FF00
 
     "timerGradient": false
-}
-
+};
 
 //Data from server
 var firstData = false;
@@ -66,14 +70,18 @@ var me = {
 var name = "";
 
 setTimeout(function() {
-
     var $canvas = $("#monitor")
     var canvasOffset = $canvas.offset()
     offsetX = canvasOffset.left;
     offsetY = canvasOffset.top;
+    var $canvas2 = $("#sidebar")
+    var canvasOffset2 = $canvas2.offset()
+    offsetX2 = canvasOffset2.left;
+    offsetY2 = canvasOffset2.top;
     $("#monitor").mousemove(function(e){handleMousemove(e);});
     $("#monitor").mouseout(function(e){handleMouseout(e);});
     $("#monitor").mousedown(function(e){handleMousedown(e);});
+    $("#sidebar").mousedown(function(e){handleMousedown2(e);});
     window.addEventListener('keydown',function(e){handleKeydown(e)},false);
 
     //See if colors can be loaded
@@ -94,6 +102,7 @@ function init(){
         me.token = data.token;
         map = data.map;
         console.log("token: "+me.token);
+        document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
 
         setInterval(function(){newData();},tick);
     });
@@ -114,6 +123,224 @@ function newData(){
         activeAttacks = data.user.activeAttacks;
 
         firstData = true;
+
+        //Update Tabs
+        tabs = [
+            [
+                {
+                    "pLabel":   "canU",
+                    "label":    (me.stats.cannon==0?"Purchase Cannon.":"Upgrade Cannon."),
+                    "canBuy":   shop.canU.canBuy,
+                    "price":{
+                        "gold":     shop.canU.price.gold,
+                        "iron":     shop.canU.price.iron,
+                        "uranium":  shop.canU.price.uranium
+                    },
+                    "level":    me.stats.cannonUpgrades,
+                    "maxLvl":   me.stats.cannonUpgradesMAX
+                },
+                {
+                    "pLabel":   "railU",
+                    "label":    (me.stats.railgun==0?"Purchase Railgun.":"Upgrade Railgun."),
+                    "canBuy":   shop.railU.canBuy,
+                    "price":{
+                        "gold":     shop.railU.price.gold,
+                        "iron":     shop.railU.price.iron,
+                        "uranium":  shop.railU.price.uranium
+                    },
+                    "level":    me.stats.railgunUpgrades,
+                    "maxLvl":   me.stats.railgunUpgradesMAX
+                },
+                {
+                    "pLabel":   "trapU",
+                    "label":    (me.stats.trap==0?"Purchase Trap Module.":"Upgrade Trap Module."),
+                    "canBuy":   shop.trapU.canBuy,
+                    "price":{
+                        "gold":     shop.trapU.price.gold,
+                        "iron":     shop.trapU.price.iron,
+                        "uranium":  shop.trapU.price.uranium
+                    },
+                    "level":    me.stats.trapUpgrades,
+                    "maxLvl":   me.stats.trapUpgradesMAX
+                },
+                {
+                    "pLabel":   "quickHeal",
+                    "label":    "Purchase Quick Heal (Consumable).",
+                    "canBuy":   shop.quickHeal.canBuy,
+                    "price":{
+                        "gold":     shop.quickHeal.price.gold,
+                        "iron":     shop.quickHeal.price.iron,
+                        "uranium":  shop.quickHeal.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
+                }
+            ],
+            [
+                {
+                    "pLabel":   "bliU",
+                    "label":    (me.stats.blink==0?"Purchase Blink Module.":"Upgrade Blink Module."),
+                    "canBuy":   shop.bliU.canBuy,
+                    "price":{
+                        "gold":     shop.bliU.price.gold,
+                        "iron":     shop.bliU.price.iron,
+                        "uranium":  shop.bliU.price.uranium
+                    },
+                    "level":    me.stats.blinkUpgrades,
+                    "maxLvl":   me.stats.blinkUpgradesMAX
+                },
+                {
+                    "pLabel":   "steU",
+                    "label":    (me.stats.stealth==0?"Purchase Stealth Module.":"Upgrade Stealth Module."),
+                    "canBuy":   shop.steU.canBuy,
+                    "price":{
+                        "gold":     shop.steU.price.gold,
+                        "iron":     shop.steU.price.iron,
+                        "uranium":  shop.steU.price.uranium
+                    },
+                    "level":    me.stats.stealthUpgrades,
+                    "maxLvl":   me.stats.stealthUpgradesMAX
+                }
+            ],
+            [
+                {
+                    "pLabel":   "scanU",
+                    "label":    "Upgrade Scanner",
+                    "canBuy":   shop.scanU.canBuy,
+                    "price":{
+                        "gold":     shop.scanU.price.gold,
+                        "iron":     shop.scanU.price.iron,
+                        "uranium":  shop.scanU.price.uranium
+                    },
+                    "level":    me.stats.scannerUpgrades,
+                    "maxLvl":   me.stats.scannerUpgradesMAX
+                },
+                {
+                    "pLabel":   "engModU",
+                    "label":    (me.stats.engMod==0?"Purchase Energy Module.":"Upgrade Energy Module."),
+                    "canBuy":   shop.engModU.canBuy,
+                    "price":{
+                        "gold":     shop.engModU.price.gold,
+                        "iron":     shop.engModU.price.iron,
+                        "uranium":  shop.engModU.price.uranium
+                    },
+                    "level":    me.stats.engModUpgrades,
+                    "maxLvl":   me.stats.engModUpgradesMAX
+                }
+            ],
+            [
+                {
+                    "pLabel":   "statAtk",
+                    "label":    "Purchase Attack+ Module.",
+                    "canBuy":   shop.statAtk.canBuy,
+                    "price":{
+                        "gold":     shop.statAtk.price.gold,
+                        "iron":     shop.statAtk.price.iron,
+                        "uranium":  shop.statAtk.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
+                },
+                {
+                    "pLabel":   "statRdr",
+                    "label":    "Purchase Radar+ Module.",
+                    "canBuy":   shop.statRdr.canBuy,
+                    "price":{
+                        "gold":     shop.statRdr.price.gold,
+                        "iron":     shop.statRdr.price.iron,
+                        "uranium":  shop.statRdr.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
+                },
+                {
+                    "pLabel":   "statHP",
+                    "label":    "Purchase HP+ Module.",
+                    "canBuy":   shop.statHP.canBuy,
+                    "price":{
+                        "gold":     shop.statHP.price.gold,
+                        "iron":     shop.statHP.price.iron,
+                        "uranium":  shop.statHP.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
+                },
+                {
+                    "pLabel":   "statEng",
+                    "label":    "Purchase Energy+ Module.",
+                    "canBuy":   shop.statEng.canBuy,
+                    "price":{
+                        "gold":     shop.statEng.price.gold,
+                        "iron":     shop.statEng.price.iron,
+                        "uranium":  shop.statEng.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
+                },
+                {
+                    "pLabel":   "statDR",
+                    "label":    "Purchase DR Module.",
+                    "canBuy":   shop.statDR.canBuy,
+                    "price":{
+                        "gold":     shop.statDR.price.gold,
+                        "iron":     shop.statDR.price.iron,
+                        "uranium":  shop.statDR.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
+                }
+            ],
+            [
+                {
+                    "pLabel":   "loadout",
+                    "label":    "Purchase Mod Slot.",
+                    "canBuy":   shop.loadout.canBuy,
+                    "price":{
+                        "gold":     shop.loadout.price.gold,
+                        "iron":     shop.loadout.price.iron,
+                        "uranium":  shop.loadout.price.uranium
+                    },
+                    "level":    me.stats.loadoutSize,
+                    "maxLvl":   2
+                },
+                {
+                    "pLabel":   "carryU",
+                    "label":    "Upgrade Uranium Carry Capacity.",
+                    "canBuy":   shop.carryU.canBuy,
+                    "price":{
+                        "gold":     shop.carryU.price.gold,
+                        "iron":     shop.carryU.price.iron,
+                        "uranium":  shop.carryU.price.uranium
+                    },
+                    "level":    me.stats.urCarryUpgrades,
+                    "maxLvl":   me.stats.urCarryUpgradesMAX
+                },
+                {
+                    "pLabel":   "insuranceU",
+                    "label":    "Upgrade Insurance.",
+                    "canBuy":   shop.insuranceU.canBuy,
+                    "price":{
+                        "gold":     shop.insuranceU.price.gold,
+                        "iron":     shop.insuranceU.price.iron,
+                        "uranium":  shop.insuranceU.price.uranium
+                    },
+                    "level":    me.stats.insuranceUpgrades,
+                    "maxLvl":   me.stats.insuranceUpgradesMAX
+                },
+                {
+                    "pLabel":   "uranium",
+                    "label":    "Purchase Uranium.",
+                    "canBuy":   shop.uranium.canBuy,
+                    "price":{
+                        "gold":     shop.uranium.price.gold,
+                        "iron":     shop.uranium.price.iron,
+                        "uranium":  shop.uranium.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
+                }
+            ]
+        ];
 
         drawMonitor();
         drawTimer();
@@ -176,6 +403,30 @@ function makePurchase(item){
 
     $.ajax({
         url: "/makePurchase",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+            // console.log('Add Project Error: ' + error.message);
+        }
+    });
+}
+
+function changeLoadout(slot,item){
+    var dat = {
+        "token": me.token,
+        "slot": slot,
+        "item": item
+    };
+
+    $.ajax({
+        url: "/changeLoadout",
         type:'POST',
         dataType: 'json',
         cache: false,
@@ -730,6 +981,7 @@ function drawTimer(){
 function drawSideBar(){
     var c = document.getElementById("sidebar");
     var ctx = c.getContext("2d");
+    ctx.globalAlpha = 1.0;
     ctx.clearRect(0,0,c.width,c.height);
     ctx.beginPath();
     ctx.strokeStyle = colors.hudColor;
@@ -786,57 +1038,159 @@ function drawSideBar(){
     ctx.beginPath();
     ctx.strokeRect(0,sCardHei,c.width,c.height);
     ctx.stroke();
-
-    //Named Stats
-    ctx.beginPath();
-    ctx.fillStyle = colors.hudColor;
-    ctx.font = "20px Courier";
-    ctx.fillText("ID   : "+me.info.name,5,sCardHei+30);
-    ctx.fillText("LOC  : ("+me.loc[0]+", "+me.loc[1]+")",5,sCardHei+60);
-    ctx.fillText("GOLD : "+me.info.gold+"g ("+me.info.totalGold+"g)",5,sCardHei+90);
-    ctx.fillText("KILLS: "+me.info.kills+" | DEATHS: "+me.info.deaths,5,sCardHei+120);
-    ctx.fillText("HAULS: "+me.info.hauls,5,sCardHei+150);
-
-    //Upgradable Stats
-    sCardHei = 250;
-    //HP and PWR
-    ctx.beginPath();
-    ctx.fillText("HP  ",5,sCardHei+162);
-    ctx.fillText("PWR ",5,sCardHei+202);
-    ctx.fillStyle = colors.hpColor;
-    ctx.fillRect(60,sCardHei+145,220*(me.stats.hp/me.stats.hpMAX),20);
-    for(var i = 0; i < me.stats.hpUpgradesMAX; i++){
-        if(i < me.stats.hpUpgrades) ctx.fillStyle = colors.upgradeColor;
-        else ctx.fillStyle = colors.voidUpgradeColor;
-        ctx.fillRect(60+i*(220/me.stats.hpUpgradesMAX),sCardHei+167,(220/me.stats.hpUpgradesMAX)-5,5);
+    if(shopMode){
+        //Named Stats
+        ctx.beginPath();
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "40px Courier";
+        ctx.fillText("GOLD: ",5,sCardHei+40);
+        ctx.fillStyle = colors.goldColor;
+        ctx.fillText(me.info.gold+"g",25,sCardHei+85);
+        ctx.fillStyle = colors.hudColor;
+        ctx.fillText("IRON: ",5,sCardHei+130);
+        ctx.fillStyle = colors.ironColor;
+        ctx.fillText(+me.info.iron+"i",25,sCardHei+175);
+        ctx.fillStyle = colors.hudColor;
+        ctx.fillText("URANIUM: ",5,sCardHei+220);
+        ctx.fillStyle = colors.uraniumColor;
+        ctx.fillText(me.info.uranium+"u",25,sCardHei+265);
     }
-    ctx.fillStyle = colors.energyColor;
-    ctx.fillRect(60,sCardHei+185,220*(me.stats.energy/me.stats.energyMAX),20);
-    for(var i = 0; i < me.stats.energyUpgradesMAX; i++){
-        if(i < me.stats.energyUpgrades) ctx.fillStyle = colors.upgradeColor;
-        else ctx.fillStyle = colors.voidUpgradeColor;
-        ctx.fillRect(60+i*45,sCardHei+207,40,5);
-    }
-    ctx.fillStyle = "#000000";
-    ctx.fillText(me.stats.hp,65,sCardHei+162);
-    ctx.fillText(me.stats.energy,65,sCardHei+202);
+    else if(statInfo){
+        var cookie = getCookie("token");
+        //Named Stats
+        ctx.beginPath();
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "20px Courier";
+        ctx.fillText("ID   : "+me.info.name,5,sCardHei+30);
+        ctx.fillText("LOC  : ("+me.loc[0]+", "+me.loc[1]+")",5,sCardHei+60);
+        ctx.fillText("GOLD : "+me.info.gold+"g ("+me.info.totalGold+"g)",5,sCardHei+90);
+        ctx.fillText("IRON : "+me.info.iron+"i ("+me.info.totalIron+"i)",5,sCardHei+120);
+        ctx.fillText("URAN : "+me.info.uranium+"u ("+me.info.totalUranium+"u)",5,sCardHei+150);
+        ctx.fillText("KILLS: "+me.info.kills+" | DEATHS: "+me.info.deaths,5,sCardHei+180);
+        ctx.fillText("SCANS: "+me.info.scans+" | HAULS: "+me.info.hauls,5,sCardHei+210);
+        ctx.fillText("SAVED: "+(cookie!=""?"TRUE":"FALSE"),5,sCardHei+240);
 
-    //ATK
-    ctx.fillStyle = colors.hudColor;
-    ctx.fillText("ATK",5,sCardHei+253);
-    for(var i = 0; i < me.stats.attackUpgradesMAX; i++){
-        if(i < me.stats.attackUpgrades) ctx.fillStyle = colors.upgradeColor;
-        else ctx.fillStyle = colors.voidUpgradeColor;
-        ctx.fillRect(60+i*10,sCardHei+237,5,20);
-    }
+        //Toggle Save button
+        ctx.font = "24px Courier";
+        ctx.beginPath();
+        sCardHei = 500;
+        ctx.fillStyle = colors.hudColor;
+        ctx.strokeStyle = colors.hudColor;
+        ctx.fillText("SAVE?",25,sCardHei);
+        ctx.strokeRect(15,sCardHei-25,92,35);
 
-    //RADAR
-    ctx.fillStyle = colors.hudColor;
-    ctx.fillText("RDR",125,sCardHei+253);
-    for(var i = 0; i < me.stats.radarUpgradesMAX; i++){
-        if(i < me.stats.radarUpgrades) ctx.fillStyle = colors.upgradeColor;
-        else ctx.fillStyle = colors.voidUpgradeColor;
-        ctx.fillRect(170+i*10,sCardHei+237,5,20);
+        //HUD button
+        ctx.beginPath();
+        sCardHei = 500;
+        ctx.fillStyle = colors.hudColor;
+        ctx.strokeStyle = colors.hudColor;
+        ctx.fillText("HUD",220,sCardHei);
+        ctx.strokeRect(195,sCardHei-25,92,35);
+
+    }
+    else{
+        //Named Stats
+        ctx.beginPath();
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "20px Courier";
+        ctx.fillText("LOC : ("+me.loc[0]+", "+me.loc[1]+")",5,sCardHei+30);
+
+        //insured tag
+        ctx.font = "18px Courier";
+        ctx.beginPath();
+        sCardHei = 249;
+        if(me.info.hasInsurance){
+            ctx.fillStyle = colors.hudColor;
+            ctx.strokeStyle = colors.hudColor;
+            ctx.fillText("INSURED",195,sCardHei);
+        }else{
+            ctx.fillStyle = colors.enemyColor;
+            ctx.strokeStyle = colors.enemyColor;
+            ctx.fillText("UNINSURED",185,sCardHei);
+        }
+        ctx.strokeRect(180,sCardHei-17,107,25);
+
+        //Upgradable Stats
+        ctx.font = "20px Courier";
+        ctx.fillStyle = colors.hudColor;
+        ctx.strokeStyle = colors.hudColor;
+        sCardHei = 120;
+        //HP and PWR
+        ctx.beginPath();
+        ctx.fillText("HP  ",5,sCardHei+162);
+        ctx.fillText("PWR ",5,sCardHei+202);
+        ctx.fillText("UR  ",5,sCardHei+242);
+        ctx.fillStyle = colors.hpColor;
+        ctx.fillRect(60,sCardHei+145,220*(me.stats.hp/me.stats.hpMAX),20);
+        for(var i = 0; i < me.stats.hpUpgradesMAX; i++){
+            if(i < me.stats.hpUpgrades) ctx.fillStyle = colors.upgradeColor;
+            else ctx.fillStyle = colors.voidUpgradeColor;
+            ctx.fillRect(60+i*(220/me.stats.hpUpgradesMAX),sCardHei+167,(220/me.stats.hpUpgradesMAX)-5,5);
+        }
+        ctx.fillStyle = colors.energyColor;
+        ctx.fillRect(60,sCardHei+185,220*(me.stats.energy/me.stats.energyMAX),20);
+        for(var i = 0; i < me.stats.energyUpgradesMAX; i++){
+            if(i < me.stats.energyUpgrades) ctx.fillStyle = colors.upgradeColor;
+            else ctx.fillStyle = colors.voidUpgradeColor;
+            ctx.fillRect(60+i*45,sCardHei+207,40,5);
+        }
+        for(var i = 0; i < me.stats.urCarry; i++){
+            if(i < me.info.uranium) ctx.fillStyle = colors.uraniumColor;
+            else ctx.fillStyle = "#070707";
+            ctx.fillRect(60+i*(220/me.stats.urCarry),sCardHei+225,(220/me.stats.urCarry)-3,20);
+        }
+        ctx.fillStyle = colors.uraniumColor;
+        for(var i = 0; i < me.stats.urCarryUpgradesMAX; i++){
+            if(i < me.stats.urCarryUpgrades) ctx.fillStyle = colors.upgradeColor;
+            else ctx.fillStyle = colors.voidUpgradeColor;
+            ctx.fillRect(60+i*(220/me.stats.urCarryUpgradesMAX),sCardHei+247,(220/me.stats.urCarryUpgradesMAX)-3,5);
+        }
+
+        //Ability Boxes
+        ctx.beginPath();
+        sCardHei = 370;
+        ctx.font = "22px Courier";
+        ctx.fillStyle=colors.hudColor;
+        ctx.strokeStyle = colors.hudColor;
+        ctx.strokeRect(80,sCardHei+20,50,50);
+        ctx.strokeRect(180,sCardHei+20,50,50);
+        if(me.stats.loadoutSize < 2){//If not unlocked
+            ctx.beginPath();
+            ctx.moveTo(180,sCardHei+20);
+            ctx.lineTo(230,sCardHei+70);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(230,sCardHei+20);
+            ctx.lineTo(180,sCardHei+70);
+            ctx.stroke();
+        }
+        ctx.fillText("Q",99,sCardHei+90);
+        ctx.fillText("E",199,sCardHei+90);
+        ctx.font = "18px Courier";
+        if(me.abilitySlots[0]!=="NONE") ctx.fillText(me.abilitySlots[0],82,sCardHei+50);
+        if(me.abilitySlots[1]!=="NONE") ctx.fillText(me.abilitySlots[1],182,sCardHei+50);
+
+        //Mode
+        sCardHei = 500;
+        ctx.beginPath();
+        ctx.font = "24px Courier";
+        if(me.info.inCombat>0){ //Combat
+            ctx.fillStyle=colors.enemyColor;
+            ctx.fillText("IN COMBAT",5,sCardHei);
+
+        }else{ //Exploring
+            ctx.fillStyle=colors.uraniumColor;
+            ctx.fillText("EXPLORING",5,sCardHei);
+        }
+
+        //Info button
+        ctx.beginPath();
+        sCardHei = 500;
+        ctx.fillStyle = colors.hudColor;
+        ctx.strokeStyle = colors.hudColor;
+        ctx.fillText("STATS",205,sCardHei);
+        ctx.strokeRect(195,sCardHei-25,92,35);
+
     }
 
 
@@ -1001,7 +1355,7 @@ function drawShopMenu(c, ctx){
     ctx.strokeStyle=colors.hudColor;
     ctx.fillStyle=colors.hudBackColor;
     ctx.globalAlpha = 1.0;
-    var startX = c.width/8;
+    var startX = c.width/4;
     var startY = c.height/4;
     ctx.strokeRect(startX,startY,c.width-startX*2,c.height-startY*2);
     ctx.fillRect(startX,startY,c.width-startX*2,c.height-startY*2);
@@ -1014,7 +1368,6 @@ function drawShopMenu(c, ctx){
 
     ctx.font = "18px Courier";
     ctx.fillText("Press the key to do the following",startX+5,startY+85);
-
 
     if(shop.hp5.canBuy && !canPurchase(shop.hp5.price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium})) ctx.fillStyle=colors.needMoreColor;
     else if(shop.hp5.canBuy) ctx.fillStyle=colors.canBuyColor;
@@ -1089,7 +1442,7 @@ function drawShopMenu(c, ctx){
     if(shop.radU.canBuy && !canPurchase(shop.radU.price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium})) ctx.fillStyle=colors.needMoreColor;
     else if(shop.radU.canBuy) ctx.fillStyle=colors.canBuyColor;
     else ctx.fillStyle=colors.cantBuyColor;
-    ctx.fillText(" 6 : Upgrade Radar Range",startX+5,startY+235);
+    ctx.fillText(" 6 : Upgrade Radar",startX+5,startY+235);
     if(shop.radU.canBuy && me.info.gold < shop.radU.price.gold) ctx.fillStyle=colors.needMoreColor;
     else if(shop.radU.canBuy) ctx.fillStyle=colors.canBuyColor;
     ctx.fillText(shop.radU.price.gold+"g",c.width-startX-140,startY+235);
@@ -1130,13 +1483,114 @@ function drawSShopMenu(c, ctx){
     ctx.fillRect(startX,startY,3*c.width/4,c.height/2);
     ctx.stroke();
 
-    //Store Labels
-    ctx.fillStyle=colors.hudColor;
-    ctx.font = "40px Courier";
-    ctx.fillText("Special Store",startX+5,startY+45);
 
+    //Tab contents
+    //0 - combat
+    //1 - travel
+    //2 - util
+    //3 - static
+    //4 - other
+    //5 - loadout
+
+    ctx.strokeStyle=colors.hudColor;
+    ctx.fillStyle=colors.hudBackColor;
     ctx.font = "18px Courier";
-    ctx.fillText("Press the key to do the following",startX+5,startY+85);
+    for(var i = 0; i < tabs.length+1; i++){
+        ctx.beginPath();
+        var tHei = 60;//(c.height/2)/(tabs.length+1);
+        if(i==cTab) ctx.fillStyle=colors.hudColor;
+        else ctx.fillStyle=colors.hudBackColor;
+        ctx.strokeRect(c.width-startX+1,startY+tHei*i,25,tHei);
+        ctx.fillRect(c.width-startX+1,startY+tHei*i,25,tHei);
+
+        if(i==cTab) ctx.fillStyle=colors.hudBackColor;
+        else ctx.fillStyle=colors.hudColor;
+        ctx.fillText((i==tabs.length?"LO":"T"+(i+1)),c.width-startX+3,startY+35+tHei*i);
+        ctx.stroke();
+    }
+
+    //Draw Shop Tab Contents
+    if(cTab < 5 && cTab > -1){
+        //Store Labels
+        ctx.fillStyle=colors.hudColor;
+        ctx.font = "40px Courier";
+        ctx.fillText("Special Store",startX+5,startY+45);
+
+        ctx.font = "18px Courier";
+        ctx.fillText("Press the key to do the following",startX+5,startY+85);
+
+        for(var i = 0; i < tabs[cTab].length; i++){
+            ctx.beginPath();
+            if(tabs[cTab][i].canBuy && !canPurchase(tabs[cTab][i].price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium})) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            else ctx.fillStyle=colors.cantBuyColor;
+            ctx.fillText(" "+(i+1)+": "+tabs[cTab][i].label,startX+5,startY+110+i*25);
+            if(tabs[cTab][i].canBuy && me.info.gold < tabs[cTab][i].price.gold) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            ctx.fillText(tabs[cTab][i].price.gold+"g",c.width-startX-140,startY+110+i*25);
+            if(tabs[cTab][i].canBuy && me.info.iron < tabs[cTab][i].price.iron) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            ctx.fillText(tabs[cTab][i].price.iron+"i",c.width-startX-68,startY+110+i*25);
+            if(tabs[cTab][i].canBuy && me.info.uranium < tabs[cTab][i].price.uranium) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            ctx.fillText(tabs[cTab][i].price.uranium+"u",c.width-startX-30,startY+110+i*25);
+
+            //upgrade bars
+            for(var u = 0; u < tabs[cTab][i].maxLvl; u++){
+                if(u < tabs[cTab][i].level) ctx.fillStyle = colors.upgradeColor;
+                else ctx.fillStyle = colors.voidUpgradeColor;
+                ctx.fillRect(c.width-startX-180+u*10,startY+95+i*25,5,20);
+            }
+        }
+    }
+    else if(cTab > -1){
+        //Edit Loadout Labels
+        ctx.beginPath();
+        ctx.fillStyle=colors.hudColor;
+        ctx.strokeStyle=colors.hudColor;
+        ctx.font = "40px Courier";
+        ctx.fillText("Loadout",startX+5,startY+45);
+
+        ctx.font = "18px Courier";
+        ctx.fillText("Hover over option and press Q or E to equip item.",startX+5,startY+85);
+
+        //Selection Boxes
+        ctx.font = "22px Courier";
+        ctx.fillText("SLOTS",startX+45,startY+185);
+        ctx.strokeRect(startX+15,startY*2+20,50,50);
+        ctx.strokeRect(startX+90,startY*2+20,50,50);
+        //If not unlocked
+        if(me.stats.loadoutSize < 2){
+            ctx.beginPath();
+            ctx.moveTo(startX+90,startY*2+20);
+            ctx.lineTo(startX+140,startY*2+70);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(startX+140,startY*2+20);
+            ctx.lineTo(startX+90,startY*2+70);
+            ctx.stroke();
+        }
+        ctx.fillText("Q",startX+35,startY*2+90);
+        ctx.fillText("E",startX+107,startY*2+90);
+        ctx.font = "18px Courier";
+        if(me.abilitySlots[0]!=="NONE") ctx.fillText(me.abilitySlots[0],startX+17,startY*2+50);
+        if(me.abilitySlots[1]!=="NONE") ctx.fillText(me.abilitySlots[1],startX+92,startY*2+50);
+
+        ctx.stroke();
+
+        //line
+        ctx.beginPath();
+        ctx.moveTo(startX+150,startY+120);
+        ctx.lineTo(startX+150,startY+c.height/2);
+        ctx.stroke();
+
+        //Options
+        ctx.font = "22px Courier";
+        for(var i = 0; i < me.storage.length; i++){
+            ctx.strokeRect(startX+170+70*(i%6),startY+130+70*parseInt(i/6),60,60);
+            ctx.fillText(me.storage[i].name,startX+170+70*(i%6)+3,startY+130+70*parseInt(i/6)+35);
+        }
+    }
 }
 
 //******************************************************************************
@@ -1153,6 +1607,9 @@ function handleKeydown(e){
         drawMonitor();
 
     }
+    else if(e.keyCode == 73){  //i
+        statInfo = !statInfo;
+    }
     else if(gameStart){
         if(e.keyCode == 13){
             init();
@@ -1163,8 +1620,14 @@ function handleKeydown(e){
         }
         drawMonitor();
     }
-    else if((e.keyCode == 77)){  //M
+    else if(e.keyCode == 77 && !settingsView){  //M
         mapView = !mapView;
+        shopMode = false;
+    }
+    else if(e.keyCode == 77 && mapView){  //M
+        mapView = false;
+        shopMode = false;
+        settingsView = false;
     }
     else if(!shopMode && !mapView && game.phase==0){
         if(e.keyCode == 65 || e.keyCode == 37){        //A
@@ -1183,39 +1646,72 @@ function handleKeydown(e){
             updateQueue({"type":"HOLD"});
         }else if(e.keyCode == 89 && me.stats.hp == 0){  //Y
             requestRespawn();
-        }else if(e.keyCode == 79 /*&& shop.withinShop!=null*/){  //O
+        }else if(e.keyCode == 79 && shop.withinShop!=null && !settingsView){  //O
             shopMode = true;
+            mapView = false;
         }
     }
     else if(shopMode){
-        if(e.keyCode == 49){        //1
-            makePurchase("hp5");
-        }else if(e.keyCode == 50){  //2
-            makePurchase("hpF");
-        }else if(e.keyCode == 51){  //3
-            makePurchase("insurance");
-        }else if(e.keyCode == 52){  //4
-            makePurchase("hpU");
-        }else if(e.keyCode == 53){  //5
-            makePurchase("enU");
-        }else if(e.keyCode == 54){  //6
-            makePurchase("radU");
-        }else if(e.keyCode == 55){  //7
-            makePurchase("atkU");
-        }else if(e.keyCode == 79 || e.keyCode == 27){  //O or escape
+        if(e.keyCode == 79 || e.keyCode == 27){  //O or escape
             shopMode = false;
         }
+        if(shop.withinShop==="SHOP"){
+            if(e.keyCode == 49){        //1
+                makePurchase("hp5");
+            }else if(e.keyCode == 50){  //2
+                makePurchase("hpF");
+            }else if(e.keyCode == 51){  //3
+                makePurchase("insurance");
+            }else if(e.keyCode == 52){  //4
+                makePurchase("hpU");
+            }else if(e.keyCode == 53){  //5
+                makePurchase("enU");
+            }else if(e.keyCode == 54){  //6
+                makePurchase("radU");
+            }else if(e.keyCode == 55){  //7
+                makePurchase("atkU");
+            }
+        }
+        else if(shop.withinShop==="SSHOP"){
+            if(cTab > -1 && cTab < 5) //In shop
+                for(var i = 0; i < tabs[cTab].length; i++){
+                    if(e.keyCode == 49+i){
+                        makePurchase(tabs[cTab][i].pLabel);
+                        break;
+                    }
+                }
+            else{ //In load out
+                var c = document.getElementById("monitor");
+                var startX = c.width/8;
+                var startY = c.height/4;
+                var i;
+                for(i = 0; i < me.storage.length; i++){
+                    if(mX > startX+170+70*(i%6) && mX < startX+170+70*(i%6) + 60 &&
+                       mY > startY+130+70*parseInt(i/6) && mY < startY+130+70*parseInt(i/6)+60){
+                           break;
+                       }
+                }
+                if(i < me.storage.length)
+                    if(e.keyCode == 81){        //Q
+                        changeLoadout(0,me.storage[i].name);
+                    }else if(e.keyCode == 69){  //E
+                        changeLoadout(1,me.storage[i].name);
+                    }
+            }
+        }
     }
-    else if(e.keyCode == 79 /*&& shop.withinShop!=null*/){  //O
+    else if(e.keyCode == 79 && shop.withinShop!=null && !settingsView){  //O
         shopMode = true;
+        mapView = false;
     }
+
 
 
 }
 
 function handleMousedown(e){
+    var c = document.getElementById("monitor");
    if(settingsView){
-       var c = document.getElementById("monitor");
 
        //Check for color click
        var i = 1;
@@ -1247,6 +1743,22 @@ function handleMousedown(e){
        }
     //    ctx.strokeRect(c.width/4+255,c.height/8+60+20*i+20,115,40);
    }
+   else if(shopMode && shop.withinShop=="SSHOP"){
+       //Change tabs
+       var startX = c.width/8;
+       var startY = c.height/4;
+
+       if(mX > c.width-startX && mX < c.width-startX+25){
+           var tHei = 60;
+           for(var i = 0; i < tabs.length+1; i++){
+               if(mY > startY+tHei*i && mY < startY+tHei*i+tHei){
+                   cTab = i;
+                   break;
+               }
+           }
+       }
+
+   }
    else if(!gameStart && !mapView && !shopMode){
         var mid = parseInt(me.stats.radar/2);
         var cX = me.loc[0] - (mid-hover[0]);
@@ -1275,6 +1787,26 @@ function handleMousemove(e){
 function handleMouseout(e){
     mX = -1;
     mY = -1;
+}
+
+function handleMousedown2(e){
+    var cX = parseInt(e.clientX - offsetX2);
+    var cY = parseInt(e.clientY - offsetY2);
+    if(statInfo){
+        //Save button
+        if(cX > 15 && cX < 107 && cY > 475 && cY < 510){
+            toggleSaving();
+        }
+        //HUD button
+        if(cX > 195 && cX < 287 && cY > 475 && cY < 510){
+            statInfo = false;
+        }
+    }else{
+        //STAT button
+        if(cX > 195 && cX < 287 && cY > 475 && cY < 510){
+            statInfo = true;
+        }
+    }
 }
 
 //******************************************************************************
@@ -1352,4 +1884,32 @@ function canPurchase(costs, inventory){
         return true;
 
     return false;
+}
+
+function getCookie(name){
+    var cname = name + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+
+    var ca = decodedCookie.split(";");
+    for(var i = 0; i < ca.length; i++){
+        var c = ca[i];
+        while(c.charAt(0)==' ')
+            c.substring(1);
+
+        if(c.indexOf(cname) == 0){
+            return c.substring(name.length, c.length);
+        }
+    }
+
+
+    return "";
+}
+
+function toggleSaving(){
+    var cookie = getCookie("token");
+    if(cookie===""){
+        document.cookie = "token="+me.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
+    }else{
+        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+    }
 }
