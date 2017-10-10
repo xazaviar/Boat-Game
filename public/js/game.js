@@ -665,7 +665,7 @@ function drawMonitor(){
                             if(eloc[0]==cX && eloc[1]==cY){
                                 ctx.beginPath();
                                 ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
-                                if(players[i].stealthed)
+                                if(!players[i].stealthed)
                                     ctx.fill();
                                 else
                                     ctx.stroke();
@@ -812,6 +812,7 @@ function drawMonitor(){
         ctx.beginPath();
         if(me.stats.hp>0){
             ctx.fillStyle=colors.hudColor;
+            ctx.strokeStyle=colors.hudColor;
             ctx.arc(c.width/2,c.height/2,tileSize/5,0,2*Math.PI);
             if(me.info.stealthed)
                 ctx.stroke();

@@ -64,6 +64,8 @@ var trapUraniumUsage        = 1;
 var railgunEnergyUsage      = 10;
 var railgunUraniumUsage     = 1;
 
+var stealthDurationPerLevel = 3;
+
 //Action Usage
 var lootActionUsage         = 2;
 var scanActionUsage         = 3;
@@ -154,6 +156,7 @@ function startServer(){
                 "scans": 0,
                 "hauls": 0,
                 "inCombat": 0,
+                "stealthTime": 0,
                 "connected": 0,
                 "hasInsurance": false,
                 "stealthed": false
@@ -262,7 +265,7 @@ function startServer(){
                 p = players[i];
                 p.info.connected = 0;
             }else if(players[i].stats.hp>0)
-                sendPlayers.push({"token":players[i].token, "name":players[i].info.name,"loc":players[i].loc});
+                sendPlayers.push({"token":players[i].token, "name":players[i].info.name,"loc":players[i].loc,"stealthed":players[i].info.stealthed});
         }
 
         if(p!=null){
@@ -284,7 +287,9 @@ function startServer(){
             }
 
             for(var i = 0; i < sendPlayers.length; i++){
-                if(!inScanned(p, sendPlayers[i].token) && !visionDistance(p.loc,sendPlayers[i].loc)){
+                var isScanned = inScanned(p, sendPlayers[i].token);
+                var inVision = visionDistance(p.loc,sendPlayers[i].loc)
+                if(!isScanned && (!inVision || (inVision && sendPlayers[i].stealthed))){
                     sendPlayers.splice(i,1);
                     i--;
                 }else{
@@ -463,28 +468,37 @@ function startServer(){
                     for(var a = 0; a < scanActionUsage; a++)
                         p.queue.push(req.body.action);
                 }
-                if(3-p.queue.length >= stealthActionUsage && req.body.action.type==="STEALTH" && p.stats.energy>=stealthEnergyUsage+inUse){
+                else if(req.body.action.type==="STEALTH" && p.info.stealthed && !queuedDestealth(p)){
+                    p.queue.push({"type":"DESTEALTH"});
+                }
+                else if(3-p.queue.length >= stealthActionUsage && req.body.action.type==="STEALTH" && p.stats.energy>=stealthEnergyUsage+inUse && p.info.uranium>=stealthUraniumUsage+inUseUR){
                     for(var a = 0; a < stealthActionUsage; a++)
                         p.queue.push(req.body.action);
                 }
-                else if(3-p.queue.length >= lootActionUsage && req.body.action.type==="LOOT" && p.stats.energy>=lootEnergyUsage+inUse){
-                    for(var a = 0; a < lootActionUsage; a++)
-                        p.queue.push(req.body.action);
-                }
-                else if(req.body.action.type==="ATTACK" && p.stats.energy>=attackEnergyUsage+inUse /*&& withinShop(p.loc)==null*/ && attackDistance(p.loc,req.body.action.location))
-                    p.queue.push(req.body.action);
-                else if(req.body.action.type==="ATTACK" && !attackDistance(p.loc,req.body.action.location))
-                    p.battleLog.unshift("Out of range.");
                 else if(req.body.action.type==="MOVE" || req.body.action.type==="HOLD")
                     p.queue.push(req.body.action);
-                else if(req.body.action.type==="QUICKHEAL" && isEquipped(p,"HEAL") && p.stats.energy>=quickHealEnergyUsage+inUse)
-                    p.queue.push(req.body.action);
-                else if(req.body.action.type==="BLINK" && isEquipped(p,"BLNK") && p.stats.energy>=blinkEnergyUsage+inUse && p.info.uranium>=blinkUraniumUsage+inUseUR)
-                    p.queue.push(req.body.action);
-                else if(req.body.action.type==="ENERGY" && isEquipped(p,"ENG") && p.info.uranium>=energyModUraniumUsage+inUseUR)
-                    p.queue.push(req.body.action);
-                else
-                    p.battleLog.unshift("You can't perform that action.");
+                else{
+                    if(p.info.stealthed && !queuedDestealth(p)){
+                        p.queue.push({"type":"DESTEALTH"});
+                    }
+
+                    if(3-p.queue.length >= lootActionUsage && req.body.action.type==="LOOT" && p.stats.energy>=lootEnergyUsage+inUse){
+                        for(var a = 0; a < lootActionUsage; a++)
+                            p.queue.push(req.body.action);
+                    }
+                    else if(req.body.action.type==="ATTACK" && p.stats.energy>=attackEnergyUsage+inUse /*&& withinShop(p.loc)==null*/ && attackDistance(p.loc,req.body.action.location))
+                        p.queue.push(req.body.action);
+                    else if(req.body.action.type==="ATTACK" && !attackDistance(p.loc,req.body.action.location))
+                        p.battleLog.unshift("Out of range.");
+                    else if(req.body.action.type==="QUICKHEAL" && isEquipped(p,"HEAL") && p.stats.energy>=quickHealEnergyUsage+inUse)
+                        p.queue.push(req.body.action);
+                    else if(req.body.action.type==="BLINK" && isEquipped(p,"BLNK") && p.stats.energy>=blinkEnergyUsage+inUse && p.info.uranium>=blinkUraniumUsage+inUseUR)
+                        p.queue.push(req.body.action);
+                    else if(req.body.action.type==="ENERGY" && isEquipped(p,"ENG") && p.info.uranium>=energyModUraniumUsage+inUseUR)
+                        p.queue.push(req.body.action);
+                    else
+                        p.battleLog.unshift("You can't perform that action.");
+                }
             }else if(p.stats.hp>0){
                 p.battleLog.unshift("No action points available.");
             }
@@ -977,6 +991,10 @@ function startServer(){
                             if(p.stats.energy > p.stats.energyMAX) p.stats.energy = p.stats.energyMAX;
                         }
 
+                        if(!isEquipped(p,"HIDE"))
+                            p.info.stealthed = false;
+
+
                         break;
                     }
                 }
@@ -1055,7 +1073,7 @@ function setupPhase(){
 }
 
 function actionPhase(){
-    var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[], stealths=[];
+    var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[], stealths=[], destealths=[];
     var actAttacks = [];
 
     //Grab all actions
@@ -1074,6 +1092,8 @@ function actionPhase(){
                 scans.push(players[i]);
             }else if(players[i].queue[0].type==="STEALTH" && players[i].queue.length == 1){
                 stealths.push(players[i]);
+            }else if(players[i].queue[0].type==="DESTEALTH"){
+                destealths.push(players[i]);
             }else if(players[i].queue[0].type==="QUICKHEAL"){
                 heals.push(players[i]);
             }else if(players[i].queue[0].type==="ENERGY"){
@@ -1107,6 +1127,8 @@ function actionPhase(){
         energyMod(engMods[i]);
     for(var i = 0; i < loots.length; i++)
         loot(loots[i]);
+    for(var i = 0; i < destealths.length; i++)
+        destealth(destealths[i]);
     for(var i = 0; i < scans.length; i++)
         scan(scans[i]);
     for(var i = 0; i < stealths.length; i++)
@@ -1140,9 +1162,12 @@ function roundCleanup(){
             players[i].queue = [];
             players[i].activeAttacks = [];
             players[i].info.inCombat--;
+            players[i].info.stealthTime--;
+            if(players[i].info.stealthTime==0)
+                players[i].info.stealthed = false;
 
             //Regen Energy
-            if(players[i].stats.hp>0){
+            if(players[i].stats.hp>0 && !players[i].info.stealthed){
                 players[i].stats.energy = players[i].stats.energy + statData.energyReg*(players[i].info.inCombat>0?1:2);
                 if (players[i].stats.energy > players[i].stats.energyMAX)
                     players[i].stats.energy = players[i].stats.energyMAX;
@@ -1314,7 +1339,7 @@ function scan(player){
             var enemyP = playerInSpot([cX,cY], player);
             if(enemyP!=null){
                 enemyP.battleLog.unshift("Someone has scanned you.");
-                player.scanned.push({"token":enemyP.token,"rounds":2+player.stats.scanner});
+                player.scanned.push({"token":enemyP.token,"rounds":3+player.stats.scanner});
             }
         }
     }
@@ -1339,9 +1364,21 @@ function stealth(p){
     p.info.uranium -= stealthUraniumUsage;
     p.stats.energy -= stealthEnergyUsage;
     p.info.stealthed = true;
+    p.info.stealthTime = stealthDurationPerLevel*p.stats.stealth+1;
 
     //Remove from scanned
+    for(var pp in players){
+        for(var i in players[pp].scanned){
+            if(players[pp].scanned[i].token===p.token){
+                players[pp].scanned[i].rounds = 0;
+                break;
+            }
+        }
+    }
+}
 
+function destealth(p){
+    p.info.stealthed = false;
 }
 
 //******************************************************************************
@@ -1820,4 +1857,11 @@ function removeFromStorage(p,mod){
             break;
         }
     }
+}
+
+function queuedDestealth(p){
+    for(var a in p.queue){
+        if(p.queue[a].type==="DESTEALTH") return true;
+    }
+    return false;
 }
