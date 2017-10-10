@@ -21,6 +21,8 @@ var zone3Hei = .4;
 var zone2Wid = .2;
 var zone2Hei = .5;
 
+var attackFromShop = true;
+
 //Loot Data
 var lootSpawnValues;
 var lootSpreadMIN = .05; //decimal as percent
@@ -63,6 +65,7 @@ var trapUraniumUsage        = 1;
 
 var railgunEnergyUsage      = 10;
 var railgunUraniumUsage     = 1;
+var railgunRange            = 10;
 
 var stealthDurationPerLevel = 3;
 
@@ -486,7 +489,18 @@ function startServer(){
                         for(var a = 0; a < lootActionUsage; a++)
                             p.queue.push(req.body.action);
                     }
-                    else if(req.body.action.type==="ATTACK" && p.stats.energy>=attackEnergyUsage+inUse /*&& withinShop(p.loc)==null*/ && attackDistance(p.loc,req.body.action.location))
+                    if(3-p.queue.length >= cannonActionUsage && req.body.action.type==="CANNON" && (withinShop(p.loc)==null || attackFromShop) && attackDistance(p.loc,req.body.action.location) && p.stats.energy>=cannonEnergyUsage+inUse && p.info.uranium>=cannonUraniumUsage+inUseUR){
+                        for(var a = 0; a < cannonActionUsage; a++)
+                            p.queue.push(req.body.action);
+                    }
+                    else if(req.body.action.type==="CANNON" && !attackDistance(p.loc,req.body.action.location)){
+                        p.battleLog.unshift("Out of range.");
+                    }
+                    if(3-p.queue.length >= railgunActionUsage && req.body.action.type==="RAILGUN" && (withinShop(p.loc)==null || attackFromShop) && p.stats.energy>=railgunEnergyUsage+inUse && p.info.uranium>=railgunUraniumUsage+inUseUR){
+                        for(var a = 0; a < railgunActionUsage; a++)
+                            p.queue.push(req.body.action);
+                    }
+                    else if(req.body.action.type==="ATTACK" && p.stats.energy>=attackEnergyUsage+inUse && (withinShop(p.loc)==null || attackFromShop) && attackDistance(p.loc,req.body.action.location))
                         p.queue.push(req.body.action);
                     else if(req.body.action.type==="ATTACK" && !attackDistance(p.loc,req.body.action.location))
                         p.battleLog.unshift("Out of range.");
@@ -1050,8 +1064,50 @@ function setupPhase(){
             for(var a = players[i].queue.length; a < 3; a++){
                 players[i].queue.push({"type":"HOLD"});
             }
-            if(players[i].queue[0].type==="ATTACK" && withinShop(players[i].loc)==null)
-                actAttacks.push(players[i].queue[0].location);
+            if(players[i].queue.length>0 && (withinShop(players[i].loc)==null || attackFromShop)){ //Next round attacks
+                if(players[i].queue[0].type==="ATTACK" )
+                    actAttacks.push(players[i].queue[0].location);
+                else if(players[i].queue[0].type==="CANNON" && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
+                    var range = (p.stats.cannon>1?5:3);
+                    var mid = parseInt(range/2);
+                    for(var x = 0; x < range; x++){
+                        for(var y = 0; y < range; y++){
+                            var cX = location[0] - (mid-x);
+                            var cY = location[1] - (mid-y);
+
+                            if(cX < 0) cX += map.length;
+                            if(cY < 0) cY += map.length;
+                            if(cX >= map.length) cX -= map.length;
+                            if(cY >= map.length) cY -= map.length;
+
+                            actAttacks.push([cX,cY]);
+                        }
+                    }
+                }
+                else if(players[i].queue[0].type==="RAILGUN" && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
+                    if(direction==="N"){
+                        for(var i = 1; i <= railgunRange; i++){
+                            var newY = players[i].loc[1]-i;
+                            if(newY < 0) newY += mapSize;
+                            actAttacks.push([players[i].loc[0],newY]);
+                        }
+                    }else if(direction==="E"){
+                        for(var i = 1; i <= railgunRange; i++){
+                            actAttacks.push([(players[i].loc[0]+i)%mapSize,players[i].loc[1]]);
+                        }
+                    }else if(direction==="S"){
+                        for(var i = 1; i <= railgunRange; i++){
+                            actAttacks.push([players[i].loc[0],(players[i].loc[1]+i)%mapSize]);
+                        }
+                    }else if(direction==="W"){
+                        for(var i = 1; i <= railgunRange; i++){
+                            var newX = players[i].loc[0]-i;
+                            if(newX < 0) newX += mapSize;
+                            actAttacks.push([newY,players[i].loc[1]]);
+                        }
+                    }
+                }
+            }
             for(var a = 0; a < players[i].scanned.length; a++){
                 players[i].scanned[a].rounds--;
                 if(players[i].scanned[a].rounds==0){
@@ -1073,7 +1129,7 @@ function setupPhase(){
 }
 
 function actionPhase(){
-    var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[], stealths=[], destealths=[];
+    var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[], stealths=[], destealths=[], cannons = [], railguns =[];
     var actAttacks = [];
 
     //Grab all actions
@@ -1082,10 +1138,12 @@ function actionPhase(){
         if(players[i].stats.hp>0 && players[i].queue[0]!=null){
             if(players[i].queue[0].type==="MOVE"){
                 moves.push({"player":players[i],"direction":players[i].queue[0].direction});
-            }else if(players[i].queue[0].type==="ATTACK" /*&& withinShop(players[i].loc)==null*/){
+            }else if(players[i].queue[0].type==="ATTACK" && (withinShop(players[i].loc)==null || attackFromShop)){
                 attacks.push({"player":players[i], "location":players[i].queue[0].location});
-            }else if(players[i].queue[0].type==="ATTACK" && withinShop(players[i].loc)!=null){
-                players[i].battleLog.unshift("You can't fight near a shop.");
+            }else if(players[i].queue[0].type==="CANNON" && (withinShop(players[i].loc)==null || attackFromShop) && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
+                cannons.push({"player":players[i], "location":players[i].queue[0].location});
+            }else if(players[i].queue[0].type==="RAILGUN" && (withinShop(players[i].loc)==null || attackFromShop) && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
+                railguns.push({"player":players[i], "direction":players[i].queue[0].direction});
             }else if(players[i].queue[0].type==="LOOT" && (players[i].queue.length == 1 || players[i].queue[1].type!=="LOOT")){
                 loots.push(players[i]);
             }else if(players[i].queue[0].type==="SCAN" && players[i].queue.length == 1){
@@ -1102,13 +1160,56 @@ function actionPhase(){
                 players[i].stats.energy=players[i].stats.energy+statData.energyReg*(players[i].info.inCombat>0?1:2);
                 if (players[i].stats.energy > players[i].stats.energyMAX)
                     players[i].stats.energy = players[i].stats.energyMAX;
+            }else if(players[i].queue[0].type!=="HOLD" && withinShop(players[i].loc)!=null){ //Must be fighting near a shop or cheating
+                players[i].battleLog.unshift("You can't fight near a shop.");
             }
 
             players[i].queue.splice(0,1); //pop from queue
 
-            if(players[i].queue.length>0)
-                if(players[i].queue[0].type==="ATTACK" && withinShop(players[i].loc)==null)
+            if(players[i].queue.length>0 && (withinShop(players[i].loc)==null || attackFromShop)){ //Next round attacks
+                if(players[i].queue[0].type==="ATTACK" )
                     actAttacks.push(players[i].queue[0].location);
+                else if(players[i].queue[0].type==="CANNON" && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
+                    var range = (players[i].stats.cannon>1?5:3);
+                    var mid = parseInt(range/2);
+                    for(var x = 0; x < range; x++){
+                        for(var y = 0; y < range; y++){
+                            var cX = players[i].queue[0].location[0] - (mid-x);
+                            var cY = players[i].queue[0].location[1] - (mid-y);
+
+                            if(cX < 0) cX += map.length;
+                            if(cY < 0) cY += map.length;
+                            if(cX >= map.length) cX -= map.length;
+                            if(cY >= map.length) cY -= map.length;
+
+                            actAttacks.push([cX,cY]);
+                        }
+                    }
+                }
+                else if(players[i].queue[0].type==="RAILGUN" && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
+                    if(players[i].queue[0].direction==="N"){
+                        for(var r = 1; r <= railgunRange; r++){
+                            var newY = players[i].loc[1]-r;
+                            if(newY < 0) newY += mapSize;
+                            actAttacks.push([players[i].loc[0],newY]);
+                        }
+                    }else if(players[i].queue[0].direction==="E"){
+                        for(var r = 1; r <= railgunRange; r++){
+                            actAttacks.push([(players[i].loc[0]+r)%mapSize,players[i].loc[1]]);
+                        }
+                    }else if(players[i].queue[0].direction==="S"){
+                        for(var r = 1; r <= railgunRange; r++){
+                            actAttacks.push([players[i].loc[0],(players[i].loc[1]+r)%mapSize]);
+                        }
+                    }else if(players[i].queue[0].direction==="W"){
+                        for(var r = 1; r <= railgunRange; r++){
+                            var newX = players[i].loc[0]-r;
+                            if(newX < 0) newX += mapSize;
+                            actAttacks.push([newY,players[i].loc[1]]);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1117,18 +1218,26 @@ function actionPhase(){
     }
 
     //Perform actions in order
+    // var order = [moves,attacks,heals,engMods,destealths,scans,stealths];
     for(var i = 0; i < moves.length; i++)
         move(moves[i].player,moves[i].direction);
+
     for(var i = 0; i < attacks.length; i++)
         attack(attacks[i].player,attacks[i].location);
+    for(var i = 0; i < cannons.length; i++)
+        cannon(cannons[i].player,cannons[i].location);
+    for(var i = 0; i < railguns.length; i++)
+        railgun(railguns[i].player,railguns[i].direction);
+
     for(var i = 0; i < heals.length; i++)
         quickHeal(heals[i]);
     for(var i = 0; i < engMods.length; i++)
         energyMod(engMods[i]);
-    for(var i = 0; i < loots.length; i++)
-        loot(loots[i]);
     for(var i = 0; i < destealths.length; i++)
         destealth(destealths[i]);
+
+    for(var i = 0; i < loots.length; i++)
+        loot(loots[i]);
     for(var i = 0; i < scans.length; i++)
         scan(scans[i]);
     for(var i = 0; i < stealths.length; i++)
@@ -1218,26 +1327,109 @@ function move(player, direction){
     }
 }
 
-function attack(player, location){
-    player.stats.energy = player.stats.energy - attackEnergyUsage;
-    player.info.inCombat = combatCooldown;
+function attack(p, location){
+    p.stats.energy -= attackEnergyUsage;
+    p.info.inCombat = combatCooldown;
 
-    for(var i = 0; i < players.length; i++){
-        if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0){
-            if(true||withinShop(players[i].loc)==null){
-                //HIT
-                players[i].stats.hp = players[i].stats.hp - (player.stats.attack + (isEquipped(player,"ATK+")?statData.attackINC:0) - (isEquipped(players[i],"DR")?1:0));
-                players[i].info.inCombat = combatCooldown;
-                players[i].battleLog.unshift(""+player.info.name+" has hit you for "+player.stats.attack+" damage.");
+    var hit = playerInSpot(location,null);
+    if(hit!=null){
+        if(attackFromShop || withinShop(hit.loc)==null){
+            //HIT
+            var dmg = p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0 - (isEquipped(hit,"DR")?1:0));
+            hit.stats.hp = hit.stats.hp - dmg;
+            hit.info.inCombat = combatCooldown;
+            hit.battleLog.unshift(""+p.info.name+" has hit you for "+dmg+" damage.");
 
-                if(players[i].stats.hp <= 0){
-                    death(players[i], player);
-                }
+            if(hit.stats.hp <= 0){
+                death(hit, p);
             }
-            break;
         }
     }
 
+}
+
+function cannon(p, location){
+    p.stats.energy -= cannonEnergyUsage;
+    p.info.uranium -= cannonUraniumUsage;
+    p.info.inCombat = combatCooldown;
+
+    var locs = [];
+    var range = (p.stats.cannon>1?5:3);
+    var mid = parseInt(range/2);
+    for(var x = 0; x < range; x++){
+        for(var y = 0; y < range; y++){
+            var cX = location[0] - (mid-x);
+            var cY = location[1] - (mid-y);
+
+            if(cX < 0) cX += map.length;
+            if(cY < 0) cY += map.length;
+            if(cX >= map.length) cX -= map.length;
+            if(cY >= map.length) cY -= map.length;
+
+            locs.push([cX,cY]);
+        }
+    }
+
+    for(var i in locs){
+        var hit = playerInSpot(locs[i],null);
+        if(hit!=null){
+            if(attackFromShop || withinShop(hit.loc)==null){
+                var dmg = parseInt((p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0)*(p.stats.cannon>2?1.5:1)) - (isEquipped(hit,"DR")?1:0));
+                hit.stats.hp = hit.stats.hp - dmg;
+                hit.info.inCombat = combatCooldown;
+                hit.battleLog.unshift(""+p.info.name+" has blasted you for "+dmg+" damage.");
+
+                if(hit.stats.hp <= 0){
+                    death(hit, p);
+                }
+            }
+        }
+    }
+}
+
+function railgun(p, direction){
+    p.stats.energy -= railgunEnergyUsage;
+    p.info.uranium -= railgunUraniumUsage;
+    p.info.inCombat = combatCooldown;
+
+    var locs = [];
+    if(direction==="N"){
+        for(var i = 1; i <= railgunRange; i++){
+            var newY = p.loc[1]-i;
+            if(newY < 0) newY += mapSize;
+            locs.push([p.loc[0],newY]);
+        }
+    }else if(direction==="E"){
+        for(var i = 1; i <= railgunRange; i++){
+            locs.push([(p.loc[0]+i)%mapSize,p.loc[1]]);
+        }
+    }else if(direction==="S"){
+        for(var i = 1; i <= railgunRange; i++){
+            locs.push([p.loc[0],(p.loc[1]+i)%mapSize]);
+        }
+    }else if(direction==="W"){
+        for(var i = 1; i <= railgunRange; i++){
+            var newX = p.loc[0]-i;
+            if(newX < 0) newX += mapSize;
+            locs.push([newY,p.loc[1]]);
+        }
+    }
+
+    for(var i in locs){
+        var hit = playerInSpot(locs[i],p);
+        if(hit!=null){
+            if(attackFromShop || withinShop(hit.loc)==null){
+                var dmg = (p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0)*p.stats.railgun - (isEquipped(hit,"DR")?1:0));
+                hit.stats.hp = hit.stats.hp - dmg;
+                hit.info.inCombat = combatCooldown;
+                hit.battleLog.unshift(""+p.info.name+" has railed you for "+dmg+" damage.");
+
+                if(hit.stats.hp <= 0){
+                    death(hit, p);
+                }
+            }
+        }
+    }
 }
 
 function loot(player){

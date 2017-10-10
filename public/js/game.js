@@ -20,6 +20,11 @@ var blink = false;
 var tabs;
 var statInfo = false;
 
+var displayBlink = false;
+var displayCannon = false;
+var displayRailgun = false;
+var railDir = "N";
+
 //Colors
 //Monitor Colors
 var colors;
@@ -705,7 +710,7 @@ function drawMonitor(){
         }
 
 
-        //Draw attacks
+        //Draw Actions
         //TODO: Draw all actions
         var atk = 1;
         var actions = [];
@@ -714,6 +719,10 @@ function drawMonitor(){
             if(me.queue[i].type==="ATTACK"){
                 actions.push({"type":"ATTACK","loc":me.queue[i].location,"num":atk});
                 atk++
+            }else if(me.queue[i].type==="CANNON"){
+                actions.push({"type":"CANNON","loc":me.queue[i].location});
+            }else if(me.queue[i].type==="RAILGUN"){
+                actions.push({"type":"RAILGUN","loc":prevLoc,"dir":me.queue[i].direction});
             }else if(me.queue[i].type==="MOVE"){
                 var loc;
                 if(me.queue[i].direction==="N"){
@@ -792,6 +801,29 @@ function drawMonitor(){
                             ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
                             ctx.globalAlpha = 1.0;
                             ctx.stroke();
+                        }else if(actions[i].type==="CANNON"){
+                            var size = (me.stats.cannon>1?5:3);
+                            ctx.beginPath();
+                            ctx.fillStyle = colors.abilityColor;
+                            ctx.globalAlpha = 0.4;
+                            ctx.fillRect(x*tileSize-parseInt(size/2)*tileSize,y*tileSize-parseInt(size/2)*tileSize,tileSize*size,tileSize*size);
+                            ctx.globalAlpha = 1.0;
+                            ctx.stroke();
+                        }else if(actions[i].type==="RAILGUN"){
+                            ctx.beginPath();
+                            ctx.fillStyle = colors.abilityColor;
+                            ctx.globalAlpha = 0.4;
+                            if(actions[i].dir==="N"){ //N
+                                ctx.fillRect(x*tileSize,0,tileSize,c.height/2-tileSize/2);
+                            }else if(actions[i].dir==="E"){ //E
+                                ctx.fillRect(x*tileSize+tileSize,y*tileSize,c.width/2-tileSize/2,tileSize);
+                            }else if(actions[i].dir==="S"){ //S
+                                ctx.fillRect(x*tileSize,y*tileSize+tileSize,tileSize,c.height/2-tileSize/2);
+                            }else if(actions[i].dir==="W"){ //W
+                                ctx.fillRect(0,y*tileSize,c.width/2-tileSize/2,tileSize);
+                            }
+                            ctx.globalAlpha = 1.0;
+                            ctx.stroke();
                         }
                         // else if(actions[i].type==="HOLD"){
                         //     ctx.beginPath();
@@ -844,11 +876,40 @@ function drawMonitor(){
 
         //Draw grid hover
         else if(mX > -1 && mY > -1 && mX < c.width && mY < c.height && !settingsView){
-            ctx.strokeStyle=colors.hudColor;
-            ctx.fillStyle=colors.hudColor;
+            ctx.beginPath();
+            if(displayBlink || displayCannon || displayRailgun){
+                ctx.strokeStyle = colors.abilityColor;
+                ctx.fillStyle = colors.abilityColor;
+            }else{
+                ctx.strokeStyle = colors.hudColor;
+                ctx.fillStyle = colors.hudColor;
+            }
             ctx.beginPath();
             ctx.globalAlpha = 0.3;
-            ctx.fillRect(parseInt(mX/tileSize)*tileSize,parseInt(mY/tileSize)*tileSize,tileSize,tileSize);
+            if(displayCannon){
+                var size = (me.stats.cannon>1?5:3);
+                ctx.fillRect(parseInt(mX/tileSize)*tileSize-parseInt(size/2)*tileSize,parseInt(mY/tileSize)*tileSize-parseInt(size/2)*tileSize,tileSize*size,tileSize*size);
+                ctx.globalAlpha = 1.0;
+                ctx.strokeRect(parseInt(mX/tileSize)*tileSize,parseInt(mY/tileSize)*tileSize,tileSize,tileSize);
+            }
+            else if(displayRailgun){
+                if(mX>c.width/3 && mX<c.width*2/3 && mY<c.width/2-tileSize/2){ //N
+                    ctx.fillRect(c.width/2-tileSize/2,0,tileSize,c.height/2-tileSize/2);
+                    railDir = "N";
+                }else if(mX>c.width/2+tileSize/2 && mY>c.width/3 && mY<c.width*2/3){ //E
+                    ctx.fillRect(c.width/2+tileSize/2,c.height/2-tileSize/2,c.width/2-tileSize/2,tileSize);
+                    railDir = "E";
+                }else if(mX>c.width/3 && mX<c.width*2/3 && mY>c.width/2+tileSize/2){ //S
+                    ctx.fillRect(c.width/2-tileSize/2,c.height/2+tileSize/2,tileSize,c.height/2-tileSize/2);
+                    railDir = "S";
+                }else if(mX<c.width/2-tileSize/2 && mY>c.width/3 && mY<c.width*2/3){ //W
+                    ctx.fillRect(0,c.height/2-tileSize/2,c.width/2-tileSize/2,tileSize);
+                    railDir = "W";
+                }
+            }
+            else{
+                ctx.fillRect(parseInt(mX/tileSize)*tileSize,parseInt(mY/tileSize)*tileSize,tileSize,tileSize);
+            }
             ctx.globalAlpha = 1.0;
             ctx.stroke();
 
@@ -1026,7 +1087,7 @@ function drawSideBar(){
             text = "SHIP REPAIR";
         }else if(me.queue[i].type==="BLINK"){
             ctx.fillStyle = colors.abilityColor;
-            text = "BLINK";
+            text = "BLINK "+me.queue[i].location;
         }else if(me.queue[i].type==="ENERGY"){
             ctx.fillStyle = colors.abilityColor;
             text = "ENERGY REGEN";
@@ -1036,6 +1097,12 @@ function drawSideBar(){
         }else if(me.queue[i].type==="DESTEALTH"){
             ctx.fillStyle = colors.abilityColor;
             text = "DESTEALTH";
+        }else if(me.queue[i].type==="CANNON"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "CANNON "+me.queue[i].location;
+        }else if(me.queue[i].type==="RAILGUN"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "RAILGUN "+me.queue[i].direction;
         }
         ctx.beginPath();
         ctx.fillRect(40,i*45+70,220,35);
@@ -1739,7 +1806,7 @@ function handleKeydown(e){
 
 function handleMousedown(e){
     var c = document.getElementById("monitor");
-   if(settingsView){
+    if(settingsView){
 
        //Check for color click
        var i = 1;
@@ -1769,7 +1836,7 @@ function handleMousedown(e){
            $("body").css("background-color",colors.hudBackColor);
            saveColorScheme();
        }
-    //    ctx.strokeRect(c.width/4+255,c.height/8+60+20*i+20,115,40);
+       //    ctx.strokeRect(c.width/4+255,c.height/8+60+20*i+20,115,40);
    }
    else if(shopMode && shop.withinShop=="SSHOP"){
        //Change tabs
@@ -1798,7 +1865,20 @@ function handleMousedown(e){
         if(cY >= map.length) cY -= map.length;
         //console.log(""+cX+", "+cY);
 
-        updateQueue({"type":"ATTACK","location":[cX, cY]})
+        if(displayCannon){
+            displayCannon = false;
+            updateQueue({"type":"CANNON","location":[cX, cY]})
+        }
+        else if(displayRailgun){
+            displayRailgun = false;
+            updateQueue({"type":"RAILGUN","direction":railDir})
+        }
+        else if(displayBlink){
+            displayBlink = false;
+            updateQueue({"type":"BLINK","location":[cX, cY]})
+        }
+        else
+            updateQueue({"type":"ATTACK","location":[cX, cY]})
     }
 }
 
@@ -1949,4 +2029,20 @@ function doSpecialAction(slot){
         updateQueue({"type":"ENERGY"});
     if(me.abilitySlots[slot]==="HIDE")
         updateQueue({"type":"STEALTH"});
+    if(me.abilitySlots[slot]==="CAN"){
+        displayCannon = !displayCannon;
+        displayRailgun = false;
+        displayBlink = false;
+    }
+    if(me.abilitySlots[slot]==="RAIL"){
+        displayCannon = false;
+        displayRailgun = !displayRailgun;
+        displayBlink = false;
+    }
+    if(me.abilitySlots[slot]==="BLNK"){
+        displayCannon = false;
+        displayRailgun = false;
+        displayBlink = !displayBlink;
+    }
+
 }
