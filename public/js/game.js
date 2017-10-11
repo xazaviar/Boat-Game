@@ -1837,8 +1837,8 @@ function handleMousedown(e){
            saveColorScheme();
        }
        //    ctx.strokeRect(c.width/4+255,c.height/8+60+20*i+20,115,40);
-   }
-   else if(shopMode && shop.withinShop=="SSHOP"){
+    }
+    else if(shopMode && shop.withinShop=="SSHOP"){
        //Change tabs
        var startX = c.width/8;
        var startY = c.height/4;
@@ -1853,8 +1853,8 @@ function handleMousedown(e){
            }
        }
 
-   }
-   else if(!gameStart && !mapView && !shopMode){
+    }
+    else if(!gameStart && !mapView && !shopMode){
         var mid = parseInt(me.stats.radar/2);
         var cX = me.loc[0] - (mid-hover[0]);
         var cY = me.loc[1] - (mid-hover[1]);
@@ -1879,7 +1879,7 @@ function handleMousedown(e){
         }
         else
             updateQueue({"type":"ATTACK","location":[cX, cY]})
-    }
+     }
 }
 
 function handleMousemove(e){

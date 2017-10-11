@@ -489,14 +489,14 @@ function startServer(){
                         for(var a = 0; a < lootActionUsage; a++)
                             p.queue.push(req.body.action);
                     }
-                    if(3-p.queue.length >= cannonActionUsage && req.body.action.type==="CANNON" && (withinShop(p.loc)==null || attackFromShop) && attackDistance(p.loc,req.body.action.location) && p.stats.energy>=cannonEnergyUsage+inUse && p.info.uranium>=cannonUraniumUsage+inUseUR){
+                    else if(3-p.queue.length >= cannonActionUsage && req.body.action.type==="CANNON" && isEquipped(p,"CAN") && (withinShop(p.loc)==null || attackFromShop) && attackDistance(p.loc,req.body.action.location) && p.stats.energy>=cannonEnergyUsage+inUse && p.info.uranium>=cannonUraniumUsage+inUseUR){
                         for(var a = 0; a < cannonActionUsage; a++)
                             p.queue.push(req.body.action);
                     }
                     else if(req.body.action.type==="CANNON" && !attackDistance(p.loc,req.body.action.location)){
                         p.battleLog.unshift("Out of range.");
                     }
-                    if(3-p.queue.length >= railgunActionUsage && req.body.action.type==="RAILGUN" && (withinShop(p.loc)==null || attackFromShop) && p.stats.energy>=railgunEnergyUsage+inUse && p.info.uranium>=railgunUraniumUsage+inUseUR){
+                    if(3-p.queue.length >= railgunActionUsage && req.body.action.type==="RAILGUN" && isEquipped(p,"RAIL") && (withinShop(p.loc)==null || attackFromShop) && p.stats.energy>=railgunEnergyUsage+inUse && p.info.uranium>=railgunUraniumUsage+inUseUR){
                         for(var a = 0; a < railgunActionUsage; a++)
                             p.queue.push(req.body.action);
                     }
@@ -506,7 +506,7 @@ function startServer(){
                         p.battleLog.unshift("Out of range.");
                     else if(req.body.action.type==="QUICKHEAL" && isEquipped(p,"HEAL") && p.stats.energy>=quickHealEnergyUsage+inUse)
                         p.queue.push(req.body.action);
-                    else if(req.body.action.type==="BLINK" && isEquipped(p,"BLNK") && p.stats.energy>=blinkEnergyUsage+inUse && p.info.uranium>=blinkUraniumUsage+inUseUR)
+                    else if(req.body.action.type==="BLINK" && isEquipped(p,"BLNK") && blinkDistance(p,req.body.action.location) && p.stats.energy>=(blinkEnergyUsage-2*p.stats.blink)+inUse && p.info.uranium>=blinkUraniumUsage+inUseUR)
                         p.queue.push(req.body.action);
                     else if(req.body.action.type==="ENERGY" && isEquipped(p,"ENG") && p.info.uranium>=energyModUraniumUsage+inUseUR)
                         p.queue.push(req.body.action);
@@ -761,7 +761,7 @@ function startServer(){
                         p.storage.push({"name":"CAN","val":p.stats.cannon});
                     }else{
                         p.battleLog.unshift("You upgraded your Cannon.");
-                        incrementStorageItem(p,"CAN",p.stats.cannon);
+                        updateStorageItem(p,"CAN",p.stats.cannon);
                     }
                 }
                 else if(req.body.item==="canU" && !canPurchase(shop.canU.price,inventory)){
@@ -777,7 +777,7 @@ function startServer(){
                         p.storage.push({"name":"BLNK","val":p.stats.blink});
                     }else{
                         p.battleLog.unshift("You upgraded your Blink Module.");
-                        incrementStorageItem(p,"BLNK",p.stats.blink);
+                        updateStorageItem(p,"BLNK",p.stats.blink);
                     }
                 }
                 else if(req.body.item==="bliU" && !canPurchase(shop.bliU.price,inventory)){
@@ -793,7 +793,7 @@ function startServer(){
                         p.storage.push({"name":"HIDE","val":p.stats.stealth});
                     }else{
                         p.battleLog.unshift("You upgraded your Stealth Module.");
-                        incrementStorageItem(p,"HIDE",p.stats.stealth);
+                        updateStorageItem(p,"HIDE",p.stats.stealth);
                     }
                 }
                 else if(req.body.item==="steU" && !canPurchase(shop.steU.price,inventory)){
@@ -809,7 +809,7 @@ function startServer(){
                         p.storage.push({"name":"TRAP","val":p.stats.trap});
                     }else{
                         p.battleLog.unshift("You upgraded your Trap Module.");
-                        incrementStorageItem(p,"TRAP",p.stats.trap);
+                        updateStorageItem(p,"TRAP",p.stats.trap);
                     }
                 }
                 else if(req.body.item==="trapU" && !canPurchase(shop.trapU.price,inventory)){
@@ -825,7 +825,7 @@ function startServer(){
                         p.storage.push({"name":"ENG","val":p.stats.engMod});
                     }else{
                         p.battleLog.unshift("You upgraded your Energy Module.");
-                        incrementStorageItem(p,"ENG",p.stats.engMod);
+                        updateStorageItem(p,"ENG",p.stats.engMod);
                     }
                 }
                 else if(req.body.item==="engModU" && !canPurchase(shop.engModU.price,inventory)){
@@ -841,7 +841,7 @@ function startServer(){
                         p.storage.push({"name":"RAIL","val":p.stats.railgun});
                     }else{
                         p.battleLog.unshift("You upgraded your Railgun.");
-                        incrementStorageItem(p,"RAIL",p.stats.railgun);
+                        updateStorageItem(p,"RAIL",p.stats.railgun);
                     }
                 }
                 else if(req.body.item==="railU" && !canPurchase(shop.railU.price,inventory)){
@@ -1129,7 +1129,7 @@ function setupPhase(){
 }
 
 function actionPhase(){
-    var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[], stealths=[], destealths=[], cannons = [], railguns =[];
+    var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[], stealths=[], destealths=[], cannons = [], railguns =[], blinks=[];
     var actAttacks = [];
 
     //Grab all actions
@@ -1154,6 +1154,8 @@ function actionPhase(){
                 destealths.push(players[i]);
             }else if(players[i].queue[0].type==="QUICKHEAL"){
                 heals.push(players[i]);
+            }else if(players[i].queue[0].type==="BLINK"){
+                blinks.push({"player":players[i],"location":players[i].queue[0].location});
             }else if(players[i].queue[0].type==="ENERGY"){
                 engMods.push(players[i]);
             }else if(players[i].queue[0].type==="HOLD" && players[i].stats.energy < players[i].stats.energyMAX){
@@ -1219,6 +1221,8 @@ function actionPhase(){
 
     //Perform actions in order
     // var order = [moves,attacks,heals,engMods,destealths,scans,stealths];
+    for(var i = 0; i < blinks.length; i++)
+        blink(blinks[i].player,blinks[i].location);
     for(var i = 0; i < moves.length; i++)
         move(moves[i].player,moves[i].direction);
 
@@ -1295,35 +1299,35 @@ function roundCleanup(){
 //******************************************************************************
 // Player Actions
 //******************************************************************************
-function move(player, direction){
-    var before = withinShop(player.loc)!=null;
-    var beforeLoc = [player.loc[0],player.loc[1]];
+function move(p, direction){
+    var before = withinShop(p.loc)!=null;
+    var beforeLoc = [p.loc[0],p.loc[1]];
 
     if(direction==="N"){
-        var newY = player.loc[1] - 1;
+        var newY = p.loc[1] - 1;
         if(newY<0) newY = mapSize-1;
-        if(!spotOccupied([player.loc[0],newY])) player.loc[1] = newY;
+        if(!spotOccupied([p.loc[0],newY])) p.loc[1] = newY;
     }else if(direction==="E"){
-        var newX = player.loc[0] + 1;
+        var newX = p.loc[0] + 1;
         if(newX>=mapSize) newX = 0;
-        if(!spotOccupied([newX,player.loc[1]])) player.loc[0] = newX;
+        if(!spotOccupied([newX,p.loc[1]])) p.loc[0] = newX;
     }else if(direction==="S"){
-        var newY = player.loc[1] + 1;
+        var newY = p.loc[1] + 1;
         if(newY>=mapSize) newY = 0;
-        if(!spotOccupied([player.loc[0],newY])) player.loc[1] = newY;
+        if(!spotOccupied([p.loc[0],newY])) p.loc[1] = newY;
     }else if(direction==="W"){
-        var newX = player.loc[0] - 1;
+        var newX = p.loc[0] - 1;
         if(newX<0) newX = mapSize-1;
-        if(!spotOccupied([newX,player.loc[1]])) player.loc[0] = newX;
+        if(!spotOccupied([newX,p.loc[1]])) p.loc[0] = newX;
     }
 
-    var after = withinShop(player.loc)!=null;
+    var after = withinShop(p.loc)!=null;
     if(before && !after){
-        player.battleLog.unshift("You have left a safe zone.");
+        p.battleLog.unshift("You have left a safe zone.");
     }else if(!before && after){
-        player.battleLog.unshift("You have entered a safe zone.");
-    }else if(beforeLoc[0]==player.loc[0] && beforeLoc[1]==player.loc[1]){
-        player.battleLog.unshift("You can't move there.");
+        p.battleLog.unshift("You have entered a safe zone.");
+    }else if(beforeLoc[0]==p.loc[0] && beforeLoc[1]==p.loc[1]){
+        p.battleLog.unshift("You can't move there.");
     }
 }
 
@@ -1419,7 +1423,7 @@ function railgun(p, direction){
         var hit = playerInSpot(locs[i],p);
         if(hit!=null){
             if(attackFromShop || withinShop(hit.loc)==null){
-                var dmg = (p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0)*p.stats.railgun - (isEquipped(hit,"DR")?1:0));
+                var dmg = (p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0)*(p.stats.railgun+1) - (isEquipped(hit,"DR")?1:0));
                 hit.stats.hp = hit.stats.hp - dmg;
                 hit.info.inCombat = combatCooldown;
                 hit.battleLog.unshift(""+p.info.name+" has railed you for "+dmg+" damage.");
@@ -1563,6 +1567,7 @@ function stealth(p){
         for(var i in players[pp].scanned){
             if(players[pp].scanned[i].token===p.token){
                 players[pp].scanned[i].rounds = 0;
+                players[pp].battleLog.unshift(p.info.name+" has vanished.");
                 break;
             }
         }
@@ -1572,6 +1577,19 @@ function stealth(p){
 function destealth(p){
     p.info.stealthed = false;
 }
+
+function blink(p, location){
+    p.info.uranium -= blinkUraniumUsage;
+    p.stats.energy -= (blinkEnergyUsage-2*p.stats.blink);
+
+    if(!spotOccupied([location[0],location[1]]))
+        p.loc = location;
+}
+
+function trap(p){
+
+}
+
 
 //******************************************************************************
 // Utility Functions
@@ -1657,24 +1675,14 @@ function generateToken(){
 }
 
 function attackDistance(player, attack){
-    var mid = parseInt(statData.attackRange/2);
-    for(var x = 0; x < statData.attackRange; x++){
-        for(var y = 0; y < statData.attackRange; y++){
-            var cX = player[0] - (mid-x);
-            var cY = player[1] - (mid-y);
+    var t = parseInt(statData.attackRange/2);
+    var xAdj = t-player[0], yAdj = t-player[1];
+    var cX = (attack[0] + xAdj)%mapSize, cY = (attack[1] + yAdj)%mapSize;
 
-            if(cX < 0) cX += map.length;
-            if(cY < 0) cY += map.length;
-            if(cX >= map.length) cX -= map.length;
-            if(cY >= map.length) cY -= map.length;
+    if(cX<0)cX+=mapSize;
+    if(cY<0)cY+=mapSize;
 
-            if(attack[0]==cX && attack[1]==cY){
-                return true;
-            }
-        }
-    }
-
-    return false;
+    return cX < statData.attackRange && cY < statData.attackRange;
 }
 
 function visionDistance(player, spot){
@@ -1696,6 +1704,17 @@ function visionDistance(player, spot){
     }
 
     return false;
+}
+
+function blinkDistance(player, spot){
+    var t = parseInt(player.stats.radar/2);
+    var xAdj = t-player.loc[0], yAdj = t-player.loc[1];
+    var cX = (spot[0] + xAdj)%mapSize, cY = (spot[1] + yAdj)%mapSize;
+
+    if(cX<0)cX+=mapSize;
+    if(cY<0)cY+=mapSize;
+
+    return cX < player.stats.radar && cY < player.stats.radar;
 }
 
 function inScanned(player, token){
@@ -1857,7 +1876,7 @@ function makePurchase(costs, p){
     p.info.uranium -= costs.uranium;
 }
 
-function incrementStorageItem(p, mod, val){
+function updateStorageItem(p, mod, val){
     for(var i in p.storage){
         if(p.storage[i].name===mod){
             p.storage[i].val=val;
@@ -1896,7 +1915,7 @@ function death(p, killer){
         if(isEquipped(p,"CAN")){
             p.stats.cannonUpgrades--;
             p.stats.cannon = p.stats.cannon - statData.cannonINC;
-            incrementStorageItem(p,"CAN",p.stats.cannon);
+            updateStorageItem(p,"CAN",p.stats.cannon);
             if(p.stats.cannon == 0){
                 removeFromStorage(p,"CAN");
                 if(p.abilitySlots[0]==="CAN") p.abilitySlots[0] = "NONE";
@@ -1906,7 +1925,7 @@ function death(p, killer){
         if(isEquipped(p,"BLNK")){
             p.stats.blinkUpgrades--;
             p.stats.blink = p.stats.blink - statData.blinkINC;
-            incrementStorageItem(p,"BLNK",p.stats.blink);
+            updateStorageItem(p,"BLNK",p.stats.blink);
             if(p.stats.blink == 0){
                 removeFromStorage(p,"BLNK");
                 if(p.abilitySlots[0]==="BLNK") p.abilitySlots[0] = "NONE";
@@ -1916,7 +1935,7 @@ function death(p, killer){
         if(isEquipped(p,"ENG")){
             p.stats.engModUpgrades--;
             p.stats.engMod = p.stats.engMod - statData.engModINC;
-            incrementStorageItem(p,"ENG",p.stats.engMod);
+            updateStorageItem(p,"ENG",p.stats.engMod);
             if(p.stats.engMod == 0){
                 removeFromStorage(p,"ENG");
                 if(p.abilitySlots[0]==="ENG") p.abilitySlots[0] = "NONE";
@@ -1926,7 +1945,7 @@ function death(p, killer){
         if(isEquipped(p,"TRAP")){
             p.stats.trapUpgrades--;
             p.stats.trap = p.stats.trap - statData.trapINC;
-            incrementStorageItem(p,"TRAP",p.stats.trap);
+            updateStorageItem(p,"TRAP",p.stats.trap);
             if(p.stats.trap == 0){
                 removeFromStorage(p,"TRAP");
                 if(p.abilitySlots[0]==="TRAP") p.abilitySlots[0] = "NONE";
@@ -1936,7 +1955,7 @@ function death(p, killer){
         if(isEquipped(p,"HIDE")){
             p.stats.stealthUpgrades--;
             p.stats.stealth = p.stats.stealth - statData.stealthINC;
-            incrementStorageItem(p,"HIDE",p.stats.stealth);
+            updateStorageItem(p,"HIDE",p.stats.stealth);
             if(p.stats.stealth == 0){
                 removeFromStorage(p,"HIDE");
                 if(p.abilitySlots[0]==="HIDE") p.abilitySlots[0] = "NONE";
@@ -1946,7 +1965,7 @@ function death(p, killer){
         if(isEquipped(p,"RAIL")){
             p.stats.railgunUpgrades--;
             p.stats.railgun = p.stats.railgun - statData.railgunINC;
-            incrementStorageItem(p,"RAIL",p.stats.railgun);
+            updateStorageItem(p,"RAIL",p.stats.railgun);
             if(p.stats.railgun == 0){
                 removeFromStorage(p,"RAIL");
                 if(p.abilitySlots[0]==="RAIL") p.abilitySlots[0] = "NONE";
