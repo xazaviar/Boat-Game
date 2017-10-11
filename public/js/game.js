@@ -38,6 +38,7 @@ var colorsDefault = {
     "enemyColor":       "#FF0000", //Default -> #FF0000
     "shopColor":        "#999999", //Default -> #272727
     "rockColor":        "#00BB00", //Default -> #00BB00
+    "trapColor":        "#990000", //Default -> #00BB00
 
     "actionTextColor":  "#FFFFFF", //Default -> #FFFFFF
     "attackColor":      "#FF0000", //Default -> #FF0000
@@ -647,6 +648,30 @@ function drawMonitor(){
             }
         }
 
+        //Draw Known Traps
+        for(var tr in me.knownTraps){
+            var range = me.stats.radar;
+            var t = parseInt(range/2);
+            var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
+            var cX = (me.knownTraps[tr].loc[0] + xAdj)%map.length, cY = (me.knownTraps[tr].loc[1] + yAdj)%map.length;
+
+            if(cX<0)cX+=map.length;
+            if(cY<0)cY+=map.length;
+
+            //Draw Zone
+            ctx.beginPath();
+            ctx.globalAlpha = 0.3;
+            if(me.knownTraps[tr].owned) ctx.fillStyle = colors.hudColor;
+            else ctx.fillStyle = colors.trapColor;
+
+            if(me.knownTraps[tr].lvl==1)
+                ctx.fillRect(cX*tileSize, cY*tileSize, 2*tileSize, 2*tileSize);
+            else
+                ctx.fillRect(cX*tileSize-tileSize, cY*tileSize-tileSize, 3*tileSize, 3*tileSize);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+
         //Draw enemy Ships
         //TODO: SUPER SLOW, fix it
         if(players!=null){
@@ -723,6 +748,9 @@ function drawMonitor(){
                 actions.push({"type":"CANNON","loc":me.queue[i].location});
             }else if(me.queue[i].type==="RAILGUN"){
                 actions.push({"type":"RAILGUN","loc":prevLoc,"dir":me.queue[i].direction});
+            }else if(me.queue[i].type==="BLINK"){
+                actions.push({"type":"BLINK","loc":me.queue[i].location});
+                prevLoc = me.queue[i].location;
             }else if(me.queue[i].type==="MOVE"){
                 var loc;
                 if(me.queue[i].direction==="N"){
@@ -788,6 +816,13 @@ function drawMonitor(){
                             ctx.font = "14px Courier";
                             ctx.fillText(""+actions[i].num,x*tileSize+6,y*tileSize+actions[i].num*15);
                         }else if(actions[i].type==="MOVE"){
+                            ctx.beginPath();
+                            ctx.fillStyle = colors.moveColor;
+                            ctx.globalAlpha = 0.4;
+                            ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
+                            ctx.globalAlpha = 1.0;
+                            ctx.stroke();
+                        }else if(actions[i].type==="BLINK"){
                             ctx.beginPath();
                             ctx.fillStyle = colors.moveColor;
                             ctx.globalAlpha = 0.4;
@@ -1103,6 +1138,9 @@ function drawSideBar(){
         }else if(me.queue[i].type==="RAILGUN"){
             ctx.fillStyle = colors.abilityColor;
             text = "RAILGUN "+me.queue[i].direction;
+        }else if(me.queue[i].type==="TRAP"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "TRAP";
         }
         ctx.beginPath();
         ctx.fillRect(40,i*45+70,220,35);
@@ -1144,7 +1182,7 @@ function drawSideBar(){
         ctx.fillStyle = colors.hudColor;
         ctx.fillText("URANIUM: ",5,sCardHei+220);
         ctx.fillStyle = colors.uraniumColor;
-        ctx.fillText(me.info.uranium+"u",25,sCardHei+265);
+        ctx.fillText(me.info.uranium+"u/"+me.stats.urCarry+"u",25,sCardHei+265);
     }
     else if(statInfo){
         var cookie = getCookie("token");
@@ -1195,8 +1233,8 @@ function drawSideBar(){
             ctx.strokeStyle = colors.hudColor;
             ctx.fillText("INSURED",195,sCardHei);
         }else{
-            ctx.fillStyle = colors.enemyColor;
-            ctx.strokeStyle = colors.enemyColor;
+            ctx.fillStyle = colors.needMoreColor;
+            ctx.strokeStyle = colors.needMoreColor;
             ctx.fillText("UNINSURED",185,sCardHei);
         }
         ctx.strokeRect(180,sCardHei-17,107,25);
@@ -1240,10 +1278,27 @@ function drawSideBar(){
         //Ability Boxes
         ctx.beginPath();
         sCardHei = 370;
-        ctx.font = "22px Courier";
-        ctx.fillStyle=colors.hudColor;
-        ctx.strokeStyle = colors.hudColor;
+        if(me.abilitySlots[0].canUse && game.phase==0){
+            ctx.fillStyle = colors.hudColor;
+            ctx.strokeStyle = colors.hudColor;
+        }else{
+            ctx.fillStyle = colors.cantBuyColor;
+            ctx.strokeStyle = colors.cantBuyColor;
+        }
         ctx.strokeRect(80,sCardHei+20,50,50);
+        ctx.font = "22px Courier";
+        ctx.fillText("Q",99,sCardHei+90);
+        ctx.font = "18px Courier";
+        if(me.abilitySlots[0].type!=="NONE") ctx.fillText(me.abilitySlots[0].type,82,sCardHei+50);
+
+
+        if(me.abilitySlots[1].canUse){
+            ctx.fillStyle = colors.hudColor;
+            ctx.strokeStyle = colors.hudColor;
+        }else{
+            ctx.fillStyle = colors.cantBuyColor;
+            ctx.strokeStyle = colors.cantBuyColor;
+        }
         ctx.strokeRect(180,sCardHei+20,50,50);
         if(me.stats.loadoutSize < 2){//If not unlocked
             ctx.beginPath();
@@ -1255,17 +1310,24 @@ function drawSideBar(){
             ctx.lineTo(180,sCardHei+70);
             ctx.stroke();
         }
-        ctx.fillText("Q",99,sCardHei+90);
+        ctx.font = "22px Courier";
         ctx.fillText("E",199,sCardHei+90);
         ctx.font = "18px Courier";
-        if(me.abilitySlots[0]!=="NONE") ctx.fillText(me.abilitySlots[0],82,sCardHei+50);
-        if(me.abilitySlots[1]!=="NONE") ctx.fillText(me.abilitySlots[1],182,sCardHei+50);
+        if(me.abilitySlots[1].type!=="NONE") ctx.fillText(me.abilitySlots[1].type,182,sCardHei+50);
 
         //Mode
         sCardHei = 500;
         ctx.beginPath();
         ctx.font = "24px Courier";
-        if(me.info.inCombat>0){ //Combat
+        if(me.info.trapped>0){ //Trapped
+            ctx.fillStyle=colors.trapColor;
+            ctx.fillText("TRAPPED",5,sCardHei);
+
+        }else if(me.info.stealthTime>0){ //stealthed
+            ctx.fillStyle=colors.hudColor;
+            ctx.fillText("STEALTHED",5,sCardHei);
+
+        }else if(me.info.inCombat>0){ //Combat
             ctx.fillStyle=colors.enemyColor;
             ctx.fillText("IN COMBAT",5,sCardHei);
 
@@ -1664,8 +1726,8 @@ function drawSShopMenu(c, ctx){
         ctx.fillText("Q",startX+35,startY*2+90);
         ctx.fillText("E",startX+107,startY*2+90);
         ctx.font = "18px Courier";
-        if(me.abilitySlots[0]!=="NONE") ctx.fillText(me.abilitySlots[0],startX+17,startY*2+50);
-        if(me.abilitySlots[1]!=="NONE") ctx.fillText(me.abilitySlots[1],startX+92,startY*2+50);
+        if(me.abilitySlots[0].type!=="NONE") ctx.fillText(me.abilitySlots[0].type,startX+17,startY*2+50);
+        if(me.abilitySlots[1].type!=="NONE") ctx.fillText(me.abilitySlots[1].type,startX+92,startY*2+50);
 
         ctx.stroke();
 
@@ -2023,23 +2085,25 @@ function toggleSaving(){
 }
 
 function doSpecialAction(slot){
-    if(me.abilitySlots[slot]==="HEAL")
+    if(me.abilitySlots[slot].type==="HEAL" && me.abilitySlots[slot].canUse)
         updateQueue({"type":"QUICKHEAL"});
-    if(me.abilitySlots[slot]==="ENG")
+    if(me.abilitySlots[slot].type==="TRAP" && me.abilitySlots[slot].canUse)
+        updateQueue({"type":"TRAP"});
+    if(me.abilitySlots[slot].type==="ENG" && me.abilitySlots[slot].canUse)
         updateQueue({"type":"ENERGY"});
-    if(me.abilitySlots[slot]==="HIDE")
+    if(me.abilitySlots[slot].type==="HIDE" && me.abilitySlots[slot].canUse)
         updateQueue({"type":"STEALTH"});
-    if(me.abilitySlots[slot]==="CAN"){
+    if(me.abilitySlots[slot].type==="CAN" && me.abilitySlots[slot].canUse){
         displayCannon = !displayCannon;
         displayRailgun = false;
         displayBlink = false;
     }
-    if(me.abilitySlots[slot]==="RAIL"){
+    if(me.abilitySlots[slot].type==="RAIL" && me.abilitySlots[slot].canUse){
         displayCannon = false;
         displayRailgun = !displayRailgun;
         displayBlink = false;
     }
-    if(me.abilitySlots[slot]==="BLNK"){
+    if(me.abilitySlots[slot].type==="BLNK" && me.abilitySlots[slot].canUse){
         displayCannon = false;
         displayRailgun = false;
         displayBlink = !displayBlink;
