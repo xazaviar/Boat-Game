@@ -52,7 +52,7 @@
     "railgunINC"   :    1,
 
     "urCarryStart" :    3,
-    "urCarryMAX"   :    7,
+    "urCarryMAX"   :    11,
     "urCarryINC"   :    2,
 
     "insuranceStart":    0,

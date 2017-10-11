@@ -54,7 +54,7 @@ var energyModUraniumUsage   = 1;
 var cannonEnergyUsage       = 10;
 var cannonUraniumUsage      = 1;
 
-var blinkEnergyUsage        = 12; //Changes by lvl
+var blinkEnergyUsage        = 12;
 var blinkUraniumUsage       = 1;
 
 var stealthEnergyUsage      = 5;
@@ -84,8 +84,7 @@ var quickHealActionUsage    = 1;
 //TODO: SHOP MODEL IMPORT
 var shopData;
 
-var shopList = []; //for later use
-var lootList = []; //for later use
+var shopList = [];
 var trapList = [];
 var trapCounter = 0;
 
@@ -170,7 +169,8 @@ function startServer(){
                 "connected": 0,
                 "hasInsurance": false,
                 "stealthed": false,
-                "trapped": 0
+                "trapped": 0,
+                "shipMass": 0
             },
             "loc": sp,
             "queue": [],
@@ -333,7 +333,7 @@ function startServer(){
                         "canBuy":p.stats.hp!=p.stats.hpMAX
                     },
                     "insurance":{
-                        "price":calculatePrices(shopData.insurance,p.stats.hpMAX),
+                        "price":calculatePrices(shopData.insurance,p.info.shipMass),
                         "canBuy":!p.info.hasInsurance
                     },
                     "hpU":{
@@ -395,27 +395,27 @@ function startServer(){
                         "canBuy":p.stats.urCarryUpgrades!=p.stats.urCarryUpgradesMAX
                     },
                     "statHP":{
-                        "price":calculatePrices(shopData.staticHp,0),
+                        "price":calculatePrices(shopData.staticHp,1),
                         "canBuy":!p.stats.staticHp
                     },
                     "statEng":{
-                        "price":calculatePrices(shopData.staticEng,0),
+                        "price":calculatePrices(shopData.staticEng,1),
                         "canBuy":!p.stats.staticEng
                     },
                     "statAtk":{
-                        "price":calculatePrices(shopData.staticAtk,0),
+                        "price":calculatePrices(shopData.staticAtk,1),
                         "canBuy":!p.stats.staticAtk
                     },
                     "statRdr":{
-                        "price":calculatePrices(shopData.staticRdr,0),
+                        "price":calculatePrices(shopData.staticRdr,1),
                         "canBuy":!p.stats.staticRdr
                     },
                     "statDR":{
-                        "price":calculatePrices(shopData.staticDR,0),
+                        "price":calculatePrices(shopData.staticDR,1),
                         "canBuy":!p.stats.staticDR
                     },
                     "uranium":{
-                        "price":calculatePrices(shopData.uranium,0),
+                        "price":calculatePrices(shopData.uranium,1),
                         "canBuy":p.info.uranium<p.stats.urCarry
                     },
                     "quickHeal":{
@@ -598,7 +598,7 @@ function startServer(){
                     "canBuy":p.stats.hp!=p.stats.hpMAX
                 },
                 "insurance":{
-                    "price":calculatePrices(shopData.insurance,p.stats.hpMAX),
+                    "price":calculatePrices(shopData.insurance,p.info.shipMass),
                     "canBuy":!p.info.hasInsurance
                 },
                 "hpU":{
@@ -660,27 +660,27 @@ function startServer(){
                     "canBuy":p.stats.urCarryUpgrades!=p.stats.urCarryUpgradesMAX
                 },
                 "statHP":{
-                    "price":calculatePrices(shopData.staticHp,0),
+                    "price":calculatePrices(shopData.staticHp,1),
                     "canBuy":!p.stats.staticHp
                 },
                 "statEng":{
-                    "price":calculatePrices(shopData.staticEng,0),
+                    "price":calculatePrices(shopData.staticEng,1),
                     "canBuy":!p.stats.staticEng
                 },
                 "statAtk":{
-                    "price":calculatePrices(shopData.staticAtk,0),
+                    "price":calculatePrices(shopData.staticAtk,1),
                     "canBuy":!p.stats.staticAtk
                 },
                 "statRdr":{
-                    "price":calculatePrices(shopData.staticRdr,0),
+                    "price":calculatePrices(shopData.staticRdr,1),
                     "canBuy":!p.stats.staticRdr
                 },
                 "statDR":{
-                    "price":calculatePrices(shopData.staticDR,0),
+                    "price":calculatePrices(shopData.staticDR,1),
                     "canBuy":!p.stats.staticDR
                 },
                 "uranium":{
-                    "price":calculatePrices(shopData.uranium,0),
+                    "price":calculatePrices(shopData.uranium,1),
                     "canBuy":p.info.uranium<p.stats.urCarry
                 },
                 "quickHeal":{
@@ -697,9 +697,11 @@ function startServer(){
                     makePurchase(shop.hpF.price,p);
                     p.stats.hp = p.stats.hpMAX;
                     p.battleLog.unshift("You repaired your ship.");
-                }else if(req.body.item==="hpF" && !canPurchase(shop.hpF.price,inventory)){
+                }
+                else if(req.body.item==="hpF" && !canPurchase(shop.hpF.price,inventory)){
                     p.battleLog.unshift("You need more resources.");
-                }else if(req.body.item==="hpF" && !shop.hpF.canBuy){
+                }
+                else if(req.body.item==="hpF" && !shop.hpF.canBuy){
                     p.battleLog.unshift("Your ship is at full health.");
                 }
 
@@ -708,9 +710,11 @@ function startServer(){
                     p.stats.hp = p.stats.hp + 5;
                     if(p.stats.hp > p.stats.hpMAX) p.stats.hp = p.stats.hpMAX;
                     p.battleLog.unshift("You repaired your ship.");
-                }else if(req.body.item==="hp5" && !canPurchase(shop.hp5.price,inventory)){
+                }
+                else if(req.body.item==="hp5" && !canPurchase(shop.hp5.price,inventory)){
                     p.battleLog.unshift("You need more resources.");
-                }else if(req.body.item==="hp5" && !shop.hp5.canBuy){
+                }
+                else if(req.body.item==="hp5" && !shop.hp5.canBuy){
                     p.battleLog.unshift("Your ship is at full health.");
                 }
 
@@ -718,46 +722,56 @@ function startServer(){
                     makePurchase(shop.insurance.price,p);
                     p.info.hasInsurance = true;
                     p.battleLog.unshift("You purchased insurance.");
-                }else if(req.body.item==="insurance" && !canPurchase(shop.insurance.price,inventory)){
+                }
+                else if(req.body.item==="insurance" && !canPurchase(shop.insurance.price,inventory)){
                     p.battleLog.unshift("You need more resources.");
-                }else if(req.body.item==="insurance" && !shop.insurance.canBuy){
+                }
+                else if(req.body.item==="insurance" && !shop.insurance.canBuy){
                     p.battleLog.unshift("You are already insured.");
                 }
 
                 else if(req.body.item==="hpU" && canPurchase(shop.hpU.price,inventory) && shop.hpU.canBuy){
                     makePurchase(shop.hpU.price,p);
                     p.stats.hpUpgrades++;
+                    p.info.shipMass++;
                     p.stats.hpMAX = p.stats.hpMAX + statData.hpINC;
                     p.stats.hp = p.stats.hp + statData.hpINC;
                     p.battleLog.unshift("You upgraded your health.");
-                }else if(req.body.item==="hpU" && !canPurchase(shop.hpU.price,inventory)){
+                }
+                else if(req.body.item==="hpU" && !canPurchase(shop.hpU.price,inventory)){
                     p.battleLog.unshift("You need more resources.");
                 }
 
                 else if(req.body.item==="enU" && canPurchase(shop.enU.price,inventory) && shop.enU.canBuy){
                     makePurchase(shop.enU.price,p);
                     p.stats.energyUpgrades++;
+                    p.info.shipMass++;
                     p.stats.energyMAX = p.stats.energyMAX + statData.energyINC;
                     p.battleLog.unshift("You upgraded your energy.");
-                }else if(req.body.item==="enU" && !canPurchase(shop.enU.price,inventory)){
+                }
+                else if(req.body.item==="enU" && !canPurchase(shop.enU.price,inventory)){
                     p.battleLog.unshift("You need more resources.");
                 }
 
                 else if(req.body.item==="radU" && canPurchase(shop.radU.price,inventory) && shop.radU.canBuy){
                     makePurchase(shop.radU.price,p);
                     p.stats.radarUpgrades++;
+                    p.info.shipMass++;
                     p.stats.radar = p.stats.radar + statData.radarINC;
                     p.battleLog.unshift("You upgraded your radar.");
-                }else if(req.body.item==="radU" && !canPurchase(shop.radU.price,inventory)){
+                }
+                else if(req.body.item==="radU" && !canPurchase(shop.radU.price,inventory)){
                     p.battleLog.unshift("You need more resources.");
                 }
 
                 else if(req.body.item==="atkU" && canPurchase(shop.atkU.price,inventory) && shop.atkU.canBuy){
                     makePurchase(shop.atkU.price,p);
                     p.stats.attackUpgrades++;
+                    p.info.shipMass++;
                     p.stats.attack = p.stats.attack + statData.attackINC;
                     p.battleLog.unshift("You upgraded your radar.");
-                }else if(req.body.item==="atkU" && !canPurchase(shop.atkU.price,inventory)){
+                }
+                else if(req.body.item==="atkU" && !canPurchase(shop.atkU.price,inventory)){
                     p.battleLog.unshift("You need more resources.");
                 }
 
@@ -784,6 +798,7 @@ function startServer(){
                     makePurchase(shop.canU.price,p);
                     p.stats.cannonUpgrades++;
                     p.stats.cannon = p.stats.cannon + statData.cannonINC;
+                    p.info.shipMass++;
                     if(p.stats.cannonUpgrades==1){
                         p.battleLog.unshift("You purchased the Cannon.");
                         p.storage.push({"name":"CAN","val":p.stats.cannon});
@@ -803,6 +818,7 @@ function startServer(){
                     makePurchase(shop.bliU.price,p);
                     p.stats.blinkUpgrades++;
                     p.stats.blink = p.stats.blink + statData.blinkINC;
+                    p.info.shipMass++;
                     if(p.stats.blinkUpgrades==1){
                         p.battleLog.unshift("You purchased the Blink Module.");
                         p.storage.push({"name":"BLNK","val":p.stats.blink});
@@ -821,6 +837,7 @@ function startServer(){
                     makePurchase(shop.steU.price,p);
                     p.stats.stealthUpgrades++;
                     p.stats.stealth = p.stats.stealth + statData.stealthINC;
+                    p.info.shipMass++;
                     if(p.stats.stealthUpgrades==1){
                         p.battleLog.unshift("You purchased the Stealth Module.");
                         p.storage.push({"name":"HIDE","val":p.stats.stealth});
@@ -839,6 +856,7 @@ function startServer(){
                     makePurchase(shop.trapU.price,p);
                     p.stats.trapUpgrades++;
                     p.stats.trap = p.stats.trap + statData.trapINC;
+                    p.info.shipMass++;
                     if(p.stats.trapUpgrades==1){
                         p.battleLog.unshift("You purchased the Trap Module.");
                         p.storage.push({"name":"TRAP","val":p.stats.trap});
@@ -857,6 +875,7 @@ function startServer(){
                     makePurchase(shop.engModU.price,p);
                     p.stats.engModUpgrades++;
                     p.stats.engMod = p.stats.engMod + statData.engModINC;
+                    p.info.shipMass++;
                     if(p.stats.engModUpgrades==1){
                         p.battleLog.unshift("You purchased the Energy Module.");
                         p.storage.push({"name":"ENG","val":p.stats.engMod});
@@ -875,6 +894,7 @@ function startServer(){
                     makePurchase(shop.railU.price,p);
                     p.stats.railgunUpgrades++;
                     p.stats.railgun = p.stats.railgun + statData.railgunINC;
+                    p.info.shipMass++;
                     if(p.stats.railgunUpgrades==1){
                         p.battleLog.unshift("You purchased the Railgun.");
                         p.storage.push({"name":"RAIL","val":p.stats.railgun});
@@ -913,6 +933,7 @@ function startServer(){
                     makePurchase(shop.scanU.price,p);
                     p.stats.scannerUpgrades++;
                     p.stats.scanner = p.stats.scanner + statData.scannerINC;
+                    p.info.shipMass++;
                     p.battleLog.unshift("You upgraded your Scanner.");
                 }
                 else if(req.body.item==="scanU" && !canPurchase(shop.scanU.price,inventory)){
@@ -924,6 +945,7 @@ function startServer(){
                     p.stats.staticHp = true;
                     p.battleLog.unshift("You purchased the Health+ Module.");
                     p.storage.push({"name":"HP+","val":1});
+                    p.info.shipMass++;
                     if(p.abilitySlots[1].type==="NONE" && p.stats.loadoutSize>1) p.abilitySlots[1]={"type":"HP+","canUse":false};
                     else if(p.abilitySlots[1].type!=="HP+") p.abilitySlots[0]={"type":"HP+","canUse":false};
                 }
@@ -934,6 +956,7 @@ function startServer(){
                 else if(req.body.item==="statEng" && canPurchase(shop.statEng.price,inventory) && shop.statEng.canBuy){
                     makePurchase(shop.statEng.price,p);
                     p.stats.staticEng = true;
+                    p.info.shipMass++;
                     p.battleLog.unshift("You purchased the Energy+ Module.");
                     p.storage.push({"name":"PWR+","val":1});
                     if(p.abilitySlots[1].type==="NONE" && p.stats.loadoutSize>1) p.abilitySlots[1]={"type":"PWR+","canUse":false};
@@ -946,6 +969,7 @@ function startServer(){
                 else if(req.body.item==="statAtk" && canPurchase(shop.statAtk.price,inventory) && shop.statAtk.canBuy){
                     makePurchase(shop.statAtk.price,p);
                     p.stats.staticAtk = true;
+                    p.info.shipMass++;
                     p.battleLog.unshift("You purchased the Attack+ Module.");
                     p.storage.push({"name":"ATK+","val":1});
                     if(p.abilitySlots[1].type==="NONE" && p.stats.loadoutSize>1) p.abilitySlots[1]={"type":"ATK+","canUse":false};
@@ -958,6 +982,7 @@ function startServer(){
                 else if(req.body.item==="statRdr" && canPurchase(shop.statRdr.price,inventory) && shop.statRdr.canBuy){
                     makePurchase(shop.statRdr.price,p);
                     p.stats.staticRdr = true;
+                    p.info.shipMass++;
                     p.battleLog.unshift("You purchased the Radar+ Module.");
                     p.storage.push({"name":"RDR+","val":1});
                     if(p.abilitySlots[1].type==="NONE" && p.stats.loadoutSize>1) p.abilitySlots[1]={"type":"RDR+","canUse":false};
@@ -970,6 +995,7 @@ function startServer(){
                 else if(req.body.item==="statDR" && canPurchase(shop.statDR.price,inventory) && shop.statDR.canBuy){
                     makePurchase(shop.statDR.price,p);
                     p.stats.staticDR = true;
+                    p.info.shipMass++;
                     p.battleLog.unshift("You purchased the DR Module.");
                     p.storage.push({"name":"DR","val":1});
                     if(p.abilitySlots[1].type==="NONE" && p.stats.loadoutSize>1) p.abilitySlots[1]={"type":"DR","canUse":false};
@@ -982,6 +1008,7 @@ function startServer(){
                 else if(req.body.item==="quickHeal" && canPurchase(shop.quickHeal.price,inventory) && shop.quickHeal.canBuy){
                     makePurchase(shop.quickHeal.price,p);
                     p.stats.quickHeal = true;
+                    p.info.shipMass++;
                     p.battleLog.unshift("You purchased a Quick Heal.");
                     p.storage.push({"name":"HEAL","val":1});
                     if(p.abilitySlots[1].type==="NONE" && p.stats.loadoutSize>1) p.abilitySlots[1]={"type":"HEAL","canUse":false};
@@ -1004,6 +1031,30 @@ function startServer(){
                 else{
                     p.battleLog.unshift("You can't purchase that.");
                 }
+
+                //Check for Changes
+                if(isEquipped(p,"RDR+")){
+                    p.stats.radar = statData.radarStart+(statData.radarINC*p.stats.radarUpgrades);
+                }else{
+                    p.stats.radar = statData.radarStart+(statData.radarINC*(p.stats.radarUpgrades-1));
+                }
+
+                if(isEquipped(p,"HP+")){
+                    p.stats.hpMAX = statData.hpStart+(statData.hpINC*p.stats.hpUpgrades)+5;
+                }else{
+                    p.stats.hpMAX = statData.hpStart+(statData.hpINC*(p.stats.hpUpgrades));
+                    if(p.stats.hp > p.stats.hpMAX) p.stats.hp = p.stats.hpMAX;
+                }
+
+                if(isEquipped(p,"PWR+")){
+                    p.stats.energyMAX = statData.energyStart+(statData.energyINC*p.stats.energyUpgrades)+5;
+                }else{
+                    p.stats.energyMAX = statData.energyStart+(statData.energyINC*(p.stats.energyUpgrades));
+                    if(p.stats.energy > p.stats.energyMAX) p.stats.energy = p.stats.energyMAX;
+                }
+
+                if(!isEquipped(p,"HIDE"))
+                    p.info.stealthed = false;
             }
         }
         res.send('');
@@ -1527,7 +1578,7 @@ function loot(player){
             player.info.totalUranium = player.info.totalUranium + treasure.count;
             player.battleLog.unshift("You found "+treasure.count+" uranium!");
             looted = true;
-        }else if(treasure.type==="URANIUM" && player.info.uranium==player.stats.urCarry){
+        }else if(treasure.type==="URANIUM" && player.info.uranium>=player.stats.urCarry){
             player.battleLog.unshift("You can't carry any more uranium.");
         }
 
@@ -1922,41 +1973,41 @@ function calculatePrices(purchase, lvl){
 
     //GOLD
     if(purchase.gold.model==1)
-        prices.gold = lvl * purchase.gold.mod;
+        prices.gold = Math.min(lvl * purchase.gold.mod, purchase.gold.cap);
     else if(purchase.gold.model==2)
-        prices.gold = lvl * lvl * purchase.gold.mod;
+        prices.gold = Math.min(lvl * lvl * purchase.gold.mod, purchase.gold.cap);
     else if(purchase.gold.model==3)
-        prices.gold = purchase.gold.mod;
+        prices.gold = Math.min(purchase.gold.mod, purchase.gold.cap);
     else if(purchase.gold.model==4)
-        prices.gold = lvl * purchase.gold.mod + purchase.gold.mod2;
+        prices.gold = Math.min(lvl * purchase.gold.mod + purchase.gold.mod2, purchase.gold.cap);
     else if(purchase.gold.model==5)
-        prices.gold = lvl * lvl * purchase.gold.mod + purchase.gold.mod2;
+        prices.gold = Math.min(lvl * lvl * purchase.gold.mod + purchase.gold.mod2, purchase.gold.cap);
 
     //IRON
     if(lvl >= purchase.iron.threshold)
         if(purchase.iron.model==1)
-            prices.iron = lvl * purchase.iron.mod;
+            prices.iron = Math.min((lvl * purchase.iron.mod)*parseInt(lvl/purchase.iron.threshold), purchase.iron.cap);
         else if(purchase.iron.model==2)
-            prices.iron = lvl * lvl * purchase.iron.mod;
+            prices.iron = Math.min((lvl * lvl * purchase.iron.mod)*parseInt(lvl/purchase.iron.threshold), purchase.iron.cap);
         else if(purchase.iron.model==3)
-            prices.iron = purchase.iron.mod;
+            prices.iron = Math.min(purchase.iron.mod*parseInt(lvl/purchase.iron.threshold), purchase.iron.cap);
         else if(purchase.iron.model==4)
-            prices.iron = lvl * purchase.iron.mod + purchase.iron.mod2;
+            prices.iron = Math.min((lvl * purchase.iron.mod + purchase.iron.mod2)*parseInt(lvl/purchase.iron.threshold), purchase.iron.cap);
         else if(purchase.gold.model==5)
-            prices.iron = lvl * lvl * purchase.iron.mod + purchase.iron.mod2;
+            prices.iron = Math.min((lvl * lvl * purchase.iron.mod + purchase.iron.mod2)*parseInt(lvl/purchase.iron.threshold), purchase.iron.cap);
 
     //URANIUM
     if(lvl >= purchase.uranium.threshold)
         if(purchase.uranium.model==1)
-            prices.uranium = lvl * purchase.uranium.mod;
+            prices.uranium = Math.min((lvl * purchase.uranium.mod)*parseInt(lvl/purchase.uranium.threshold), purchase.uranium.cap);
         else if(purchase.uranium.model==2)
-            prices.uranium = lvl * lvl * purchase.uranium.mod;
+            prices.uranium = Math.min((lvl * lvl * purchase.uranium.mod)*parseInt(lvl/purchase.uranium.threshold), purchase.uranium.cap);
         else if(purchase.uranium.model==3)
-            prices.uranium = purchase.uranium.mod;
+            prices.uranium = Math.min((purchase.uranium.mod)*parseInt(lvl/purchase.uranium.threshold), purchase.uranium.cap);
         else if(purchase.uranium.model==4)
-            prices.uranium = lvl * purchase.uranium.mod + purchase.uranium.mod2;
+            prices.uranium = Math.min((lvl * purchase.uranium.mod + purchase.uranium.mod2)*parseInt(lvl/purchase.uranium.threshold), purchase.uranium.cap);
         else if(purchase.uranium.model==5)
-            prices.uranium = lvl * lvl * purchase.uranium.mod + purchase.uranium.mod2;
+            prices.uranium = Math.min((lvl * lvl * purchase.uranium.mod + purchase.uranium.mod2)*parseInt(lvl/purchase.uranium.threshold), purchase.uranium.cap);
 
     return prices;
 }
@@ -2006,6 +2057,9 @@ function death(p, killer){
         p.info.gold = 0;
         p.info.iron = 0;
         p.info.uranium = 0;
+
+        p.info.shipMass-=5;
+        if(p.info.shipMass<0)p.info.shipMass=0;
 
         //Equips
         if(p.stats.scanner>1){
@@ -2135,7 +2189,8 @@ function death(p, killer){
             p.stats.attackUpgrades--;
             p.stats.attack = p.stats.attack-statData.attackINC;
         }
-    }else{
+    }
+    else{
         p.info.hasInsurance = false;
         dropGold = p.info.gold-parseInt(p.info.gold*p.stats.insurance*.2);
         dropIron = p.info.iron-parseInt(p.info.iron*p.stats.insurance*.2);

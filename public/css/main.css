@@ -3,8 +3,7 @@ body {
 }
 
 .gameScreen {
-    width: 75%;
-    margin: 0 auto;
+    margin-left: 0px;
     z-index: 10;
 }
 
