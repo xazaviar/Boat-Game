@@ -320,6 +320,7 @@ function startServer(){
                 "map": sendMap,
                 "game":{"countdown":countdown,"phase":phase,"version":version},
                 "shop":{
+                    "shops": shopList,
                     "withinShop": withinShop(p.loc),
 
                     //Regular Shop
@@ -1838,12 +1839,15 @@ function buildMap(){
 
             if(r < .03 && !superShop && (x < (mapSize-parseInt(zone3Wid*mapSize))/2-3 && x > (mapSize-parseInt(zone3Wid*mapSize))/2-parseInt(zone2Wid*mapSize))){
                 map[x][y] = {"type":"SSHOP"};
+                shopList.push({"type":"SSHOP","loc":[x,y]});
                 superShop = true;
             }else if(r < .01 && !superShop && (x > (mapSize+3-parseInt(zone3Wid*mapSize))/2+parseInt(zone3Wid*mapSize) && x < (mapSize-parseInt(zone3Wid*mapSize))/2+parseInt(zone3Wid*mapSize)+parseInt(zone2Wid*mapSize))){
                 map[x][y] = {"type":"SSHOP"};
+                shopList.push({"type":"SSHOP","loc":[x,y]});
                 superShop = true;
             }else if(r < shopSpread && (x < (mapSize-parseInt(zone3Wid*mapSize))/2-3 || x > mapSize+3-((mapSize-parseInt(zone3Wid*mapSize))/2))){
                 map[x][y] = {"type":"SHOP"};
+                shopList.push({"type":"SHOP","loc":[x,y]});
             }else if(r < rockSpread){
                 map[x][y] = {"type":"ROCK"};
             }else{
