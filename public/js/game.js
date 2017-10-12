@@ -102,7 +102,29 @@ setTimeout(function() {
     setInterval(function(){if(chatMode){chatBlink=!chatBlink;} },200);
 
     drawMonitor();
+
+    var cookie = getCookie("token")
+    if(cookie!=""){
+        tokenInit(cookie);
+    }
+
 },2);
+
+function tokenInit(token){
+    $.get("/returning_user/"+token, function( data ) {
+        if(data.error===""){
+            console.log("token: "+data.token);
+            if(data.token!==undefined){
+                me.token = data.token;
+                map = data.map;
+
+                document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
+                gameStart = false;
+                setInterval(function(){newData();},tick);
+            }
+        }
+    });
+}
 
 function init(){
     //get data
@@ -568,6 +590,28 @@ function sendChatMsg(){
     });
 }
 
+function removeFromQueue(i){
+    var dat = {
+        "token": me.token,
+        "remove": i
+    };
+
+    $.ajax({
+        url: "/removeFromQueue",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+            // console.log('Add Project Error: ' + error.message);
+        }
+    });
+}
 
 //******************************************************************************
 // Drawing Canvas Functions
@@ -713,15 +757,17 @@ function drawMonitor(){
             var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
             var cX = (sloc[0] + xAdj)%map.length, cY = (sloc[1] + yAdj)%map.length;
 
+
+            // if(cX<0)cX+=map.length;
+            // if(cY<0)cY+=map.length;
+
             if(shop.shops[i].type==="SHOP"){ //Shop
+
                 //Draw Safe Zone
                 ctx.beginPath();
                 ctx.globalAlpha = 0.3;
-                ctx.fillRect(cX*tileSize-tileSize, cY*tileSize-tileSize, 3*tileSize, 3*tileSize);
+                ctx.fillRect((cX-1)*tileSize, (cY-1)*tileSize, 3*tileSize, 3*tileSize);
                 ctx.fill();
-
-                if(cX<0)cX+=map.length;
-                if(cY<0)cY+=map.length;
 
                 //Draw Shop
                 ctx.beginPath();
@@ -736,14 +782,12 @@ function drawMonitor(){
 
             }
             else if(shop.shops[i].type==="SSHOP"){ //Super Shop
+
                 //Draw Safe Zone
                 ctx.beginPath();
                 ctx.globalAlpha = 0.3;
-                ctx.fillRect(cX*tileSize-2*tileSize, cY*tileSize-2*tileSize, 5*tileSize, 5*tileSize);
+                ctx.fillRect((cX-2)*tileSize, (cY-2)*tileSize, 5*tileSize, 5*tileSize);
                 ctx.fill();
-
-                if(cX<0)cX+=map.length;
-                if(cY<0)cY+=map.length;
 
                 //Draw Super Shop
                 ctx.beginPath();
@@ -855,8 +899,8 @@ function drawMonitor(){
             var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
             var x = (actions[i].loc[0] + xAdj)%map.length, y = (actions[i].loc[1] + yAdj)%map.length;
 
-            if(y<0)x+=map.length;
-            if(y<0)x+=map.length;
+            if(x<0)x+=map.length;
+            if(y<0)y+=map.length;
 
             if(actions[i].type==="ATTACK"){
                 var xSize = 15;
@@ -1241,15 +1285,16 @@ function drawSideBar(){
         //Named Stats
         ctx.beginPath();
         ctx.fillStyle = colors.hudColor;
-        ctx.font = "20px Courier";
+        ctx.font = "18px Courier";
         ctx.fillText("ID   : "+me.info.name,5,sCardHei+30);
-        ctx.fillText("LOC  : ("+me.loc[0]+", "+me.loc[1]+")",5,sCardHei+60);
-        ctx.fillText("GOLD : "+me.info.gold+"g ("+me.info.totalGold+"g)",5,sCardHei+90);
-        ctx.fillText("IRON : "+me.info.iron+"i ("+me.info.totalIron+"i)",5,sCardHei+120);
-        ctx.fillText("URAN : "+me.info.uranium+"u ("+me.info.totalUranium+"u)",5,sCardHei+150);
-        ctx.fillText("KILLS: "+me.info.kills+" | DEATHS: "+me.info.deaths,5,sCardHei+180);
-        ctx.fillText("SCANS: "+me.info.scans+" | HAULS: "+me.info.hauls,5,sCardHei+210);
-        ctx.fillText("SAVED: "+(cookie!=""?"TRUE":"FALSE"),5,sCardHei+240);
+        ctx.fillText("LOC  : ("+me.loc[0]+", "+me.loc[1]+")",5,sCardHei+55);
+        ctx.fillText("GOLD : "+me.info.gold+"g ("+me.info.totalGold+"g)",5,sCardHei+80);
+        ctx.fillText("IRON : "+me.info.iron+"i ("+me.info.totalIron+"i)",5,sCardHei+105);
+        ctx.fillText("URAN : "+me.info.uranium+"u ("+me.info.totalUranium+"u)",5,sCardHei+130);
+        ctx.fillText("KILLS: "+me.info.kills+" | DEATHS: "+me.info.deaths,5,sCardHei+155);
+        ctx.fillText("SCANS: "+me.info.scans+" | HAULS: "+me.info.hauls,5,sCardHei+180);
+        ctx.fillText("TRAPS: "+me.info.traps,5,sCardHei+205);
+        ctx.fillText("SAVED: "+(cookie!=""?"TRUE":"FALSE"),5,sCardHei+230);
 
         //Toggle Save button
         ctx.font = "24px Courier";
@@ -1991,6 +2036,16 @@ function handleMouseout(e){
 function handleMousedown2(e){
     var cX = parseInt(e.clientX - offsetX2);
     var cY = parseInt(e.clientY - offsetY2);
+
+    for(var i = 0; i < 3; i++){
+        if(cX>=40 && cX<=260 &&
+           cY>=i*45+70 && cY<=i*45+105){
+               removeFromQueue(i);
+               console.log(i);
+
+           }
+    }
+
     if(statInfo){
         //Save button
         if(cX > 15 && cX < 107 && cY > 475 && cY < 510){
@@ -2075,7 +2130,7 @@ function getCookie(name){
             c.substring(1);
 
         if(c.indexOf(cname) == 0){
-            return c.substring(name.length, c.length);
+            return c.substring(name.length+1, c.length);
         }
     }
 

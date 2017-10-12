@@ -5,7 +5,7 @@ var version = "Alpha v1.1";
 //Globals
 var port = 8081;
 var players = [];
-var tokenSize = 450;
+var tokenSize = 200;
 
 //Map Building
 var mapSize = 52;
@@ -39,6 +39,11 @@ var cTick = 30; //countdownMax * tick = 3 secs
 var aTick = 800; //action tick
 var combatCooldown = 4; //Number of rounds
 var dcCountdown = 2; //d/c cooldown
+
+//Saving
+var saveCountdown = 0;
+var saveRound = 3;
+var canDelete = true;
 
 //Stat Data
 var statData;
@@ -144,6 +149,59 @@ function startServer(){
     //**************************************************************************
     // Requests
     //**************************************************************************
+    app.get('/returning_user/:token', function(req,res){
+        //Get token
+        var token = req.params.token
+
+        // console.log("GOT TOKEN: "+token);
+
+        var found = false;
+        for(var i = 0; i < players.length; i++){
+            if(players[i].token === token){
+                found = true;
+                break;
+            }
+        }
+
+        if(!found)
+        jsonfile.readFile("data/playerData/"+token+".json", function(err, obj) {
+            var data;
+            if(err){
+                console.log(err);
+                data = {
+                    "error": "Invalid token"
+                }
+            }else{
+                players.push(obj);
+                var name = ""
+                for(var i = players.length-1; i > -1; i--){
+                    if(players[i].token === token){
+                        players[i].battleLog = [];
+                        players[i].loc = spawn();
+                        name = players[i].info.name;
+                        break;
+                    }
+                }
+                data = {
+                    "token": obj.token,
+                    "map": map,
+                    "error":""
+                }
+                var msg = {"type":"server", "msg": ""+name+" has connected."};
+                console.log(msg.msg);
+                for(var m = 0; m < players.length; m++){
+                    players[m].battleLog.unshift(msg);
+                }
+
+            }
+            res.send(data);
+
+        });
+
+        if(found)
+            res.send(data = {"error": "already online"});
+
+    });
     app.get('/new_user/:name', function (req, res) {
         var name = req.params.name;
         if(name==="") name = "random";
@@ -154,11 +212,11 @@ function startServer(){
             "token": token,
             "info":{
                 "name": name,
-                "gold": 100000,
+                "gold": 5000,
                 "totalGold":0,
-                "iron": 1000,
+                "iron": 0,
                 "totalIron":0,
-                "uranium": 100,
+                "uranium": 0,
                 "totalUranium":0,
                 "kills": 0,
                 "deaths": 0,
@@ -549,6 +607,41 @@ function startServer(){
 
 
         //TODO: Return correctly
+        res.send('');
+    });
+    app.post('/removeFromQueue', function(req,res){
+        //Get token
+        var token = req.body.token;
+        var remove = req.body.remove;
+
+        var p;
+        for(var i = 0; i < players.length; i++){
+            if(players[i].token===token){
+                p = players[i];
+                break;
+            }
+        }
+
+        if(p!=null && phase==0){
+            if(remove > -1 && remove < p.queue.length){
+                if(p.queue[remove].type==="MOVE" || p.queue[remove].type==="HOLD" ||
+                   p.queue[remove].type==="BLINK" || p.queue[remove].type==="DESTEALTH" ||
+                   p.queue[remove].type==="ATTACK" || p.queue[remove].type==="ENERGY" ||
+                   p.queue[remove].type==="QUICKHEAL") //1 Action
+                    p.queue.splice(remove,1);
+                else if(p.queue[remove].type==="SCAN" || p.queue[remove].type==="STEALTH") //3 actions
+                    p.queue = [];
+                else{
+                    if(p.queue[0].type===p.queue[1].type){
+                        p.queue.splice(remove,2);
+                    }else
+                        p.queue.splice(1,2);
+
+                }
+            }
+
+        }
+
         res.send('');
     });
     app.post('/requestRespawn', function(req, res){
@@ -1389,6 +1482,9 @@ function actionPhase(){
 }
 
 function roundCleanup(){
+    saveCountdown++;
+    canDelete = false;
+
     //Refresh energy levels and clear queues
     for(var i = 0; i < players.length; i++){
         //disconnect lost players
@@ -1399,8 +1495,7 @@ function roundCleanup(){
             for(var m = 0; m < players.length; m++){
                 players[m].battleLog.unshift(msg);
             }
-            players.splice(i,1);
-            i--;
+            savePlayer(players[i], true);
         }else{
             players[i].queue = [];
             players[i].activeAttacks = [];
@@ -1418,12 +1513,20 @@ function roundCleanup(){
             }
 
             triggeredTrap(players[i]);
+            if(saveCountdown==saveRound){
+                savePlayer(players[i], false);
+            }
         }
+    }
+
+    if(saveCountdown==saveRound){
+        saveCountdown = 0;
     }
 
     //Spawn Treasures
     spawnLoot();
 
+    canDelete = true;
 }
 
 
@@ -2302,4 +2405,23 @@ function canUseMod(p, mod){
     else if(mod=="ATK+" || mod=="PWR+" || mod=="RDR+" || mod=="HP+" || mod=="DR")
         return true;
     return false;
+}
+
+function savePlayer(p, del){
+    var writePlayer = p;
+    jsonfile.writeFile('data/playerData/'+writePlayer.token+".json", writePlayer, {spaces: 4},function(err){
+        if(err){
+            console.log(err);
+        }else if(del){
+            while(!canDelete){
+                var k = 0;
+            }
+            for(var i in players){
+                if(players[i].token===writePlayer.token){
+                    players.splice(i,1);
+                    break;
+                }
+            }
+        }
+    });
 }
