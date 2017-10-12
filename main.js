@@ -169,7 +169,7 @@ function startServer(){
             if(err){
                 console.log(err);
                 data = {
-                    "error": "Invalid token"
+                    "error": "Invalid Token"
                 }
             }else{
                 players.push(obj);
@@ -199,7 +199,7 @@ function startServer(){
         });
 
         if(found)
-            res.send(data = {"error": "already online"});
+            res.send(data = {"error": "Already Online"});
 
     });
     app.get('/new_user/:name', function (req, res) {
@@ -1249,6 +1249,18 @@ function startServer(){
     app.get('/game', function (req, res) {
         console.log("Got a GET request for the Game page");
         res.sendFile( __dirname + "/public/game.html" );
+    });
+    app.get('/wiki', function (req, res) {
+        console.log("Got a GET request for the Wiki page");
+        res.sendFile( __dirname + "/public/wiki.html" );
+    });
+    app.get('/home', function (req, res) {
+        console.log("Got a GET request for the home page");
+        res.sendFile( __dirname + "/public/home.html" );
+    });
+    app.get('/admin', function (req, res) {
+        console.log("Got a GET request for the admin page");
+        res.sendFile( __dirname + "/public/admin.html" );
     });
     app.get('/log', function (req, res) {
         console.log("Got a GET request for the Change Log page");

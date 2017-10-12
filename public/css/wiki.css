@@ -1,0 +1,84 @@
+body {
+    background-color: black;
+    color: green;
+    font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+}
+
+.sidebar {
+    position: fixed;
+    float: left;
+    width: 200px;
+    height: 100%;
+    top: 0px;
+    border: 1px green solid;
+    left: 0px;
+}
+
+.page {
+    width: 60%;
+    margin: auto;
+}
+.title {
+    font-size: 30pt;
+    margin-top: 50px;
+
+}
+.subtitle {
+    font-size: 22pt;
+    margin-top: 10px;
+}
+.label {
+    font-size: 20pt;
+    margin-top: 10px;
+}
+.content {
+    font-size: 18pt;
+    width: 90%;
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+td, th {
+    border: 1px solid green;
+    text-align: left;
+    padding: 8px;
+}
+
+#mainScreen {
+    width: 100%;
+}
+
+#startScreen {
+    width: 100%;
+}
+
+#shop {
+    width: 10%;
+}
+
+#superShop {
+    width: 10%;
+}
+
+.contentLinkMain {
+    font-size: 14pt;
+    margin-left: 5px;
+    color: green;
+}
+
+.contentLinkSub {
+    font-size: 12pt;
+    margin-left: 15px;
+    color: green;
+}
+
+.contentLinkLab {
+    font-size: 12pt;
+    margin-left: 25px;
+    color: green;
+}

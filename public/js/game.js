@@ -25,6 +25,8 @@ var statInfo = false;
 var chatMode = false;
 var chatMsg = '';
 
+var errorMsg = '';
+
 var displayBlink = false;
 var displayCannon = false;
 var displayRailgun = false;
@@ -122,6 +124,9 @@ function tokenInit(token){
                 gameStart = false;
                 setInterval(function(){newData();},tick);
             }
+        }else{
+            errorMsg = data.error;
+            drawMonitor();
         }
     });
 }
@@ -649,7 +654,14 @@ function drawMonitor(){
         ctx.fillRect(c.width/8,c.height/4,3*c.width/4,c.height/8);
         ctx.stroke();
 
-        //Store Labels
+
+        if(errorMsg!=''){
+            ctx.fillStyle=colors.enemyColor;
+            ctx.font = "30px Courier";
+            ctx.fillText(errorMsg,c.width/2-120,c.height/4-40);
+        }
+
+        //Text entry area Labels
         ctx.fillStyle=colors.hudColor;
         ctx.font = "30px Courier";
         ctx.fillText("Enter Name: "+name,c.width/8+35,c.height/4+60);
@@ -1050,86 +1062,7 @@ function drawMonitor(){
     }
 
     if(settingsView){
-        var hudStart = c.width/6;
-        ctx.beginPath();
-        ctx.strokeStyle = colors.hudColor;
-        ctx.fillStyle = colors.hudBackColor;
-        ctx.globalAlpha = 1.0;
-        ctx.strokeRect(hudStart,c.height/8,c.width/2,3*c.height/4);
-        ctx.fillRect(hudStart,c.height/8,c.width/2,3*c.height/4);
-        ctx.stroke();
-
-        //Settings Labels
-        ctx.beginPath();
-        ctx.fillStyle = colors.hudColor;
-        ctx.font = "30px Courier";
-        ctx.fillText("Settings",hudStart+5,c.height/8+35);
-        ctx.font = "20px Courier";
-        ctx.fillText("Click the color to change it.",hudStart+5,c.height/8+55);
-
-        var i = 1;
-        ctx.font = "18px Courier";
-        for(var property in colors){
-            if(colors.hasOwnProperty(property)){
-                if(property!=="timerGradient"){
-                    ctx.beginPath();
-                    ctx.fillStyle = colors.hudColor;
-                    ctx.fillText(property,hudStart+20,c.height/8+75+20*i);
-                    ctx.strokeStyle = colors.hudColor;
-                    ctx.fillStyle = colors[property];
-                    ctx.strokeRect(hudStart+350,c.height/8+60+20*i,15,15);
-                    ctx.fillRect(hudStart+350,c.height/8+60+20*i,15,15);
-                    i++;
-                }
-            }
-        }
-
-        //Draw return to default button
-        ctx.fillStyle = colors.hudColor;
-        ctx.strokeStyle = colors.hudColor;
-        ctx.font = "25px Courier";
-        ctx.fillText("Default",hudStart+260,c.height/8+107+20*i);
-        ctx.strokeRect(hudStart+255,c.height/8+60+20*i+20,115,40);
-
-        //Controls
-        hudStart = 4*c.width/6;
-        ctx.beginPath();
-        ctx.strokeStyle = colors.hudColor;
-        ctx.fillStyle = colors.hudBackColor;
-        ctx.globalAlpha = 1.0;
-        ctx.strokeRect(hudStart+1,c.height/8,5*c.width/16,c.height/2+20);
-        ctx.fillRect(hudStart+1,c.height/8,5*c.width/16,c.height/2+20);
-        ctx.fillStyle = colors.hudColor;
-        ctx.font = "22px Courier";
-        ctx.fillText("Controls",(hudStart)+6,c.height/8+23);
-        ctx.font = "16px Courier";
-        ctx.fillText("Key     Action   Cost",(hudStart)+6,c.height/8+40);
-        ctx.fillText("1     - Scan      [3]",(hudStart)+6,c.height/8+55);
-        ctx.fillText("2     - Loot      [2]",(hudStart)+6,c.height/8+70);
-        ctx.fillText("3     - Hold      [1]",(hudStart)+6,c.height/8+85);
-        ctx.fillText("WASD  - Move      [1]",(hudStart)+6,c.height/8+100);
-        ctx.fillText("Click - Attack    [1]",(hudStart)+6,c.height/8+115);
-        ctx.fillText("ESC   - Settings  [0]",(hudStart)+6,c.height/8+130);
-        ctx.font = "22px Courier";
-        ctx.fillText("How to Play",(hudStart)+6,c.height/8+165);
-        ctx.font = "16px Courier";
-        ctx.fillText("Scan to reveal treasure. ",(hudStart)+6,c.height/8+182);
-        ctx.fillText("Move over the treasure to",(hudStart)+6,c.height/8+197);
-        ctx.fillText("loot it. Take the gold to",(hudStart)+6,c.height/8+212);
-        ctx.fillText("shops to get upgrades.   ",(hudStart)+6,c.height/8+227);
-        ctx.fillText("Attack  enemy ships to   ",(hudStart)+6,c.height/8+242);
-        ctx.fillText("steal their loot.        ",(hudStart)+6,c.height/8+257);
-        ctx.fillText("                         ",(hudStart)+6,c.height/8+272);
-        ctx.fillText("You have 3 action slots  ",(hudStart)+6,c.height/8+287);
-        ctx.fillText("per round and 3 secs to  ",(hudStart)+6,c.height/8+302);
-        ctx.fillText("choose them. All actions ",(hudStart)+6,c.height/8+317);
-        ctx.fillText("are done in order at the ",(hudStart)+6,c.height/8+332);
-        ctx.fillText("same time as other       ",(hudStart)+6,c.height/8+347);
-        ctx.fillText("players. Priority order  ",(hudStart)+6,c.height/8+362);
-        ctx.fillText("goes:                    ",(hudStart)+6,c.height/8+377);
-        ctx.fillText(" MOVE->ATTACK->LOOT->SCAN",(hudStart)+6,c.height/8+392);
-        ctx.fillText("                         ",(hudStart)+6,c.height/8+407);
-        ctx.stroke();
+        drawSettings(c, ctx);
     }
 
     //Draw Version and Author info
@@ -1804,6 +1737,89 @@ function drawSShopMenu(c, ctx){
     }
 }
 
+function drawSettings(c, ctx){
+    var hudStart = c.width/6;
+    ctx.beginPath();
+    ctx.strokeStyle = colors.hudColor;
+    ctx.fillStyle = colors.hudBackColor;
+    ctx.globalAlpha = 1.0;
+    ctx.strokeRect(hudStart,c.height/8,c.width/2,3*c.height/4);
+    ctx.fillRect(hudStart,c.height/8,c.width/2,3*c.height/4);
+    ctx.stroke();
+
+    //Settings Labels
+    ctx.beginPath();
+    ctx.fillStyle = colors.hudColor;
+    ctx.font = "30px Courier";
+    ctx.fillText("Settings",hudStart+5,c.height/8+35);
+    ctx.font = "20px Courier";
+    ctx.fillText("Click the color to change it.",hudStart+5,c.height/8+55);
+
+    var i = 1;
+    ctx.font = "18px Courier";
+    for(var property in colors){
+        if(colors.hasOwnProperty(property)){
+            if(property!=="timerGradient"){
+                ctx.beginPath();
+                ctx.fillStyle = colors.hudColor;
+                ctx.fillText(property,hudStart+20,c.height/8+75+20*i);
+                ctx.strokeStyle = colors.hudColor;
+                ctx.fillStyle = colors[property];
+                ctx.strokeRect(hudStart+350,c.height/8+60+20*i,15,15);
+                ctx.fillRect(hudStart+350,c.height/8+60+20*i,15,15);
+                i++;
+            }
+        }
+    }
+
+    //Draw return to default button
+    ctx.fillStyle = colors.hudColor;
+    ctx.strokeStyle = colors.hudColor;
+    ctx.font = "25px Courier";
+    ctx.fillText("Default",hudStart+260,c.height/8+107+20*i);
+    ctx.strokeRect(hudStart+255,c.height/8+60+20*i+20,115,40);
+
+    //Controls
+    hudStart = 4*c.width/6;
+    ctx.beginPath();
+    ctx.strokeStyle = colors.hudColor;
+    ctx.fillStyle = colors.hudBackColor;
+    ctx.globalAlpha = 1.0;
+    ctx.strokeRect(hudStart+1,c.height/8,5*c.width/16,c.height/2+20);
+    ctx.fillRect(hudStart+1,c.height/8,5*c.width/16,c.height/2+20);
+    ctx.fillStyle = colors.hudColor;
+    ctx.font = "22px Courier";
+    ctx.fillText("Controls",(hudStart)+6,c.height/8+23);
+    ctx.font = "16px Courier";
+    ctx.fillText("Key     Action   Cost",(hudStart)+6,c.height/8+40);
+    ctx.fillText("1     - Scan      [3]",(hudStart)+6,c.height/8+55);
+    ctx.fillText("2     - Loot      [2]",(hudStart)+6,c.height/8+70);
+    ctx.fillText("3     - Hold      [1]",(hudStart)+6,c.height/8+85);
+    ctx.fillText("WASD  - Move      [1]",(hudStart)+6,c.height/8+100);
+    ctx.fillText("Click - Attack    [1]",(hudStart)+6,c.height/8+115);
+    ctx.fillText("ESC   - Settings  [0]",(hudStart)+6,c.height/8+130);
+    ctx.font = "22px Courier";
+    ctx.fillText("How to Play",(hudStart)+6,c.height/8+165);
+    ctx.font = "16px Courier";
+    ctx.fillText("Scan to reveal treasure. ",(hudStart)+6,c.height/8+182);
+    ctx.fillText("Move over the treasure to",(hudStart)+6,c.height/8+197);
+    ctx.fillText("loot it. Take the gold to",(hudStart)+6,c.height/8+212);
+    ctx.fillText("shops to get upgrades.   ",(hudStart)+6,c.height/8+227);
+    ctx.fillText("Attack  enemy ships to   ",(hudStart)+6,c.height/8+242);
+    ctx.fillText("steal their loot.        ",(hudStart)+6,c.height/8+257);
+    ctx.fillText("                         ",(hudStart)+6,c.height/8+272);
+    ctx.fillText("You have 3 action slots  ",(hudStart)+6,c.height/8+287);
+    ctx.fillText("per round and 3 secs to  ",(hudStart)+6,c.height/8+302);
+    ctx.fillText("choose them. All actions ",(hudStart)+6,c.height/8+317);
+    ctx.fillText("are done in order at the ",(hudStart)+6,c.height/8+332);
+    ctx.fillText("same time as other       ",(hudStart)+6,c.height/8+347);
+    ctx.fillText("players. Priority order  ",(hudStart)+6,c.height/8+362);
+    ctx.fillText("goes:                    ",(hudStart)+6,c.height/8+377);
+    ctx.fillText(" MOVE->ATTACK->LOOT->SCAN",(hudStart)+6,c.height/8+392);
+    ctx.fillText("                         ",(hudStart)+6,c.height/8+407);
+    ctx.stroke();
+}
+
 
 //******************************************************************************
 // Event Handler Functions
@@ -1876,11 +1892,11 @@ function handleKeydown(e){
             updateQueue({"type":"MOVE","direction":"N"});
         }else if(keyCode == 83 || keyCode == 40){  //S
             updateQueue({"type":"MOVE","direction":"S"});
-        }else if(keyCode == 72 || keyCode == 49){  //H or 1
+        }else if(keyCode == 49){  //1
             updateQueue({"type":"SCAN"});
-        }else if(keyCode == 76 || keyCode == 50){  //L or 2
+        }else if(keyCode == 50){  //2
             updateQueue({"type":"LOOT"});
-        }else if(keyCode == 32 || keyCode == 51){  //Space or 3
+        }else if(keyCode == 51){  //3
             updateQueue({"type":"HOLD"});
         }else if(keyCode == 89 && me.stats.hp == 0){  //Y
             requestRespawn();

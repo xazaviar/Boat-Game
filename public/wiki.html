@@ -1,0 +1,213 @@
+<html>
+
+<head>
+    <title>Wiki</title>
+    <script src="js/jquery-3.1.1.min.js"></script>
+	<script src="js/wiki.js"></script>
+	<link rel="stylesheet" href="css/wiki.css"/>
+</head>
+
+<body>
+    <div class="sidebar">
+        <a href="#intro" class="contentLinkMain">Introduction</a></br>
+        <a href="#basics" class="contentLinkMain">The Basics</a></br>
+            <a href="#controls" class="contentLinkSub">Controls</a></br>
+            <a href="#interface" class="contentLinkSub">Interface</a></br>
+            <a href="#rounds" class="contentLinkSub">Rounds</a></br>
+            <a href="#dying" class="contentLinkSub">Dying</a></br>
+            <!-- <a href="#legend" class="contentLinkSub">Legend</a></br> -->
+        <a href="#shops" class="contentLinkMain">Shops</a></br>
+            <a href="#bshop" class="contentLinkSub">Basic Shop</a></br>
+            <a href="#sshop" class="contentLinkSub">Super Shop</a></br>
+            <a href="#inventory" class="contentLinkSub">Inventory</a></br>
+        <a href="#actions" class="contentLinkMain">Actions</a></br>
+            <a href="#bacts" class="contentLinkSub">Base Actions</a></br>
+                <a href="#attack" class="contentLinkLab">Attack</a></br>
+                <a href="#hold" class="contentLinkLab">Hold</a></br>
+                <a href="#loot" class="contentLinkLab">Loot</a></br>
+                <a href="#move" class="contentLinkLab">Move</a></br>
+                <a href="#scan" class="contentLinkLab">Scan</a></br>
+            <a href="#sacts" class="contentLinkSub">Special Actions</a></br>
+                <a href="#blink" class="contentLinkLab">Blink</a></br>
+                <a href="#cannon" class="contentLinkLab">Cannon</a></br>
+                <a href="#destealth" class="contentLinkLab">Destealth</a></br>
+                <a href="#engMod" class="contentLinkLab">Energy Module</a></br>
+                <a href="#quickheal" class="contentLinkLab">Quick Heal</a></br>
+                <a href="#railgun" class="contentLinkLab">Railgun</a></br>
+                <a href="#stealth" class="contentLinkLab">Stealth</a></br>
+                <a href="#trap" class="contentLinkLab">Trap</a></br>
+            <a href="#loadout" class="contentLinkSub">Editing Loadout</a></br>
+    </div>
+
+    <div class="page">
+        <div id="intro" class="title">Welcome to [NAME PENDING]!</div>
+        <div class="content">
+            <p>
+                In this game, you command a private ship. There is treasure to be found
+                and you can find it. Scan the area and loot your treasure. Send your
+                gold on ship upgrades and special actions. Fight your enemies and be wary
+                of pirates. Dying could me losing a lot more than just your loot!
+            </p>
+        </div>
+
+        <div id="basics" class="title">The Basics</div>
+        <div class="content">
+            <div id="controls" class="subtitle">Controls</div>
+            <table>
+                <tr>
+                    <th>Action</th>
+                    <th>Button</th>
+                </tr>
+                <tr>
+                    <td>Attack</td>
+                    <td>Left Mouse Click</td>
+                </tr>
+                <tr>
+                    <td>Move</td>
+                    <td>WASD or <^>v </td>
+                </tr>
+                <tr>
+                    <td>Scan</td>
+                    <td>1</td>
+                </tr>
+                <tr>
+                    <td>Loot</td>
+                    <td>2</td>
+                </tr>
+                <tr>
+                    <td>Hold</td>
+                    <td>3</td>
+                </tr>
+                <tr>
+                    <td>Special 1</td>
+                    <td>q</td>
+                </tr>
+                <tr>
+                    <td>Special 2</td>
+                    <td>e</td>
+                </tr>
+                <tr>
+                    <td>Map</td>
+                    <td>m</td>
+                </tr>
+                <tr>
+                    <td>Chat</td>
+                    <td>enter</td>
+                </tr>
+                <tr>
+                    <td>Open Shop</td>
+                    <td>o</td>
+                </tr>
+                <tr>
+                    <td>Respawn</td>
+                    <td>y</td>
+                </tr>
+                <tr>
+                    <td>Menu</td>
+                    <td>Esc Key</td>
+                </tr>
+                <tr>
+                    <td>Other Stats</td>
+                    <td>i</td>
+                </tr>
+                <tr>
+                    <td>Map</td>
+                    <td>m</td>
+                </tr>
+                <tr>
+                    <td>Remove Action</td>
+                    <td>Click the action</td>
+                </tr>
+            </table> </br>
+            <div id="interface" class="subtitle">Interface</div>
+            <p>This is the screen that you see when you start the game. Enter a name to begin.</p>
+            <img src="images/start_screen.png" id="startScreen"/>
+            <p>
+                This is the main view screen. You are always in the center of the screen.
+                Everything operats on a grid in semi-realtime. The top bar is the round
+                counter, and this tells you how long you have left in a round to put in
+                your actions. The action queue are the actions that will happen this round.
+                If you scan the area, loot will appear. Grab loot to get gold. The battle log
+                is where all messages and chat is shown.
+            </p>
+            <img src="images/main_screen.png" id="mainScreen"/>
+            <div id="rounds" class="subtitle">Rounds</div>
+            <p>
+                The game operates on a global round counter. Every player has three action
+                points to spend each round and three seconds to select them. Once the time
+                is up, all actions will occur in the queue order. Empty queue slots are
+                filled with "Hold" actions.
+            </p>
+            <div id="dying" class="subtitle">Dying</div>
+            <p>
+                When you die, if you do not have insurance, you will drop all of
+                your loot. In addition to this, all of your skills and items
+                will decrease by a single level. You can respawn by pressing 'y'.
+            </p>
+            <!-- <div id="legend" class="subtitle">Legend</div>
+            <p></p> -->
+        </div>
+
+        <div id="shops" class="title">Shops</div>
+        <div class="content">
+            <p>
+                Shops are where you can purchase upgrades, repair your ship, and
+                modify your ship. Every shop is surrounded by a safe zone. While
+                in the safe zone you do not take damage, but you can also not attack.
+                Press 'o' to open the shop.
+            </p>
+            <div id="bshop" class="subtitle">Basic Shop</div>
+            <img src="images/shop.png" id="shop"/><p></p>
+            <div id="sshop" class="subtitle">Super Shop</div>
+            <img src="images/super_shop.png" id="superShop"/><p></p>
+            <div id="inventory" class="subtitle">Inventory</div>
+            <table>
+                <tr>
+                    <th>Action</th>
+                    <th>Button</th>
+                </tr>
+                <tr>
+                    <td>Attack</td>
+                    <td>Left Mouse Click</td>
+                </tr>
+        </div>
+
+        <div id="actions" class="title">Actions</div>
+        <div class="content">
+            <div id="bacts" class="subtitle">Basic Actions</div>
+            <p></p>
+            <div id="attack" class="label">Attack</div>
+            <p></p>
+            <div id="hold" class="label">Hold</div>
+            <p></p>
+            <div id="move" class="label">Move</div>
+            <p></p>
+            <div id="loot" class="label">Loot</div>
+            <p></p>
+            <div id="scan" class="label">Scan</div>
+            <p></p>
+
+            <div id="sacts" class="subtitle">Special Actions</div>
+            <p></p>
+            <div id="blink" class="label">Blink</div>
+            <p></p>
+            <div id="cannon" class="label">Cannon</div>
+            <p></p>
+            <div id="destealth" class="label">Destealth</div>
+            <p></p>
+            <div id="engMod" class="label">Energy Module</div>
+            <p></p>
+            <div id="quickheal" class="label">Quick heal</div>
+            <p></p>
+            <div id="railgun" class="label">Railgun</div>
+            <p></p>
+            <div id="stealth" class="label">Stealth</div>
+            <p></p>
+            <div id="trap" class="label">Trap</div>
+            <p></p>
+
+            <div id="loadout" class="subtitle">Editing Loadout</div>
+            <p></p>
+        </div>
+    </div>
+</body>
