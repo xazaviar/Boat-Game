@@ -16,6 +16,7 @@ var radarAngleChange = true;
 var radarFollow = 5;
 var mapView = false;
 var blink = false;
+var chatBlink = true;
 var tabs;
 var baseStore;
 var statInfo = false;
@@ -98,6 +99,7 @@ setTimeout(function() {
     $("body").css("background-color",colors.hudBackColor);
 
     setInterval(function(){radarAngle=radarAngle+radarINC}, radarTick);
+    setInterval(function(){if(chatMode){chatBlink=!chatBlink;} },200);
 
     drawMonitor();
 },2);
@@ -1407,11 +1409,12 @@ function drawSideBar(){
 
     ctx.beginPath();
     ctx.fillStyle = colors.hudColor;
-    ctx.font = "25px Courier";
-    ctx.fillText("Battle Log",0,bCardHei+30);
+    // ctx.font = "25px Courier";
+    // ctx.fillText("Battle Log",0,bCardHei+30);
+    bCardHei = 540;
     ctx.font = "14px Courier";
     var multi = 0;
-    for(var i = 0; i < Math.min(battleLog.length,25);i++){
+    for(var i = 0; i+multi < Math.min(battleLog.length,27); i++){
         var name = '';
         if(battleLog[i].type==="combat"){
             ctx.fillStyle = colors.enemyColor;
@@ -1432,15 +1435,20 @@ function drawSideBar(){
 
         var temp = [];
         for(var l = 0; l < parseInt(msg.length/35)+1; l++){
-            temp.unshift(msg.substring(l*35,l*35+Math.min(35,msg.length-l*35)));
+            temp.push(msg.substring(l*35,l*35+Math.min(35,msg.length-l*35)));
             if(l > 0) multi++;
         }
         // console.log(temp);
         for(var l = 0; l < temp.length; l++){
-            ctx.fillText(temp[l],3,bCardHei+55+(i+(multi-l))*15);
+            ctx.fillText(temp[l],3,c.height-30-(i+(multi-l))*15);
         }
     }
-
+    ctx.fillStyle = colors.hudColor;
+    ctx.strokeRect(0,c.height-25,c.width,c.height);
+    var start = (chatMsg.length>26?chatMsg.length-26:0);
+    ctx.fillText("[CHAT]: "+chatMsg.substring(start,start+Math.min(chatMsg.length,26)),3,c.height-10);
+    if(chatBlink)
+        ctx.fillRect(Math.min((chatMsg.length+8)*8.6,290),c.height-20,2,15);
 }
 
 
@@ -1767,7 +1775,7 @@ function handleKeypress(e){
     }else if(chatMode){
         if(((keyCode > 31 && keyCode < 128) || (keyCode > 185)) && chatMsg.length < 140){
             chatMsg = chatMsg+""+String.fromCharCode(keyCode);
-            chatMsg = chatMsg.replace("/","_").replace("\'","_").replace("\"","_").replace("#","_");
+            chatMsg = chatMsg.replace("/","_").replace("#","_");
         }
         drawMonitor();
     }
@@ -1782,14 +1790,12 @@ function handleKeydown(e){
             $(".modal").toggle(false);
         drawMonitor();
     }
-    else if(keyCode == 73){  //i
-        statInfo = !statInfo;
-    }
     else if(gameStart){
         if(keyCode == 13){ //Enter
             init();
         }else if(keyCode == 8){ //backspace
             name = name.substring(0,name.length-1);
+            drawMonitor();
         }
     }
     else if(chatMode){
@@ -1797,8 +1803,12 @@ function handleKeydown(e){
             chatMode = false;
             sendChatMsg();
         }else if(keyCode == 8){ //backspace
-            chatMsg = chatMsg.substring(0,name.length-1);
+            chatMsg = chatMsg.substring(0,chatMsg.length-1);
+            drawMonitor();
         }
+    }
+    else if(keyCode == 73){  //i
+        statInfo = !statInfo;
     }
     else if(keyCode == 13){
         chatMode = true;

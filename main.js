@@ -146,6 +146,7 @@ function startServer(){
     //**************************************************************************
     app.get('/new_user/:name', function (req, res) {
         var name = req.params.name;
+        if(name==="") name = "random";
         var token =  generateToken();
         var sp = spawn();
 
@@ -1129,16 +1130,18 @@ function startServer(){
         var msg = req.body.msg;
         var token = req.body.token
 
-        var p;
-        for(var i = 0; i < players.length; i++){
-            if(players[i].token===token){
-                p = players[i];
-                break;
+        if(msg!==""){
+            var p;
+            for(var i = 0; i < players.length; i++){
+                if(players[i].token===token){
+                    p = players[i];
+                    break;
+                }
             }
-        }
 
-        for(var i in players){
-            players[i].battleLog.unshift({"type":"chat","msg":msg,"user":p.info.name});
+            for(var i in players){
+                players[i].battleLog.unshift({"type":"chat","msg":msg,"user":p.info.name});
+            }
         }
         res.send('');
     });
