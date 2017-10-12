@@ -20,6 +20,10 @@ var tabs;
 var baseStore;
 var statInfo = false;
 
+//Chat data
+var chatMode = false;
+var chatMsg = '';
+
 var displayBlink = false;
 var displayCannon = false;
 var displayRailgun = false;
@@ -34,7 +38,7 @@ var colorsDefault = {
     "hudColor":         "#00FF00", //Default -> #00FF00
     "hudBackColor":     "#000000", //Default -> #000000
 
-    "goldColor":        "#BBBB00", //Default -> #BBBB00
+    "goldColor":        "#DDDD00", //Default -> #DDDD00
     "ironColor":        "#333333", //Default -> #333333
     "uraniumColor":     "#AA00AA", //Default -> #AA00AA
     "enemyColor":       "#FF0000", //Default -> #FF0000
@@ -85,6 +89,7 @@ setTimeout(function() {
     $("#monitor").mousedown(function(e){handleMousedown(e);});
     $("#sidebar").mousedown(function(e){handleMousedown2(e);});
     window.addEventListener('keydown',function(e){handleKeydown(e)},false);
+    window.addEventListener('keypress',function(e){handleKeypress(e)},false);
 
     //See if colors can be loaded
     var temp = JSON.parse(localStorage.getItem('savedColors'));
@@ -101,14 +106,16 @@ function init(){
     //get data
     if(name==='') name = "random";
 
-    $.get("/new_user/"+name, function( data ) {
-        gameStart = false;
-        me.token = data.token;
-        map = data.map;
-        console.log("token: "+me.token);
-        document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
+    $.get("/new_user/"+encodeURI(name), function( data ) {
+        console.log("token: "+data.token);
+        if(data.token!==undefined){
+            me.token = data.token;
+            map = data.map;
 
-        setInterval(function(){newData();},tick);
+            document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
+            gameStart = false;
+            setInterval(function(){newData();},tick);
+        }
     });
 }
 
@@ -530,6 +537,30 @@ function changeLoadout(slot,item){
             console.log('Sent');
         },
         error: function(xhr, status, error){
+            // console.log('Add Project Error: ' + error.message);
+        }
+    });
+}
+
+function sendChatMsg(){
+    var dat = {
+        "token": me.token,
+        "msg": chatMsg
+    };
+
+    $.ajax({
+        url: "/postChatMsg",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+            chatMsg = '';
             // console.log('Add Project Error: ' + error.message);
         }
     });
@@ -1379,8 +1410,35 @@ function drawSideBar(){
     ctx.font = "25px Courier";
     ctx.fillText("Battle Log",0,bCardHei+30);
     ctx.font = "14px Courier";
-    for(var i = 0; i < (battleLog.length>26?26:battleLog.length);i++){
-        ctx.fillText(battleLog[i],3,bCardHei+45+i*15);
+    var multi = 0;
+    for(var i = 0; i < Math.min(battleLog.length,25);i++){
+        var name = '';
+        if(battleLog[i].type==="combat"){
+            ctx.fillStyle = colors.enemyColor;
+        }else if(battleLog[i].type==="server"){
+            ctx.fillStyle = "#FFa500";
+        }else if(battleLog[i].type==="chat"){
+            ctx.fillStyle = colors.hudColor;
+            name = "["+battleLog[i].user+"]: ";
+        }else if(battleLog[i].type==="loot"){
+            ctx.fillStyle = "#FFFF00";
+        }else if(battleLog[i].type==="action"){
+            ctx.fillStyle = colors.cantBuyColor;
+        }else if(battleLog[i].type==="purchase"){
+            ctx.fillStyle = "#FFFF00";
+        }
+
+        var msg = name+battleLog[i].msg;
+
+        var temp = [];
+        for(var l = 0; l < parseInt(msg.length/35)+1; l++){
+            temp.unshift(msg.substring(l*35,l*35+Math.min(35,msg.length-l*35)));
+            if(l > 0) multi++;
+        }
+        // console.log(temp);
+        for(var l = 0; l < temp.length; l++){
+            ctx.fillText(temp[l],3,bCardHei+55+(i+(multi-l))*15);
+        }
     }
 
 }
@@ -1697,78 +1755,96 @@ function drawSShopMenu(c, ctx){
 //******************************************************************************
 // Event Handler Functions
 //******************************************************************************
-function handleKeydown(e){
-    // alert(e.keyCode);
+function handleKeypress(e){
+    var keyCode = e.which || e.keyCode;
 
-    //Move Actions
-    if (e.keyCode == 27 && !shopMode){ //Open Menu (esc)
+    if(gameStart){
+        if(((keyCode > 31 && keyCode < 128) || (keyCode > 185)) && name.length < 16){
+            name = name+""+String.fromCharCode(keyCode);
+            name = name.replace("/","_").replace("\'","_").replace("\"","_").replace("#","_");
+        }
+        drawMonitor();
+    }else if(chatMode){
+        if(((keyCode > 31 && keyCode < 128) || (keyCode > 185)) && chatMsg.length < 140){
+            chatMsg = chatMsg+""+String.fromCharCode(keyCode);
+            chatMsg = chatMsg.replace("/","_").replace("\'","_").replace("\"","_").replace("#","_");
+        }
+        drawMonitor();
+    }
+}
+
+function handleKeydown(e){
+    var keyCode = e.which || e.keyCode;
+
+    if (keyCode == 27 && !shopMode){ //Open Menu (esc)
         settingsView = !settingsView;
         if(!settingsView)
             $(".modal").toggle(false);
         drawMonitor();
-
     }
-    else if(e.keyCode == 73){  //i
+    else if(keyCode == 73){  //i
         statInfo = !statInfo;
     }
     else if(gameStart){
-        if(e.keyCode == 13){
+        if(keyCode == 13){ //Enter
             init();
-        }else if(e.keyCode == 8){ //backspace
+        }else if(keyCode == 8){ //backspace
             name = name.substring(0,name.length-1);
-        }else if(((e.keyCode > 47 && e.keyCode < 91) || e.keyCode == 32) && name.length < 16){ //number and letter
-            if(e.shiftKey)
-                name = name+""+String.fromCharCode(e.keyCode).toUpperCase();
-            else
-                name = name+""+String.fromCharCode(e.keyCode).toLowerCase();
-        }else if((e.keyCode > 185) && name.length < 16){
-            // console.log(e.keyCode);
-            name = name+""+String.fromCharCode(e.charCode);
         }
-        drawMonitor();
     }
-    else if(e.keyCode == 77 && !settingsView){  //M
+    else if(chatMode){
+        if(keyCode == 13){
+            chatMode = false;
+            sendChatMsg();
+        }else if(keyCode == 8){ //backspace
+            chatMsg = chatMsg.substring(0,name.length-1);
+        }
+    }
+    else if(keyCode == 13){
+        chatMode = true;
+    }
+    else if(keyCode == 77 && !settingsView){  //M
         mapView = !mapView;
         shopMode = false;
     }
-    else if(e.keyCode == 77 && mapView){  //M
+    else if(keyCode == 77 && mapView){  //M
         mapView = false;
         shopMode = false;
         settingsView = false;
     }
     else if(!shopMode && !mapView && game.phase==0){
-        if(e.keyCode == 65 || e.keyCode == 37){        //A
+        if(keyCode == 65 || keyCode == 37){        //A
             updateQueue({"type":"MOVE","direction":"W"});
-        }else if(e.keyCode == 68 || e.keyCode == 39){  //D
+        }else if(keyCode == 68 || keyCode == 39){  //D
             updateQueue({"type":"MOVE","direction":"E"});
-        }else if(e.keyCode == 87 || e.keyCode == 38){  //W
+        }else if(keyCode == 87 || keyCode == 38){  //W
             updateQueue({"type":"MOVE","direction":"N"});
-        }else if(e.keyCode == 83 || e.keyCode == 40){  //S
+        }else if(keyCode == 83 || keyCode == 40){  //S
             updateQueue({"type":"MOVE","direction":"S"});
-        }else if(e.keyCode == 72 || e.keyCode == 49){  //H or 1
+        }else if(keyCode == 72 || keyCode == 49){  //H or 1
             updateQueue({"type":"SCAN"});
-        }else if(e.keyCode == 76 || e.keyCode == 50){  //L or 2
+        }else if(keyCode == 76 || keyCode == 50){  //L or 2
             updateQueue({"type":"LOOT"});
-        }else if(e.keyCode == 32 || e.keyCode == 51){  //Space or 3
+        }else if(keyCode == 32 || keyCode == 51){  //Space or 3
             updateQueue({"type":"HOLD"});
-        }else if(e.keyCode == 89 && me.stats.hp == 0){  //Y
+        }else if(keyCode == 89 && me.stats.hp == 0){  //Y
             requestRespawn();
-        }else if(e.keyCode == 79 && shop.withinShop!=null && !settingsView){  //O
+        }else if(keyCode == 79 && shop.withinShop!=null && !settingsView){  //O
             shopMode = true;
             mapView = false;
-        }else if(e.keyCode == 81){          //Q
+        }else if(keyCode == 81){          //Q
             doSpecialAction(0);
-        }else if(e.keyCode == 69){          //E
+        }else if(keyCode == 69){          //E
             doSpecialAction(1);
         }
     }
     else if(shopMode){
-        if(e.keyCode == 79 || e.keyCode == 27){  //O or escape
+        if(keyCode == 79 || keyCode == 27){  //O or escape
             shopMode = false;
         }
         if(shop.withinShop==="SHOP"){
             for(var i = 0; i < baseStore.length; i++){
-                if(e.keyCode == 49+i){
+                if(keyCode == 49+i){
                     makePurchase(baseStore[i].pLabel);
                     break;
                 }
@@ -1777,7 +1853,7 @@ function handleKeydown(e){
         else if(shop.withinShop==="SSHOP"){
             if(cTab > -1 && cTab < 5) //In shop
                 for(var i = 0; i < tabs[cTab].length; i++){
-                    if(e.keyCode == 49+i){
+                    if(keyCode == 49+i){
                         makePurchase(tabs[cTab][i].pLabel);
                         break;
                     }
@@ -1794,15 +1870,15 @@ function handleKeydown(e){
                        }
                 }
                 if(i < me.storage.length)
-                    if(e.keyCode == 81){        //Q
+                    if(keyCode == 81){        //Q
                         changeLoadout(0,me.storage[i].name);
-                    }else if(e.keyCode == 69){  //E
+                    }else if(keyCode == 69){  //E
                         changeLoadout(1,me.storage[i].name);
                     }
             }
         }
     }
-    else if(e.keyCode == 79 && shop.withinShop!=null && !settingsView){  //O
+    else if(keyCode == 79 && shop.withinShop!=null && !settingsView){  //O
         shopMode = true;
         mapView = false;
     }
@@ -2035,8 +2111,10 @@ function doSpecialAction(slot){
 
 function screenResize(){
     //place monitor in center
+    var c1 = document.getElementById("monitor");
+    var c2 = document.getElementById("sidebar");
     prevWid = $( document ).width();
-    $(".gameScreen").css("margin-left",(prevWid-300-800)/2+"px");
+    $(".gameScreen").css("margin-left",(prevWid-c1.width-c2.width)/2+"px");
 
     var $canvas = $("#monitor")
     var canvasOffset = $canvas.offset()
