@@ -40,6 +40,7 @@ body {
 
 table {
     border-collapse: collapse;
+    width: 100%;
 }
 
 td, th {
@@ -48,11 +49,7 @@ td, th {
     padding: 8px;
 }
 
-#mainScreen {
-    width: 100%;
-}
-
-#startScreen {
+img {
     width: 100%;
 }
 
@@ -60,7 +57,7 @@ td, th {
     width: 10%;
 }
 
-#superShop {
+#specialShop {
     width: 10%;
 }
 
