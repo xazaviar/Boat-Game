@@ -8,7 +8,7 @@ var players = [];
 var tokenSize = 200;
 
 //Map Building
-var mapSize = 52;
+var mapSize = 104;
 var rockSpread = .04;   //decimal as percent
 var shopSpread = .007;  //decimal as percent
 var specialShops = 2;   //even number is preferred
