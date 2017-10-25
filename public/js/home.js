@@ -52,32 +52,40 @@ function drawAllBases(){
         $("#c"+b).css('background-color',bases[b].areaColor);
         $("#c"+b+" .baseArea").css('background-color',bases[b].baseColor);
     }
-    //drawAvailableColors();
 }
 
 function colorAvailable(base, area){
     if(base === area)
         return "Base and area need to be different colors.";
 
-
     var hex = area.replace('#','');
-    var r = parseInt(hex.substring(0,2), 16);
-    var g = parseInt(hex.substring(2,4), 16);
-    var b = parseInt(hex.substring(4,6), 16);
-    if(r+g+b < 140)
+    var ar = parseInt(hex.substring(0,2), 16);
+    var ag = parseInt(hex.substring(2,4), 16);
+    var ab = parseInt(hex.substring(4,6), 16);
+    if(ar+ag+ab < 140)
         return "Area color is too dark";
 
     hex = base.replace('#','');
-    var r2 = parseInt(hex.substring(0,2), 16);
-    var g2 = parseInt(hex.substring(2,4), 16);
-    var b2 = parseInt(hex.substring(4,6), 16);
+    var br = parseInt(hex.substring(0,2), 16);
+    var bg = parseInt(hex.substring(2,4), 16);
+    var bb = parseInt(hex.substring(4,6), 16);
 
-    if(Math.abs(r2-r)<20 && Math.abs(g2-g)<20 && Math.abs(b2-b)<20)
+    if(Math.abs(ar-br)<50 && Math.abs(ag-bg)<50 && Math.abs(ab-bb)<50)
         return "Base color is too similar to Area color";
 
     for(var b in bases){
-        if(bases[b].baseColor==base && bases[b].areaColor==area){
-            return "Color Has been taken";
+        hex = bases[b].baseColor.replace('#','');
+        var br2 = parseInt(hex.substring(0,2), 16);
+        var bg2 = parseInt(hex.substring(2,4), 16);
+        var bb2 = parseInt(hex.substring(4,6), 16);
+        hex = bases[b].areaColor.replace('#','');
+        var ar2 = parseInt(hex.substring(0,2), 16);
+        var ag2 = parseInt(hex.substring(2,4), 16);
+        var ab2 = parseInt(hex.substring(4,6), 16);
+
+        if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
+           Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
+            return "Color combo has been taken";
         }
     }
 

@@ -86,25 +86,15 @@ var trapActionUsage         = 2;
 var railgunActionUsage      = 2;
 var quickHealActionUsage    = 1;
 
-//TODO: SHOP MODEL IMPORT
 var shopData;
-
 var shopList = [];
 var trapList = [];
+var teamData;
 var trapCounter = 0;
 
 init();
 
 function init(){
-    //load change log
-    jsonfile.readFile("data/changelog.json", function(err, obj) {
-        if(err){
-            console.log(err);
-            process.exit(1);
-        }
-        changelog = obj;
-    });
-
     //load game data
     jsonfile.readFile("data/statdata.json", function(err, obj) {
         if(err){
@@ -129,6 +119,13 @@ function init(){
             process.exit(1);
         }
         shopData = obj;
+    });
+    jsonfile.readFile("data/teamdata.json", function(err, obj) {
+        if(err){
+            console.log(err);
+            process.exit(1);
+        }
+        teamData = obj;
     });
 
 
@@ -1240,7 +1237,13 @@ function startServer(){
     });
 
     app.get('/changelog', function (req, res) {
-        res.send(changelog);
+        jsonfile.readFile("data/changelog.json", function(err, obj) {
+            if(err){
+                console.log(err);
+                res.send({"error": "Unable to get Changelog"});
+            }
+            res.send(obj);
+        });
     });
 
     //**************************************************************************
@@ -1689,71 +1692,71 @@ function railgun(p, direction){
     }
 }
 
-function loot(player){
-    player.stats.energy = player.stats.energy - lootEnergyUsage;
+function loot(p){
+    p.stats.energy = p.stats.energy - lootEnergyUsage;
 
-    var treasure = map[player.loc[0]][player.loc[1]];
+    var treasure = map[p.loc[0]][p.loc[1]];
     if(isLoot(treasure)){
-        var startGold = player.info.gold;
-        var startTotalGold = player.info.totalGold;
+        var startGold = p.info.gold;
+        var startTotalGold = p.info.totalGold;
         var looted = false;
 
         if(treasure.type==="GOLD"){
-            player.info.gold = player.info.gold + treasure.count;
-            player.info.totalGold = player.info.totalGold + treasure.count;
-            player.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.count+"g!"});
+            p.info.gold = p.info.gold + treasure.count;
+            p.info.totalGold = p.info.totalGold + treasure.count;
+            p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.count+"g!"});
             looted = true;
         }else if(treasure.type==="IRON"){
-            player.info.iron = player.info.iron + treasure.count;
-            player.info.totalIron = player.info.totalIron + treasure.count;
-            player.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.count+" iron!"});
+            p.info.iron = p.info.iron + treasure.count;
+            p.info.totalIron = p.info.totalIron + treasure.count;
+            p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.count+" iron!"});
             looted = true;
-        }else if(treasure.type==="URANIUM" && player.info.uranium<player.stats.urCarry){
-            player.info.uranium = player.info.uranium + treasure.count;
-            player.info.totalUranium = player.info.totalUranium + treasure.count;
-            player.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.count+" uranium!"});
+        }else if(treasure.type==="URANIUM" && p.info.uranium<p.stats.urCarry){
+            p.info.uranium = p.info.uranium + treasure.count;
+            p.info.totalUranium = p.info.totalUranium + treasure.count;
+            p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.count+" uranium!"});
             looted = true;
-        }else if(treasure.type==="URANIUM" && player.info.uranium>=player.stats.urCarry){
-            player.battleLog.unshift({"type":"action", "msg": "You can't carry any more uranium."});
+        }else if(treasure.type==="URANIUM" && p.info.uranium>=p.stats.urCarry){
+            p.battleLog.unshift({"type":"action", "msg": "You can't carry any more uranium."});
         }
 
         if(looted){
-            player.info.hauls++;
+            p.info.hauls++;
 
-            map[player.loc[0]][player.loc[1]] = {"type":"OPEN"};
-            lootSpawns.push([player.loc[0],player.loc[1]]);
+            map[p.loc[0]][p.loc[1]] = {"type":"OPEN"};
+            lootSpawns.push([p.loc[0],p.loc[1]]);
             lootCount--;
 
             //Alert local people of looting
             var mid = parseInt(statData.vision/2);
             for(var x = 0; x < statData.vision; x++){
                 for(var y = 0; y < statData.vision; y++){
-                    var cX = player.loc[0] - (mid-x);
-                    var cY = player.loc[1] - (mid-y);
+                    var cX = p.loc[0] - (mid-x);
+                    var cY = p.loc[1] - (mid-y);
 
                     if(cX < 0) cX += map.length;
                     if(cY < 0) cY += map.length;
                     if(cX >= map.length) cX -= map.length;
                     if(cY >= map.length) cY -= map.length;
 
-                    var enemyP = playerInSpot([cX,cY], player);
+                    var enemyP = playerInSpot([cX,cY], p);
                     if(enemyP!=null)
-                        enemyP.battleLog.unshift({"type":"combat", "msg": player.info.name+" has looted near you."});
+                        enemyP.battleLog.unshift({"type":"combat", "msg": p.info.name+" has looted near you."});
                 }
             }
 
             //Alert world of great wealth
             var msg;
-            if(parseInt(startGold/1000) < parseInt(player.info.gold/1000)){
-                msg = ""+player.info.name+" has over "+(parseInt(player.info.gold/1000)*1000)+"g.";
+            if(parseInt(startGold/1000) < parseInt(p.info.gold/1000)){
+                msg = ""+p.info.name+" has over "+(parseInt(p.info.gold/1000)*1000)+"g.";
             }
-            if(parseInt(startTotalGold/2000) < parseInt(player.info.totalGold/2000)){
-                msg = ""+player.info.name+" has amassed over "+(parseInt(player.info.totalGold/2000)*2000)+"g.";
+            if(parseInt(startTotalGold/2000) < parseInt(p.info.totalGold/2000)){
+                msg = ""+p.info.name+" has amassed over "+(parseInt(p.info.totalGold/2000)*2000)+"g.";
             }
 
             for(var i = 0; i < players.length; i++){
                 for(var k = 0; k < players[i].knownLocs.length; k++){
-                    if(players[i].knownLocs[k][0]==player.loc[0] && players[i].knownLocs[k][1]==player.loc[1]){
+                    if(players[i].knownLocs[k][0]==p.loc[0] && players[i].knownLocs[k][1]==p.loc[1]){
                         players[i].knownLocs.splice(k,1);
                     }
                 }
@@ -1761,20 +1764,20 @@ function loot(player){
             }
         }
     }else{
-        player.battleLog.unshift({"type":"action", "msg": "You didn't find anything."});
+        p.battleLog.unshift({"type":"action", "msg": "You didn't find anything."});
     }
 }
 
-function scan(player){
-    player.stats.energy -= scanEnergyUsage;
-    player.info.scans++;
+function scan(p){
+    p.stats.energy -= scanEnergyUsage;
+    p.info.scans++;
 
     //Scan Area
-    var mid = parseInt((player.stats.radar+(isEquipped(player,"RDR+")?statData.radarINC:0))/2);
-    for(var x = 0; x < player.stats.radar+(isEquipped(player,"RDR+")?statData.radarINC:0); x++){
-        for(var y = 0; y < player.stats.radar+(isEquipped(player,"RDR+")?statData.radarINC:0); y++){
-            var cX = player.loc[0] - (mid-x);
-            var cY = player.loc[1] - (mid-y);
+    var mid = parseInt(p.stats.radar/2);
+    for(var x = 0; x < p.stats.radar; x++){
+        for(var y = 0; y < p.stats.radar; y++){
+            var cX = p.loc[0] - (mid-x);
+            var cY = p.loc[1] - (mid-y);
 
             if(cX < 0) cX += map.length;
             if(cY < 0) cY += map.length;
@@ -1782,19 +1785,19 @@ function scan(player){
             if(cY >= map.length) cY -= map.length;
 
             if(isLoot(map[cX][cY])){
-                player.knownLocs.push([cX,cY]);
+                p.knownLocs.push([cX,cY]);
             }
 
             var tr = withinTrap([cX,cY]);
             if(tr>-1){
-                if(!isKnownTrap(player,trapList[tr]))
-                    player.knownTraps.push({"loc":trapList[tr].loc,"lvl":0+trapList[tr].lvl,"id":0+trapList[tr].id,"owned":false});
+                if(!isKnownTrap(p,trapList[tr]))
+                    p.knownTraps.push({"loc":trapList[tr].loc,"lvl":0+trapList[tr].lvl,"id":0+trapList[tr].id,"owned":false});
             }
 
-            var enemyP = playerInSpot([cX,cY], player);
+            var enemyP = playerInSpot([cX,cY], p);
             if(enemyP!=null){
                 enemyP.battleLog.unshift({"type":"combat", "msg": "Someone has scanned you."});
-                player.scanned.push({"token":enemyP.token,"rounds":3+player.stats.scanner});
+                p.scanned.push({"token":enemyP.token,"rounds":3+p.stats.scanner});
             }
         }
     }
