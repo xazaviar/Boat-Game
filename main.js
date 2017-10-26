@@ -6,6 +6,8 @@ var version = "Alpha v1.1";
 var port = 8081;
 var players = [];
 var tokenSize = 200;
+var playerNameMaxLength = 16;
+var teamNameMaxLength = 25;
 
 //Map Building
 var mapSize = 24;
@@ -386,20 +388,28 @@ function startServer(){
                     sendTeam[teamData[t].id] = {
                         "id": teamData[t].id,
                         "name": teamData[t].name,
-                        "colors":teamData[t].colors,
+                        "colors": teamData[t].colors,
                         "leader": teamData[t].leader[1],
                         "admins": admins,
                         "members": members,
-                        "gold":teamData[t].gold,
-                        "iron":teamData[t].iron,
-                        "uranium":teamData[t].uranium,
-                        "credits":teamData[t].credits,
-                        "income":teamData[t].income,
+                        "gold": teamData[t].gold,
+                        "iron": teamData[t].iron,
+                        "uranium": teamData[t].uranium,
+                        "credits": teamData[t].credits,
+                        "income": teamData[t].income,
                         "settings": teamData[t].settings
                     };
                 }
                 else{
-                    sendTeam[teamData[t].id] = {"id":teamData[t].id,"name":teamData[t].name,"colors":teamData[t].colors,"size":teamData[t].members.length+teamData[t].admins.length+1,"joinStatus":teamData[t].settings.membership};
+                    sendTeam[teamData[t].id] = {
+                        "id": teamData[t].id,
+                        "name": teamData[t].name,
+                        "colors": teamData[t].colors,
+                        "size": teamData[t].members.length+teamData[t].admins.length+1,
+                        "joinStatus": teamData[t].settings.membership,
+                        "profitDivide": teamData[t].settings.profitDivide,
+                        "tax": teamData[t].settings.tax
+                    };
                 }
             }
 

@@ -1855,6 +1855,18 @@ function drawRadarScan(ctx, width, height){
     ctx.globalAlpha = 1.0;
 }
 
+function drawJoinTeam(ctx, startX, startY, width, height){
+    
+}
+
+function drawCreateTeam(ctx, startX, startY, width, height){
+
+}
+
+function drawTeamMenu(ctx, startX, startY, width, height){
+
+}
+
 
 //******************************************************************************
 // Event Handler Functions
