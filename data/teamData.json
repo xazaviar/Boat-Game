@@ -1,1 +1,48 @@
-[]
+[
+    {
+        "id": 0,
+        "name": "Red Team",
+        "baseColor": "#f20d0d",
+        "areaColor": "#fdd7d7",
+        "baseShape": "DIAMOND",
+        "leader": ["----","BOAT_GAME"],
+        "admins": [],
+        "members": [],
+        "gold":0,
+        "iron":0,
+        "uranium":0,
+        "credits":0,
+        "income":0,
+        "settings":{
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 1,
+        "name": "Blue Team",
+        "baseColor": "#1925e6",
+        "areaColor": "#d9dbfb",
+        "baseShape": "DIAMOND",
+        "leader": ["---","BOAT_GAME"],
+        "admins": [],
+        "members": [],
+        "gold":0,
+        "iron":0,
+        "uranium":0,
+        "credits":0,
+        "income":0,
+        "settings":{
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    }
+]

@@ -75,6 +75,8 @@ var map;
 var players;
 var game;
 var shop;
+var shopList;
+var teamList;
 var battleLog;
 var activeAttacks;
 var me = {
@@ -103,7 +105,7 @@ setTimeout(function() {
     setInterval(function(){radarAngle=radarAngle+radarINC}, radarTick);
     setInterval(function(){if(chatMode){chatBlink=!chatBlink;} },200);
 
-    drawMonitor();
+    drawScreen();
 
     var cookie = getCookie("token")
     if(cookie!=""){
@@ -126,7 +128,7 @@ function tokenInit(token){
             }
         }else{
             errorMsg = data.error;
-            drawMonitor();
+            drawScreen();
         }
     });
 }
@@ -159,6 +161,8 @@ function newData(){
         map = data.map;
         game = data.game;
         shop = data.shop;
+        shopList = data.shopList;
+        teamList = data.teamList;
         battleLog = data.user.battleLog;
         activeAttacks = data.user.activeAttacks;
 
@@ -471,7 +475,8 @@ function newData(){
         //Check for screen resize
         if($( document ).width()!=prevWid) screenResize();
 
-        drawMonitor();
+        drawScreen();
+        // drawMonitor();
         drawTimer();
         drawSideBar();
     });
@@ -621,55 +626,44 @@ function removeFromQueue(i){
 //******************************************************************************
 // Drawing Canvas Functions
 //******************************************************************************
-function drawMonitor(){
+function drawScreen(){
     var c = document.getElementById("monitor");
     var ctx = c.getContext("2d");
     ctx.clearRect(0,0,c.width,c.height);
 
-    var tileSize = c.width/(!gameStart?me.stats.radar:9);
+    drawMonitor(ctx, 800, 800);
+}
 
-    //GridLines
-    ctx.strokeStyle = colors.hudColor;
-    ctx.fillStyle = colors.hudColor;
-    for(var i = 0; i < 5; i++){
-        ctx.beginPath();
-        ctx.arc(c.width/2,c.height/2,90+i*70,0,2*Math.PI);
-        ctx.stroke();
-    }
-    ctx.beginPath();
-    ctx.moveTo(c.width/2,0);
-    ctx.lineTo(c.width/2,c.height);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(0,c.height/2);
-    ctx.lineTo(c.width,c.height/2);
-    ctx.stroke();
+function drawMonitor(ctx, width, height){
+    var tileSize = width/(!gameStart?me.stats.radar:9);
 
     if(gameStart){
+        drawGridLines(ctx, width, height);
         ctx.beginPath();
         ctx.strokeStyle=colors.hudColor;
         ctx.fillStyle=colors.hudBackColor;
         ctx.globalAlpha = 1.0;
-        ctx.strokeRect(c.width/8,c.height/4,3*c.width/4,c.height/8);
-        ctx.fillRect(c.width/8,c.height/4,3*c.width/4,c.height/8);
+        ctx.strokeRect(width/8,height/4,3*width/4,height/8);
+        ctx.fillRect(width/8,height/4,3*width/4,height/8);
         ctx.stroke();
 
 
         if(errorMsg!=''){
             ctx.fillStyle=colors.enemyColor;
             ctx.font = "30px Courier";
-            ctx.fillText(errorMsg,c.width/2-120,c.height/4-40);
+            ctx.fillText(errorMsg,width/2-120,height/4-40);
         }
 
         //Text entry area Labels
         ctx.fillStyle=colors.hudColor;
         ctx.font = "30px Courier";
-        ctx.fillText("Enter Name: "+name,c.width/8+35,c.height/4+60);
+        ctx.fillText("Enter Name: "+name,width/8+35,height/4+60);
     }
     else if(mapView){
-        drawMap();
+        drawMap(ctx, 50, 50, width-200, height-200);
     }
     else{
+        drawGridLines(ctx, width, height);
         //Draw map
         var mid = parseInt(me.stats.radar/2);
         for(var x = 0; x < me.stats.radar; x++){
@@ -762,8 +756,8 @@ function drawMonitor(){
 
         //Draw shops
         ctx.fillStyle=colors.shopColor;
-        for(var i = 0; i < shop.shops.length; i++){
-            var sloc = shop.shops[i].loc;
+        for(var i = 0; i < shopList.length; i++){
+            var sloc = shopList[i].loc;
 
             var t = parseInt(me.stats.radar/2);
             var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
@@ -773,7 +767,7 @@ function drawMonitor(){
             // if(cX<0)cX+=map.length;
             // if(cY<0)cY+=map.length;
 
-            if(shop.shops[i].type==="SHOP"){ //Shop
+            if(shopList[i].type==="SHOP"){ //Shop
 
                 //Draw Safe Zone
                 ctx.beginPath();
@@ -793,7 +787,7 @@ function drawMonitor(){
                 ctx.fill();
 
             }
-            else if(shop.shops[i].type==="SSHOP"){ //Super Shop
+            else if(shopList[i].type==="SSHOP"){ //Super Shop
 
                 //Draw Safe Zone
                 ctx.beginPath();
@@ -901,7 +895,7 @@ function drawMonitor(){
             }else if(me.queue[i].type==="HOLD"){
                 actions.push({"type":"HOLD","loc":prevLoc});
             }else if(me.queue[i].type==="SCAN"){
-                drawRadarScan(c, ctx);
+                drawRadarScan(ctx, width, height);
             }
         }
 
@@ -962,13 +956,13 @@ function drawMonitor(){
                 ctx.fillStyle = colors.abilityColor;
                 ctx.globalAlpha = 0.4;
                 if(actions[i].dir==="N"){ //N
-                    ctx.fillRect(x*tileSize,0,tileSize,c.height/2-tileSize/2);
+                    ctx.fillRect(x*tileSize,0,tileSize,height/2-tileSize/2);
                 }else if(actions[i].dir==="E"){ //E
-                    ctx.fillRect(x*tileSize+tileSize,y*tileSize,c.width/2-tileSize/2,tileSize);
+                    ctx.fillRect(x*tileSize+tileSize,y*tileSize,width/2-tileSize/2,tileSize);
                 }else if(actions[i].dir==="S"){ //S
-                    ctx.fillRect(x*tileSize,y*tileSize+tileSize,tileSize,c.height/2-tileSize/2);
+                    ctx.fillRect(x*tileSize,y*tileSize+tileSize,tileSize,height/2-tileSize/2);
                 }else if(actions[i].dir==="W"){ //W
-                    ctx.fillRect(0,y*tileSize,c.width/2-tileSize/2,tileSize);
+                    ctx.fillRect(0,y*tileSize,width/2-tileSize/2,tileSize);
                 }
                 ctx.globalAlpha = 1.0;
                 ctx.stroke();
@@ -988,7 +982,7 @@ function drawMonitor(){
         if(me.stats.hp>0){
             ctx.fillStyle=colors.hudColor;
             ctx.strokeStyle=colors.hudColor;
-            ctx.arc(c.width/2,c.height/2,tileSize/5,0,2*Math.PI);
+            ctx.arc(width/2,height/2,tileSize/5,0,2*Math.PI);
             if(me.info.stealthed)
                 ctx.stroke();
             else
@@ -997,36 +991,38 @@ function drawMonitor(){
         else{
             ctx.fillStyle=colors.enemyColor;
             ctx.font = "40px Courier";
-            ctx.fillText("YOU ARE DEAD",c.width/2-130,c.height/2);
-            ctx.fillText("Press 'y' to Respawn",c.width/2-220,c.height/2+50);
+            ctx.fillText("YOU ARE DEAD",width/2-130,height/2);
+            ctx.fillText("Press 'y' to Respawn",width/2-220,height/2+50);
         }
 
         //Let them know they can access the Store
         if(shop.withinShop!=null){
             ctx.fillStyle = colors.shopColor;
             ctx.font = "20px Courier";
-            ctx.fillText("Press 'o' to open shop menu",c.width/2-150,c.height/2-50);
+            ctx.fillText("Press 'o' to open shop menu",width/2-150,height/2-50);
         }
 
 
         //Draw shop Screen
         if(shopMode && shop.withinShop=="SHOP"){
-            drawShopMenu(c, ctx);
+            drawShopMenu(ctx, width, height);
         }
         else if(shopMode && shop.withinShop=="SSHOP"){
-            drawSShopMenu(c, ctx);
+            drawSShopMenu(ctx, width, height);
         }
 
         //Draw grid hover
-        else if(mX > -1 && mY > -1 && mX < c.width && mY < c.height && !settingsView){
+        else if(mX > -1 && mY > -1 && mX < width && mY < height && !settingsView){
             ctx.beginPath();
             if(displayBlink || displayCannon || displayRailgun){
                 ctx.strokeStyle = colors.abilityColor;
                 ctx.fillStyle = colors.abilityColor;
-            }else{
+            }
+            else{
                 ctx.strokeStyle = colors.hudColor;
                 ctx.fillStyle = colors.hudColor;
             }
+
             ctx.beginPath();
             ctx.globalAlpha = 0.3;
             if(displayCannon){
@@ -1036,17 +1032,17 @@ function drawMonitor(){
                 ctx.strokeRect(parseInt(mX/tileSize)*tileSize,parseInt(mY/tileSize)*tileSize,tileSize,tileSize);
             }
             else if(displayRailgun){
-                if(mX>c.width/3 && mX<c.width*2/3 && mY<c.width/2-tileSize/2){ //N
-                    ctx.fillRect(c.width/2-tileSize/2,0,tileSize,c.height/2-tileSize/2);
+                if(mX>width/3 && mX<width*2/3 && mY<width/2-tileSize/2){ //N
+                    ctx.fillRect(width/2-tileSize/2,0,tileSize,height/2-tileSize/2);
                     railDir = "N";
-                }else if(mX>c.width/2+tileSize/2 && mY>c.width/3 && mY<c.width*2/3){ //E
-                    ctx.fillRect(c.width/2+tileSize/2,c.height/2-tileSize/2,c.width/2-tileSize/2,tileSize);
+                }else if(mX>width/2+tileSize/2 && mY>width/3 && mY<width*2/3){ //E
+                    ctx.fillRect(width/2+tileSize/2,height/2-tileSize/2,width/2-tileSize/2,tileSize);
                     railDir = "E";
-                }else if(mX>c.width/3 && mX<c.width*2/3 && mY>c.width/2+tileSize/2){ //S
-                    ctx.fillRect(c.width/2-tileSize/2,c.height/2+tileSize/2,tileSize,c.height/2-tileSize/2);
+                }else if(mX>width/3 && mX<width*2/3 && mY>width/2+tileSize/2){ //S
+                    ctx.fillRect(width/2-tileSize/2,height/2+tileSize/2,tileSize,height/2-tileSize/2);
                     railDir = "S";
-                }else if(mX<c.width/2-tileSize/2 && mY>c.width/3 && mY<c.width*2/3){ //W
-                    ctx.fillRect(0,c.height/2-tileSize/2,c.width/2-tileSize/2,tileSize);
+                }else if(mX<width/2-tileSize/2 && mY>width/3 && mY<width*2/3){ //W
+                    ctx.fillRect(0,height/2-tileSize/2,width/2-tileSize/2,tileSize);
                     railDir = "W";
                 }
             }
@@ -1062,18 +1058,18 @@ function drawMonitor(){
     }
 
     if(settingsView){
-        drawSettings(c, ctx);
+        drawSettings(ctx, width, height);
     }
 
     //Draw Version and Author info
     ctx.beginPath();
     ctx.fillStyle = colors.hudColor;
     ctx.font = "12px Courier";
-    ctx.fillText("Made by Xazaviar",0,c.height-15);
+    ctx.fillText("Made by Xazaviar",0,height-15);
     if(game!=null)
-        ctx.fillText(game.version,0,c.height-30);
+        ctx.fillText(game.version,0,height-30);
     if(gameStart)
-        ctx.fillText("press 'esc' for settings",c.width-175,c.height-15);
+        ctx.fillText("press 'esc' for settings",width-175,height-15);
 
 }
 
@@ -1433,19 +1429,38 @@ function drawSideBar(){
 //******************************************************************************
 // Drawing Helper Functions
 //******************************************************************************
-function drawMap(){
-    var c = document.getElementById("monitor");
-    var ctx = c.getContext("2d");
-    ctx.clearRect(0,0,c.width,c.height);
+function drawGridLines(ctx, width, height){
+    ctx.strokeStyle = colors.hudColor;
+    ctx.fillStyle = colors.hudColor;
+    for(var i = 0; i < 5; i++){
+        ctx.beginPath();
+        ctx.arc(width/2,height/2,90+i*70,0,2*Math.PI);
+        ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.moveTo(width/2,0);
+    ctx.lineTo(width/2,height);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0,height/2);
+    ctx.lineTo(width,height/2);
+    ctx.stroke();
 
-    var tileSize = c.width/map.length;
+}
+
+function drawMap(ctx, startX, startY, width, height){
+    // var c = document.getElementById("monitor");
+    // var ctx = c.getContext("2d");
+    // ctx.clearRect(0,0,width,height);
+
+    var tileSize = width/map.length;
 
     for(var x = 0; x < map.length; x++){
         for(var y = 0; y < map.length; y++){
             if(map[x][y]==="ROCK"){ //Rock
                 ctx.beginPath();
                 ctx.fillStyle= colors.rockColor;
-                ctx.fillRect(x*tileSize+tileSize/2-tileSize*.4,y*tileSize+tileSize/2-tileSize*.4,tileSize*.8,tileSize*.8);
+                ctx.fillRect(x*tileSize+tileSize/2-tileSize*.4+startX,y*tileSize+tileSize/2-tileSize*.4+startY,tileSize*.8,tileSize*.8);
                 ctx.stroke();
             }
             else if(map[x][y]==="SHOP"){ //Shop
@@ -1458,7 +1473,7 @@ function drawMap(){
                 var eX=(x==me.stats.radar-1?me.stats.radar:x+1);
                 var eY=(y==me.stats.radar-1?me.stats.radar:y+1);
 
-                ctx.fillRect(sX*tileSize, sY*tileSize, (eX-sX+1)*tileSize, (eY-sY+1)*tileSize);
+                ctx.fillRect(sX*tileSize+startX, sY*tileSize+startY, (eX-sX+1)*tileSize, (eY-sY+1)*tileSize);
                 ctx.fill();
 
                 //Draw Shop
@@ -1466,7 +1481,7 @@ function drawMap(){
                 ctx.globalAlpha = 1.0;
                 ctx.fillStyle = colors.shopColor;
                 ctx.save();
-                ctx.translate(x*tileSize+tileSize/2, y*tileSize+tileSize/2);
+                ctx.translate(x*tileSize+tileSize/2+startX, y*tileSize+tileSize/2+startY);
                 ctx.rotate(Math.PI / 4);
                 ctx.translate(-(tileSize/2 / 2), -(tileSize/2 / 2));
                 ctx.fillRect(0,0, tileSize/2, tileSize/2);
@@ -1484,7 +1499,7 @@ function drawMap(){
                 var eX=(x==me.stats.radar-2?me.stats.radar:x+2);
                 var eY=(y==me.stats.radar-2?me.stats.radar:y+2);
 
-                ctx.fillRect(sX*tileSize, sY*tileSize, (eX-sX+1)*tileSize, (eY-sY+1)*tileSize);
+                ctx.fillRect(sX*tileSize+startX, sY*tileSize+startY, (eX-sX+1)*tileSize, (eY-sY+1)*tileSize);
                 ctx.fill();
 
                 //Draw Super Shop
@@ -1492,50 +1507,50 @@ function drawMap(){
                 ctx.globalAlpha = 1.0;
                 ctx.fillStyle = colors.shopColor;
                 ctx.save();
-                ctx.translate(x*tileSize+tileSize/2, y*tileSize+tileSize/2);
+                ctx.translate(x*tileSize+tileSize/2+startX, y*tileSize+tileSize/2+startY);
                 ctx.rotate(Math.PI / 4);
                 ctx.translate(-(tileSize/2 / 2), -(tileSize/2 / 2));
                 ctx.fillRect(0,0, tileSize/2, tileSize/2);
                 ctx.rotate(3*Math.PI / 4);
                 ctx.restore();
-                ctx.fillRect(x*tileSize+tileSize/4,y*tileSize+tileSize/4, tileSize/2, tileSize/2);
+                ctx.fillRect(x*tileSize+tileSize/4+startX,y*tileSize+tileSize/4+startY, tileSize/2, tileSize/2);
                 ctx.fill();
 
             }
             else if(map[x][y]=="GOLD"){ //Treasure
                 ctx.beginPath();
                 ctx.fillStyle=colors.goldColor;
-                ctx.arc(x*tileSize+tileSize/2-tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.arc(x*tileSize+tileSize/2-tileSize/8+startX,y*tileSize+tileSize/2+tileSize/10+startY,tileSize/6,0,2*Math.PI);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(x*tileSize+tileSize/2+tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.arc(x*tileSize+tileSize/2+tileSize/8+startX,y*tileSize+tileSize/2+tileSize/10+startY,tileSize/6,0,2*Math.PI);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2-tileSize/4+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.arc(x*tileSize+tileSize/2+startX,y*tileSize+tileSize/2-tileSize/4+tileSize/10+startY,tileSize/6,0,2*Math.PI);
                 ctx.fill();
             }
             else if(map[x][y]=="IRON"){ //Iron
                 ctx.beginPath();
                 ctx.fillStyle=colors.ironColor;
-                ctx.arc(x*tileSize+tileSize/2-tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.arc(x*tileSize+tileSize/2-tileSize/8+startX,y*tileSize+tileSize/2+tileSize/10+startY,tileSize/6,0,2*Math.PI);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(x*tileSize+tileSize/2+tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.arc(x*tileSize+tileSize/2+tileSize/8+startX,y*tileSize+tileSize/2+tileSize/10+startY,tileSize/6,0,2*Math.PI);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2-tileSize/4+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.arc(x*tileSize+tileSize/2+startX,y*tileSize+tileSize/2-tileSize/4+tileSize/10+startY,tileSize/6,0,2*Math.PI);
                 ctx.fill();
             }
             else if(map[x][y]=="URANIUM"){ //Uranium
                 ctx.beginPath();
                 ctx.fillStyle=colors.uraniumColor;
-                ctx.arc(x*tileSize+tileSize/2-tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.arc(x*tileSize+tileSize/2-tileSize/8+startX,y*tileSize+tileSize/2+tileSize/10+startY,tileSize/6,0,2*Math.PI);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(x*tileSize+tileSize/2+tileSize/8,y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.arc(x*tileSize+tileSize/2+tileSize/8+startX,y*tileSize+tileSize/2+tileSize/10+startY,tileSize/6,0,2*Math.PI);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2-tileSize/4+tileSize/10,tileSize/6,0,2*Math.PI);
+                ctx.arc(x*tileSize+tileSize/2+startX,y*tileSize+tileSize/2-tileSize/4+tileSize/10+startY,tileSize/6,0,2*Math.PI);
                 ctx.fill();
             }
 
@@ -1545,12 +1560,12 @@ function drawMap(){
                     ctx.beginPath();
                     ctx.fillStyle = colors.hudColor;
                     ctx.strokeStyle = colors.hudColor;
-                    ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2,tileSize/4,0,2*Math.PI);
+                    ctx.arc(x*tileSize+tileSize/2+startX,y*tileSize+tileSize/2+startY,tileSize/4,0,2*Math.PI);
                     ctx.fill();
 
                     ctx.beginPath();
                     ctx.globalAlpha = 0.3;
-                    ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
+                    ctx.fillRect(x*tileSize+startX,y*tileSize+startY,tileSize,tileSize);
                     ctx.globalAlpha = 1.0;
                     ctx.stroke();
                 }
@@ -1563,21 +1578,21 @@ function drawMap(){
         var eloc = players[i].loc; //Check if same player
         if(!(eloc[0]==me.loc[0] && eloc[1]==me.loc[1] && me.stats.hp>0)){
             ctx.beginPath();
-            ctx.arc(eloc[0]*tileSize+tileSize/2,eloc[1]*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
+            ctx.arc(eloc[0]*tileSize+tileSize/2+startX,eloc[1]*tileSize+tileSize/2+startY,tileSize/5,0,2*Math.PI);
             ctx.fill();
         }
     }
 }
 
-function drawShopMenu(c, ctx){
+function drawShopMenu(ctx, width, height){
     ctx.beginPath();
     ctx.strokeStyle=colors.hudColor;
     ctx.fillStyle=colors.hudBackColor;
     ctx.globalAlpha = 1.0;
-    var startX = c.width/6;
-    var startY = c.height/4;
-    ctx.strokeRect(startX,startY,c.width-startX*2,c.height-startY*2);
-    ctx.fillRect(startX,startY,c.width-startX*2,c.height-startY*2);
+    var startX = width/6;
+    var startY = height/4;
+    ctx.strokeRect(startX,startY,width-startX*2,height-startY*2);
+    ctx.fillRect(startX,startY,width-startX*2,height-startY*2);
     ctx.stroke();
 
     //Store Labels
@@ -1596,19 +1611,19 @@ function drawShopMenu(c, ctx){
         ctx.fillText(" "+(i+1)+" : "+baseStore[i].label,startX+5,startY+110+25*i);
         if(baseStore[i].canBuy && me.info.gold < baseStore[i].price.gold) ctx.fillStyle=colors.needMoreColor;
         else if(baseStore[i].canBuy) ctx.fillStyle=colors.canBuyColor;
-        ctx.fillText(baseStore[i].price.gold+"g",c.width-startX-140,startY+110+25*i);
+        ctx.fillText(baseStore[i].price.gold+"g",width-startX-140,startY+110+25*i);
         if(baseStore[i].canBuy && me.info.iron < baseStore[i].price.iron) ctx.fillStyle=colors.needMoreColor;
         else if(baseStore[i].canBuy) ctx.fillStyle=colors.canBuyColor;
-        ctx.fillText(baseStore[i].price.iron+"i",c.width-startX-68,startY+110+25*i);
+        ctx.fillText(baseStore[i].price.iron+"i",width-startX-68,startY+110+25*i);
         if(baseStore[i].canBuy && me.info.uranium < baseStore[i].price.uranium) ctx.fillStyle=colors.needMoreColor;
         else if(baseStore[i].canBuy) ctx.fillStyle=colors.canBuyColor;
-        ctx.fillText(baseStore[i].price.uranium+"u",c.width-startX-30,startY+110+25*i);
+        ctx.fillText(baseStore[i].price.uranium+"u",width-startX-30,startY+110+25*i);
 
         //upgrade bars
         for(var u = 0; u < baseStore[i].maxLvl; u++){
             if(u < baseStore[i].level) ctx.fillStyle = colors.upgradeColor;
             else ctx.fillStyle = colors.voidUpgradeColor;
-            ctx.fillRect(c.width-startX-250+u*10,startY+95+i*25,5,20);
+            ctx.fillRect(width-startX-250+u*10,startY+95+i*25,5,20);
         }
     }
     // ctx.fillStyle=colors.hudColor;
@@ -1616,15 +1631,15 @@ function drawShopMenu(c, ctx){
 
 }
 
-function drawSShopMenu(c, ctx){
+function drawSShopMenu(ctx, width, height){
     ctx.beginPath();
     ctx.strokeStyle=colors.hudColor;
     ctx.fillStyle=colors.hudBackColor;
     ctx.globalAlpha = 1.0;
-    var startX = c.width/8;
-    var startY = c.height/4;
-    ctx.strokeRect(startX,startY,3*c.width/4,c.height/2);
-    ctx.fillRect(startX,startY,3*c.width/4,c.height/2);
+    var startX = width/8;
+    var startY = height/4;
+    ctx.strokeRect(startX,startY,3*width/4,height/2);
+    ctx.fillRect(startX,startY,3*width/4,height/2);
     ctx.stroke();
 
 
@@ -1641,15 +1656,15 @@ function drawSShopMenu(c, ctx){
     ctx.font = "18px Courier";
     for(var i = 0; i < tabs.length+1; i++){
         ctx.beginPath();
-        var tHei = 60;//(c.height/2)/(tabs.length+1);
+        var tHei = 60;//(height/2)/(tabs.length+1);
         if(i==cTab) ctx.fillStyle=colors.hudColor;
         else ctx.fillStyle=colors.hudBackColor;
-        ctx.strokeRect(c.width-startX+1,startY+tHei*i,25,tHei);
-        ctx.fillRect(c.width-startX+1,startY+tHei*i,25,tHei);
+        ctx.strokeRect(width-startX+1,startY+tHei*i,25,tHei);
+        ctx.fillRect(width-startX+1,startY+tHei*i,25,tHei);
 
         if(i==cTab) ctx.fillStyle=colors.hudBackColor;
         else ctx.fillStyle=colors.hudColor;
-        ctx.fillText((i==tabs.length?"LO":"T"+(i+1)),c.width-startX+3,startY+35+tHei*i);
+        ctx.fillText((i==tabs.length?"LO":"T"+(i+1)),width-startX+3,startY+35+tHei*i);
         ctx.stroke();
     }
 
@@ -1671,19 +1686,19 @@ function drawSShopMenu(c, ctx){
             ctx.fillText(" "+(i+1)+": "+tabs[cTab][i].label,startX+5,startY+110+i*25);
             if(tabs[cTab][i].canBuy && me.info.gold < tabs[cTab][i].price.gold) ctx.fillStyle=colors.needMoreColor;
             else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
-            ctx.fillText(tabs[cTab][i].price.gold+"g",c.width-startX-140,startY+110+i*25);
+            ctx.fillText(tabs[cTab][i].price.gold+"g",width-startX-140,startY+110+i*25);
             if(tabs[cTab][i].canBuy && me.info.iron < tabs[cTab][i].price.iron) ctx.fillStyle=colors.needMoreColor;
             else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
-            ctx.fillText(tabs[cTab][i].price.iron+"i",c.width-startX-68,startY+110+i*25);
+            ctx.fillText(tabs[cTab][i].price.iron+"i",width-startX-68,startY+110+i*25);
             if(tabs[cTab][i].canBuy && me.info.uranium < tabs[cTab][i].price.uranium) ctx.fillStyle=colors.needMoreColor;
             else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
-            ctx.fillText(tabs[cTab][i].price.uranium+"u",c.width-startX-30,startY+110+i*25);
+            ctx.fillText(tabs[cTab][i].price.uranium+"u",width-startX-30,startY+110+i*25);
 
             //upgrade bars
             for(var u = 0; u < tabs[cTab][i].maxLvl; u++){
                 if(u < tabs[cTab][i].level) ctx.fillStyle = colors.upgradeColor;
                 else ctx.fillStyle = colors.voidUpgradeColor;
-                ctx.fillRect(c.width-startX-200+u*10,startY+95+i*25,5,20);
+                ctx.fillRect(width-startX-200+u*10,startY+95+i*25,5,20);
             }
         }
     }
@@ -1725,7 +1740,7 @@ function drawSShopMenu(c, ctx){
         //line
         ctx.beginPath();
         ctx.moveTo(startX+150,startY+120);
-        ctx.lineTo(startX+150,startY+c.height/2);
+        ctx.lineTo(startX+150,startY+height/2);
         ctx.stroke();
 
         //Options
@@ -1737,23 +1752,23 @@ function drawSShopMenu(c, ctx){
     }
 }
 
-function drawSettings(c, ctx){
-    var hudStart = c.width/6;
+function drawSettings(ctx, width, height){
+    var hudStart = width/6;
     ctx.beginPath();
     ctx.strokeStyle = colors.hudColor;
     ctx.fillStyle = colors.hudBackColor;
     ctx.globalAlpha = 1.0;
-    ctx.strokeRect(hudStart,c.height/8,c.width/2,3*c.height/4);
-    ctx.fillRect(hudStart,c.height/8,c.width/2,3*c.height/4);
+    ctx.strokeRect(hudStart,height/8,width/2,3*height/4);
+    ctx.fillRect(hudStart,height/8,width/2,3*height/4);
     ctx.stroke();
 
     //Settings Labels
     ctx.beginPath();
     ctx.fillStyle = colors.hudColor;
     ctx.font = "30px Courier";
-    ctx.fillText("Settings",hudStart+5,c.height/8+35);
+    ctx.fillText("Settings",hudStart+5,height/8+35);
     ctx.font = "20px Courier";
-    ctx.fillText("Click the color to change it.",hudStart+5,c.height/8+55);
+    ctx.fillText("Click the color to change it.",hudStart+5,height/8+55);
 
     var i = 1;
     ctx.font = "18px Courier";
@@ -1762,11 +1777,11 @@ function drawSettings(c, ctx){
             if(property!=="timerGradient"){
                 ctx.beginPath();
                 ctx.fillStyle = colors.hudColor;
-                ctx.fillText(property,hudStart+20,c.height/8+75+20*i);
+                ctx.fillText(property,hudStart+20,height/8+75+20*i);
                 ctx.strokeStyle = colors.hudColor;
                 ctx.fillStyle = colors[property];
-                ctx.strokeRect(hudStart+350,c.height/8+60+20*i,15,15);
-                ctx.fillRect(hudStart+350,c.height/8+60+20*i,15,15);
+                ctx.strokeRect(hudStart+350,height/8+60+20*i,15,15);
+                ctx.fillRect(hudStart+350,height/8+60+20*i,15,15);
                 i++;
             }
         }
@@ -1776,48 +1791,68 @@ function drawSettings(c, ctx){
     ctx.fillStyle = colors.hudColor;
     ctx.strokeStyle = colors.hudColor;
     ctx.font = "25px Courier";
-    ctx.fillText("Default",hudStart+260,c.height/8+107+20*i);
-    ctx.strokeRect(hudStart+255,c.height/8+60+20*i+20,115,40);
+    ctx.fillText("Default",hudStart+260,height/8+107+20*i);
+    ctx.strokeRect(hudStart+255,height/8+60+20*i+20,115,40);
 
     //Controls
-    hudStart = 4*c.width/6;
+    hudStart = 4*width/6;
     ctx.beginPath();
     ctx.strokeStyle = colors.hudColor;
     ctx.fillStyle = colors.hudBackColor;
     ctx.globalAlpha = 1.0;
-    ctx.strokeRect(hudStart+1,c.height/8,5*c.width/16,c.height/2+20);
-    ctx.fillRect(hudStart+1,c.height/8,5*c.width/16,c.height/2+20);
+    ctx.strokeRect(hudStart+1,height/8,5*width/16,height/2+20);
+    ctx.fillRect(hudStart+1,height/8,5*width/16,height/2+20);
     ctx.fillStyle = colors.hudColor;
     ctx.font = "22px Courier";
-    ctx.fillText("Controls",(hudStart)+6,c.height/8+23);
+    ctx.fillText("Controls",(hudStart)+6,height/8+23);
     ctx.font = "16px Courier";
-    ctx.fillText("Key     Action   Cost",(hudStart)+6,c.height/8+40);
-    ctx.fillText("1     - Scan      [3]",(hudStart)+6,c.height/8+55);
-    ctx.fillText("2     - Loot      [2]",(hudStart)+6,c.height/8+70);
-    ctx.fillText("3     - Hold      [1]",(hudStart)+6,c.height/8+85);
-    ctx.fillText("WASD  - Move      [1]",(hudStart)+6,c.height/8+100);
-    ctx.fillText("Click - Attack    [1]",(hudStart)+6,c.height/8+115);
-    ctx.fillText("ESC   - Settings  [0]",(hudStart)+6,c.height/8+130);
+    ctx.fillText("Key     Action   Cost",(hudStart)+6,height/8+40);
+    ctx.fillText("1     - Scan      [3]",(hudStart)+6,height/8+55);
+    ctx.fillText("2     - Loot      [2]",(hudStart)+6,height/8+70);
+    ctx.fillText("3     - Hold      [1]",(hudStart)+6,height/8+85);
+    ctx.fillText("WASD  - Move      [1]",(hudStart)+6,height/8+100);
+    ctx.fillText("Click - Attack    [1]",(hudStart)+6,height/8+115);
+    ctx.fillText("ESC   - Settings  [0]",(hudStart)+6,height/8+130);
     ctx.font = "22px Courier";
-    ctx.fillText("How to Play",(hudStart)+6,c.height/8+165);
+    ctx.fillText("How to Play",(hudStart)+6,height/8+165);
     ctx.font = "16px Courier";
-    ctx.fillText("Scan to reveal treasure. ",(hudStart)+6,c.height/8+182);
-    ctx.fillText("Move over the treasure to",(hudStart)+6,c.height/8+197);
-    ctx.fillText("loot it. Take the gold to",(hudStart)+6,c.height/8+212);
-    ctx.fillText("shops to get upgrades.   ",(hudStart)+6,c.height/8+227);
-    ctx.fillText("Attack  enemy ships to   ",(hudStart)+6,c.height/8+242);
-    ctx.fillText("steal their loot.        ",(hudStart)+6,c.height/8+257);
-    ctx.fillText("                         ",(hudStart)+6,c.height/8+272);
-    ctx.fillText("You have 3 action slots  ",(hudStart)+6,c.height/8+287);
-    ctx.fillText("per round and 3 secs to  ",(hudStart)+6,c.height/8+302);
-    ctx.fillText("choose them. All actions ",(hudStart)+6,c.height/8+317);
-    ctx.fillText("are done in order at the ",(hudStart)+6,c.height/8+332);
-    ctx.fillText("same time as other       ",(hudStart)+6,c.height/8+347);
-    ctx.fillText("players. Priority order  ",(hudStart)+6,c.height/8+362);
-    ctx.fillText("goes:                    ",(hudStart)+6,c.height/8+377);
-    ctx.fillText(" MOVE->ATTACK->LOOT->SCAN",(hudStart)+6,c.height/8+392);
-    ctx.fillText("                         ",(hudStart)+6,c.height/8+407);
+    ctx.fillText("Scan to reveal treasure. ",(hudStart)+6,height/8+182);
+    ctx.fillText("Move over the treasure to",(hudStart)+6,height/8+197);
+    ctx.fillText("loot it. Take the gold to",(hudStart)+6,height/8+212);
+    ctx.fillText("shops to get upgrades.   ",(hudStart)+6,height/8+227);
+    ctx.fillText("Attack  enemy ships to   ",(hudStart)+6,height/8+242);
+    ctx.fillText("steal their loot.        ",(hudStart)+6,height/8+257);
+    ctx.fillText("                         ",(hudStart)+6,height/8+272);
+    ctx.fillText("You have 3 action slots  ",(hudStart)+6,height/8+287);
+    ctx.fillText("per round and 3 secs to  ",(hudStart)+6,height/8+302);
+    ctx.fillText("choose them. All actions ",(hudStart)+6,height/8+317);
+    ctx.fillText("are done in order at the ",(hudStart)+6,height/8+332);
+    ctx.fillText("same time as other       ",(hudStart)+6,height/8+347);
+    ctx.fillText("players. Priority order  ",(hudStart)+6,height/8+362);
+    ctx.fillText("goes:                    ",(hudStart)+6,height/8+377);
+    ctx.fillText(" MOVE->ATTACK->LOOT->SCAN",(hudStart)+6,height/8+392);
+    ctx.fillText("                         ",(hudStart)+6,height/8+407);
     ctx.stroke();
+}
+
+function drawRadarScan(ctx, width, height){
+    var radius = 450;
+    ctx.beginPath();
+    ctx.strokeStyle = colors.hudColor;
+    ctx.fillStyle = colors.hudColor;
+    ctx.moveTo(width/2+(radius*Math.cos(radarAngle)),height/2+(radius*Math.sin(radarAngle))); //Outer point
+    ctx.lineTo(width/2,height/2); //center
+    ctx.stroke();
+
+    //follow Rings
+    for(var i = 1; i < radarFollow; i++){
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0-(1.0/radarFollow)*i;
+        ctx.moveTo(width/2+(radius*Math.cos(radarAngle-i*(radarINC/2))),height/2+(radius*Math.sin(radarAngle-i*(radarINC/2)))); //Outer point
+        ctx.lineTo(width/2,height/2); //center
+        ctx.stroke();
+    }
+    ctx.globalAlpha = 1.0;
 }
 
 
@@ -1832,13 +1867,13 @@ function handleKeypress(e){
             name = name+""+String.fromCharCode(keyCode);
             name = name.replace("/","_").replace("\'","_").replace("\"","_").replace("#","_");
         }
-        drawMonitor();
+        drawScreen();
     }else if(chatMode){
         if(((keyCode > 31 && keyCode < 128) || (keyCode > 185)) && chatMsg.length < 140){
             chatMsg = chatMsg+""+String.fromCharCode(keyCode);
             chatMsg = chatMsg.replace("/","_").replace("#","_");
         }
-        drawMonitor();
+        drawScreen();
     }
 }
 
@@ -1849,14 +1884,14 @@ function handleKeydown(e){
         settingsView = !settingsView;
         if(!settingsView)
             $(".modal").toggle(false);
-        drawMonitor();
+        drawScreen();
     }
     else if(gameStart){
         if(keyCode == 13){ //Enter
             init();
         }else if(keyCode == 8){ //backspace
             name = name.substring(0,name.length-1);
-            drawMonitor();
+            drawScreen();
         }
     }
     else if(chatMode){
@@ -1865,7 +1900,7 @@ function handleKeydown(e){
             sendChatMsg();
         }else if(keyCode == 8){ //backspace
             chatMsg = chatMsg.substring(0,chatMsg.length-1);
-            drawMonitor();
+            drawScreen();
         }
     }
     else if(keyCode == 73){  //i
@@ -1972,7 +2007,7 @@ function handleMousedown(e){
                            $("body").css("background-color",colors.hudBackColor);
                            saveColorScheme();
                            $(".modal").toggle(false);
-                           drawMonitor();
+                           drawScreen();
                        });
                        break;
                    }
@@ -2040,7 +2075,7 @@ function handleMousemove(e){
     mX = parseInt(e.clientX - offsetX);
     mY = parseInt(e.clientY - offsetY);
     if(!shopMode && !mapView){
-        drawMonitor();
+        drawScreen();
     }
 }
 
@@ -2104,26 +2139,6 @@ function displayModal(color, _callback){
 
 function saveColorScheme(){
     localStorage.setItem('savedColors', JSON.stringify(colors));
-}
-
-function drawRadarScan(c, ctx){
-    var radius = 450;
-    ctx.beginPath();
-    ctx.strokeStyle = colors.hudColor;
-    ctx.fillStyle = colors.hudColor;
-    ctx.moveTo(c.width/2+(radius*Math.cos(radarAngle)),c.height/2+(radius*Math.sin(radarAngle))); //Outer point
-    ctx.lineTo(c.width/2,c.height/2); //center
-    ctx.stroke();
-
-    //follow Rings
-    for(var i = 1; i < radarFollow; i++){
-        ctx.beginPath();
-        ctx.globalAlpha = 1.0-(1.0/radarFollow)*i;
-        ctx.moveTo(c.width/2+(radius*Math.cos(radarAngle-i*(radarINC/2))),c.height/2+(radius*Math.sin(radarAngle-i*(radarINC/2)))); //Outer point
-        ctx.lineTo(c.width/2,c.height/2); //center
-        ctx.stroke();
-    }
-    ctx.globalAlpha = 1.0;
 }
 
 function canPurchase(costs, inventory){

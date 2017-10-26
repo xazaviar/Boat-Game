@@ -8,7 +8,7 @@ var players = [];
 var tokenSize = 200;
 
 //Map Building
-var mapSize = 104;
+var mapSize = 24;
 var rockSpread = .04;   //decimal as percent
 var shopSpread = .007;  //decimal as percent
 var specialShops = 2;   //even number is preferred
@@ -125,7 +125,11 @@ function init(){
             console.log(err);
             process.exit(1);
         }
-        teamData = obj;
+        teamData = [];
+        for(var t in obj){
+            teamData[obj[t].id] = obj[t];
+        }
+        // console.log(teamData);
     });
 
 
@@ -209,6 +213,8 @@ function startServer(){
             "token": token,
             "info":{
                 "name": name,
+                "teamID": -1,
+                "teamRole": "NONE",
                 "gold": 5000,
                 "totalGold":0,
                 "iron": 0,
@@ -366,122 +372,53 @@ function startServer(){
                 }
             }
 
+            var sendTeam = [];
+            for(var t in teamData){
+                if(t == p.info.teamID){
+                    var admins = [];
+                    var members = [];
+                    for(var a in teamData[t].admins){
+                        admins.push(teamData[t].admins[a][1]);
+                    }
+                    for(var m in teamData[t].members){
+                        members.push(teamData[t].members[m][1]);
+                    }
+                    sendTeam[teamData[t].id] = {
+                        "id": teamData[t].id,
+                        "name": teamData[t].name,
+                        "colors":teamData[t].colors,
+                        "leader": teamData[t].leader[1],
+                        "admins": admins,
+                        "members": members,
+                        "gold":teamData[t].gold,
+                        "iron":teamData[t].iron,
+                        "uranium":teamData[t].uranium,
+                        "credits":teamData[t].credits,
+                        "income":teamData[t].income,
+                        "settings": teamData[t].settings
+                    };
+                }
+                else{
+                    sendTeam[teamData[t].id] = {"id":teamData[t].id,"name":teamData[t].name,"colors":teamData[t].colors,"size":teamData[t].members.length+teamData[t].admins.length+1,"joinStatus":teamData[t].settings.membership};
+                }
+            }
+
             //Update canUse
-            p.abilitySlots[0].canUse=canUseMod(p,p.abilitySlots[0].type);
-            p.abilitySlots[1].canUse=canUseMod(p,p.abilitySlots[1].type);
+            p.abilitySlots[0].canUse = canUseMod(p,p.abilitySlots[0].type);
+            p.abilitySlots[1].canUse = canUseMod(p,p.abilitySlots[1].type);
 
             var data = {
                 "user": p,
                 "players": sendPlayers,
                 "map": sendMap,
                 "game":{"countdown":countdown,"phase":phase,"version":version},
-                "shop":{
-                    "shops": shopList,
-                    "withinShop": withinShop(p.loc),
-
-                    //Regular Shop
-                    "hpF":{
-                        "price":calculatePrices(shopData.shipRepair,p.stats.hpMAX-p.stats.hp),
-                        "canBuy":p.stats.hp!=p.stats.hpMAX
-                    },
-                    "hp5":{
-                        "price":calculatePrices(shopData.shipRepair5,0),
-                        "canBuy":p.stats.hp!=p.stats.hpMAX
-                    },
-                    "insurance":{
-                        "price":calculatePrices(shopData.insurance,p.info.shipMass),
-                        "canBuy":!p.info.hasInsurance
-                    },
-                    "hpU":{
-                        "price":calculatePrices(shopData.healthUpgrades,p.stats.hpUpgrades+1),
-                        "canBuy":p.stats.hpUpgrades!=p.stats.hpUpgradesMAX
-                    },
-                    "enU":{
-                        "price":calculatePrices(shopData.energyUpgrades,p.stats.energyUpgrades+1),
-                        "canBuy":p.stats.energyUpgrades!=p.stats.energyUpgradesMAX
-                    },
-                    "radU":{
-                        "price":calculatePrices(shopData.radarUpgrades,p.stats.radarUpgrades+1),
-                        "canBuy":p.stats.radarUpgrades!=p.stats.radarUpgradesMAX
-                    },
-                    "atkU":{
-                        "price":calculatePrices(shopData.attackUpgrades,p.stats.attackUpgrades+1),
-                        "canBuy":p.stats.attackUpgrades!=p.stats.attackUpgradesMAX
-                    },
-
-                    //Super Shop
-                    "loadout":{
-                        "price":calculatePrices(shopData.loadoutUpgrades,0),
-                        "canBuy":p.stats.loadoutSize!=statData.loadoutMAX
-                    },
-                    "canU":{
-                        "price":calculatePrices(shopData.cannonUpgrades,p.stats.cannonUpgrades+1),
-                        "canBuy":p.stats.cannonUpgrades!=p.stats.cannonUpgradesMAX
-                    },
-                    "bliU":{
-                        "price":calculatePrices(shopData.blinkUpgrades,p.stats.blinkUpgrades+1),
-                        "canBuy":p.stats.blinkUpgrades!=p.stats.blinkUpgradesMAX
-                    },
-                    "steU":{
-                        "price":calculatePrices(shopData.stealthUpgrades,p.stats.stealthUpgrades+1),
-                        "canBuy":p.stats.stealthUpgrades!=p.stats.stealthUpgradesMAX
-                    },
-                    "trapU":{
-                        "price":calculatePrices(shopData.trapUpgrades,p.stats.trapUpgrades+1),
-                        "canBuy":p.stats.trapUpgrades!=p.stats.trapUpgradesMAX
-                    },
-                    "engModU":{
-                        "price":calculatePrices(shopData.engModUpgrades,p.stats.engModUpgrades+1),
-                        "canBuy":p.stats.engModUpgrades!=p.stats.engModUpgradesMAX
-                    },
-                    "scanU":{
-                        "price":calculatePrices(shopData.scannerUpgrades,p.stats.scannerUpgrades+1),
-                        "canBuy":p.stats.scannerUpgrades!=p.stats.scannerUpgradesMAX
-                    },
-                    "railU":{
-                        "price":calculatePrices(shopData.railgunUpgrades,p.stats.railgunUpgrades+1),
-                        "canBuy":p.stats.railgunUpgrades!=p.stats.railgunUpgradesMAX
-                    },
-                    "insuranceU":{
-                        "price":calculatePrices(shopData.insuranceUpgrades,p.stats.insuranceUpgrades+1),
-                        "canBuy":p.stats.insuranceUpgrades!=p.stats.insuranceUpgradesMAX
-                    },
-                    "carryU":{
-                        "price":calculatePrices(shopData.urCarryUpgrades,p.stats.urCarryUpgrades+1),
-                        "canBuy":p.stats.urCarryUpgrades!=p.stats.urCarryUpgradesMAX
-                    },
-                    "statHP":{
-                        "price":calculatePrices(shopData.staticHp,1),
-                        "canBuy":!p.stats.staticHp
-                    },
-                    "statEng":{
-                        "price":calculatePrices(shopData.staticEng,1),
-                        "canBuy":!p.stats.staticEng
-                    },
-                    "statAtk":{
-                        "price":calculatePrices(shopData.staticAtk,1),
-                        "canBuy":!p.stats.staticAtk
-                    },
-                    "statRdr":{
-                        "price":calculatePrices(shopData.staticRdr,1),
-                        "canBuy":!p.stats.staticRdr
-                    },
-                    "statDR":{
-                        "price":calculatePrices(shopData.staticDR,1),
-                        "canBuy":!p.stats.staticDR
-                    },
-                    "uranium":{
-                        "price":calculatePrices(shopData.uranium,1),
-                        "canBuy":p.info.uranium<p.stats.urCarry
-                    },
-                    "quickHeal":{
-                        "price":calculatePrices(shopData.quickHeal,p.stats.hpMAX),
-                        "canBuy":!p.stats.quickHeal
-                    }
-                }
+                "shopList": shopList,
+                "teamList": sendTeam,
+                "shop": buildStore(p)
             }
 
-        }else{
+        }
+        else{
             var data = {
                 "error": "Invalid token"
             }
@@ -676,109 +613,7 @@ function startServer(){
         }
 
         if(p!=null){
-            var shop = {
-                "withinShop": withinShop(p.loc),
-
-                //Regular Shop
-                "hpF":{
-                    "price":calculatePrices(shopData.shipRepair,p.stats.hpMAX-p.stats.hp),
-                    "canBuy":p.stats.hp!=p.stats.hpMAX
-                },
-                "hp5":{
-                    "price":calculatePrices(shopData.shipRepair5,0),
-                    "canBuy":p.stats.hp!=p.stats.hpMAX
-                },
-                "insurance":{
-                    "price":calculatePrices(shopData.insurance,p.info.shipMass),
-                    "canBuy":!p.info.hasInsurance
-                },
-                "hpU":{
-                    "price":calculatePrices(shopData.healthUpgrades,p.stats.hpUpgrades+1),
-                    "canBuy":p.stats.hpUpgrades!=p.stats.hpUpgradesMAX
-                },
-                "enU":{
-                    "price":calculatePrices(shopData.energyUpgrades,p.stats.energyUpgrades+1),
-                    "canBuy":p.stats.energyUpgrades!=p.stats.energyUpgradesMAX
-                },
-                "radU":{
-                    "price":calculatePrices(shopData.radarUpgrades,p.stats.radarUpgrades+1),
-                    "canBuy":p.stats.radarUpgrades!=p.stats.radarUpgradesMAX
-                },
-                "atkU":{
-                    "price":calculatePrices(shopData.attackUpgrades,p.stats.attackUpgrades+1),
-                    "canBuy":p.stats.attackUpgrades!=p.stats.attackUpgradesMAX
-                },
-
-                //Super Shop
-                "loadout":{
-                    "price":calculatePrices(shopData.loadoutUpgrades,0),
-                    "canBuy":p.stats.loadoutSize!=statData.loadoutMAX
-                },
-                "canU":{
-                    "price":calculatePrices(shopData.cannonUpgrades,p.stats.cannonUpgrades+1),
-                    "canBuy":p.stats.cannonUpgrades!=p.stats.cannonUpgradesMAX
-                },
-                "bliU":{
-                    "price":calculatePrices(shopData.blinkUpgrades,p.stats.blinkUpgrades+1),
-                    "canBuy":p.stats.blinkUpgrades!=p.stats.blinkUpgradesMAX
-                },
-                "steU":{
-                    "price":calculatePrices(shopData.stealthUpgrades,p.stats.stealthUpgrades+1),
-                    "canBuy":p.stats.stealthUpgrades!=p.stats.stealthUpgradesMAX
-                },
-                "trapU":{
-                    "price":calculatePrices(shopData.trapUpgrades,p.stats.trapUpgrades+1),
-                    "canBuy":p.stats.trapUpgrades!=p.stats.trapUpgradesMAX
-                },
-                "engModU":{
-                    "price":calculatePrices(shopData.engModUpgrades,p.stats.engModUpgrades+1),
-                    "canBuy":p.stats.engModUpgrades!=p.stats.engModUpgradesMAX
-                },
-                "scanU":{
-                    "price":calculatePrices(shopData.scannerUpgrades,p.stats.scannerUpgrades+1),
-                    "canBuy":p.stats.scannerUpgrades!=p.stats.scannerUpgradesMAX
-                },
-                "railU":{
-                    "price":calculatePrices(shopData.railgunUpgrades,p.stats.railgunUpgrades+1),
-                    "canBuy":p.stats.railgunUpgrades!=p.stats.railgunUpgradesMAX
-                },
-                "insuranceU":{
-                    "price":calculatePrices(shopData.insuranceUpgrades,p.stats.insuranceUpgrades+1),
-                    "canBuy":p.stats.insuranceUpgrades!=p.stats.insuranceUpgradesMAX
-                },
-                "carryU":{
-                    "price":calculatePrices(shopData.urCarryUpgrades,p.stats.urCarryUpgrades+1),
-                    "canBuy":p.stats.urCarryUpgrades!=p.stats.urCarryUpgradesMAX
-                },
-                "statHP":{
-                    "price":calculatePrices(shopData.staticHp,1),
-                    "canBuy":!p.stats.staticHp
-                },
-                "statEng":{
-                    "price":calculatePrices(shopData.staticEng,1),
-                    "canBuy":!p.stats.staticEng
-                },
-                "statAtk":{
-                    "price":calculatePrices(shopData.staticAtk,1),
-                    "canBuy":!p.stats.staticAtk
-                },
-                "statRdr":{
-                    "price":calculatePrices(shopData.staticRdr,1),
-                    "canBuy":!p.stats.staticRdr
-                },
-                "statDR":{
-                    "price":calculatePrices(shopData.staticDR,1),
-                    "canBuy":!p.stats.staticDR
-                },
-                "uranium":{
-                    "price":calculatePrices(shopData.uranium,1),
-                    "canBuy":p.info.uranium<p.stats.urCarry
-                },
-                "quickHeal":{
-                    "price":calculatePrices(shopData.quickHeal,p.stats.hpMAX),
-                    "canBuy":!p.stats.quickHeal
-                }
-            };
+            var shop = buildStore(p);
             var inventory = {"gold":p.info.gold,"iron":p.info.iron,"uranium":p.info.uranium};
 
 
@@ -1229,10 +1064,105 @@ function startServer(){
                 }
             }
 
-            for(var i in players){
-                players[i].battleLog.unshift({"type":"chat","msg":msg,"user":p.info.name});
+            if(p!=null){
+                for(var i in players){
+                    players[i].battleLog.unshift({"type":"chat","msg":msg,"user":p.info.name});
+                }
             }
         }
+        res.send('');
+    });
+
+    app.post('/createTeam', function(req, res){
+        var token = req.body.token;
+        var teamName = req.body.teamName;
+        var areaColor = req.body.areaColor;
+        var baseColor = req.body.baseColor;
+        var baseShape = req.body.baseShape;
+
+        if(token!=='' && teamName!=='' && areaColor!=='' && baseColor!=='' && baseShape !== ''){
+            //Validate token
+            var p;
+            for(var i = 0; i < players.length; i++){
+                if(players[i].token===token){
+                    p = players[i];
+                    break;
+                }
+            }
+
+            var valid = teamValidation(baseColor, areaColor);
+            if(p!=null && valid == true){
+                var id = teamData.length;
+                teamData.push({
+                    "id": id,
+                    "name": teamName,
+                    "colors":{
+                        "baseColor": baseColor,
+                        "areaColor": areaColor,
+                        "baseShape": baseShape
+                    },
+                    "leader": [token, p.info.name],
+                    "admins": [],
+                    "members": [],
+                    "gold":0,
+                    "iron":0,
+                    "uranium":0,
+                    "credits":0,
+                    "income":0,
+                    "settings":{
+                        "building": "TEAM",
+                        "ping": "ADMIN",
+                        "upgrading": "ADMIN",
+                        "membership": "INVITE",
+                        "profitDivide": "FAIR",
+                        "tax": 0
+                    }
+                });
+
+                p.info.teamID = id;
+                p.info.teamRole = "LEADER";
+
+                saveTeam();
+            }else if(p!=null){
+                //TODO: Error messaging
+            }
+        }
+
+        res.send('');
+    });
+    app.post('/joinTeam', function(req, res){
+        var token = req.body.token;
+        var teamId = req.body.id;
+        var type = req.body.type; //merge, split, none
+
+        //Validate token
+        var p;
+        for(var i = 0; i < players.length; i++){
+            if(players[i].token===token){
+                p = players[i];
+                break;
+            }
+        }
+        if(p!=null){
+            if(type==="MERGE"){ //Merge Teams together
+                //Take all bases
+
+
+                //Take all members
+
+            }
+            else if(type==="SPLIT"){
+                //Select new leader
+
+
+            }
+
+            //Move to new team
+            p.info.teamID = teamId;
+            p.info.teamRole = "MEMBER";
+            teamData[teamID].members.push([p.token,p.info.name]);
+        }
+
         res.send('');
     });
 
@@ -2439,4 +2369,156 @@ function savePlayer(p, del){
             }
         }
     });
+}
+
+function saveTeam(){
+    jsonfile.writeFile('data/teamData.json', teamData, {spaces: 4},function(err){
+        if(err){
+            console.log(err);
+        }
+    });
+}
+
+function teamValidation(base, area){
+    if(base === area)
+        return "Base and area need to be different colors.";
+
+    var hex = area.replace('#','');
+    var ar = parseInt(hex.substring(0,2), 16);
+    var ag = parseInt(hex.substring(2,4), 16);
+    var ab = parseInt(hex.substring(4,6), 16);
+    if(ar+ag+ab < 140)
+        return "Area color is too dark";
+
+    hex = base.replace('#','');
+    var br = parseInt(hex.substring(0,2), 16);
+    var bg = parseInt(hex.substring(2,4), 16);
+    var bb = parseInt(hex.substring(4,6), 16);
+
+    if(Math.abs(ar-br)<50 && Math.abs(ag-bg)<50 && Math.abs(ab-bb)<50)
+        return "Base color is too similar to Area color";
+
+    for(var b in teamData){
+        hex = teamData[b].colors.baseColor.replace('#','');
+        var br2 = parseInt(hex.substring(0,2), 16);
+        var bg2 = parseInt(hex.substring(2,4), 16);
+        var bb2 = parseInt(hex.substring(4,6), 16);
+        hex = teamData[b].colors.areaColor.replace('#','');
+        var ar2 = parseInt(hex.substring(0,2), 16);
+        var ag2 = parseInt(hex.substring(2,4), 16);
+        var ab2 = parseInt(hex.substring(4,6), 16);
+
+        if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
+           Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
+            return "Color combo has been taken";
+        }
+    }
+
+    return true;
+}
+
+function buildStore(p){
+    return {
+        "withinShop": withinShop(p.loc),
+
+        //Regular Shop
+        "hpF":{
+            "price":calculatePrices(shopData.shipRepair,p.stats.hpMAX-p.stats.hp),
+            "canBuy":p.stats.hp!=p.stats.hpMAX
+        },
+        "hp5":{
+            "price":calculatePrices(shopData.shipRepair5,0),
+            "canBuy":p.stats.hp!=p.stats.hpMAX
+        },
+        "insurance":{
+            "price":calculatePrices(shopData.insurance,p.info.shipMass),
+            "canBuy":!p.info.hasInsurance
+        },
+        "hpU":{
+            "price":calculatePrices(shopData.healthUpgrades,p.stats.hpUpgrades+1),
+            "canBuy":p.stats.hpUpgrades!=p.stats.hpUpgradesMAX
+        },
+        "enU":{
+            "price":calculatePrices(shopData.energyUpgrades,p.stats.energyUpgrades+1),
+            "canBuy":p.stats.energyUpgrades!=p.stats.energyUpgradesMAX
+        },
+        "radU":{
+            "price":calculatePrices(shopData.radarUpgrades,p.stats.radarUpgrades+1),
+            "canBuy":p.stats.radarUpgrades!=p.stats.radarUpgradesMAX
+        },
+        "atkU":{
+            "price":calculatePrices(shopData.attackUpgrades,p.stats.attackUpgrades+1),
+            "canBuy":p.stats.attackUpgrades!=p.stats.attackUpgradesMAX
+        },
+
+        //Super Shop
+        "loadout":{
+            "price":calculatePrices(shopData.loadoutUpgrades,0),
+            "canBuy":p.stats.loadoutSize!=statData.loadoutMAX
+        },
+        "canU":{
+            "price":calculatePrices(shopData.cannonUpgrades,p.stats.cannonUpgrades+1),
+            "canBuy":p.stats.cannonUpgrades!=p.stats.cannonUpgradesMAX
+        },
+        "bliU":{
+            "price":calculatePrices(shopData.blinkUpgrades,p.stats.blinkUpgrades+1),
+            "canBuy":p.stats.blinkUpgrades!=p.stats.blinkUpgradesMAX
+        },
+        "steU":{
+            "price":calculatePrices(shopData.stealthUpgrades,p.stats.stealthUpgrades+1),
+            "canBuy":p.stats.stealthUpgrades!=p.stats.stealthUpgradesMAX
+        },
+        "trapU":{
+            "price":calculatePrices(shopData.trapUpgrades,p.stats.trapUpgrades+1),
+            "canBuy":p.stats.trapUpgrades!=p.stats.trapUpgradesMAX
+        },
+        "engModU":{
+            "price":calculatePrices(shopData.engModUpgrades,p.stats.engModUpgrades+1),
+            "canBuy":p.stats.engModUpgrades!=p.stats.engModUpgradesMAX
+        },
+        "scanU":{
+            "price":calculatePrices(shopData.scannerUpgrades,p.stats.scannerUpgrades+1),
+            "canBuy":p.stats.scannerUpgrades!=p.stats.scannerUpgradesMAX
+        },
+        "railU":{
+            "price":calculatePrices(shopData.railgunUpgrades,p.stats.railgunUpgrades+1),
+            "canBuy":p.stats.railgunUpgrades!=p.stats.railgunUpgradesMAX
+        },
+        "insuranceU":{
+            "price":calculatePrices(shopData.insuranceUpgrades,p.stats.insuranceUpgrades+1),
+            "canBuy":p.stats.insuranceUpgrades!=p.stats.insuranceUpgradesMAX
+        },
+        "carryU":{
+            "price":calculatePrices(shopData.urCarryUpgrades,p.stats.urCarryUpgrades+1),
+            "canBuy":p.stats.urCarryUpgrades!=p.stats.urCarryUpgradesMAX
+        },
+        "statHP":{
+            "price":calculatePrices(shopData.staticHp,1),
+            "canBuy":!p.stats.staticHp
+        },
+        "statEng":{
+            "price":calculatePrices(shopData.staticEng,1),
+            "canBuy":!p.stats.staticEng
+        },
+        "statAtk":{
+            "price":calculatePrices(shopData.staticAtk,1),
+            "canBuy":!p.stats.staticAtk
+        },
+        "statRdr":{
+            "price":calculatePrices(shopData.staticRdr,1),
+            "canBuy":!p.stats.staticRdr
+        },
+        "statDR":{
+            "price":calculatePrices(shopData.staticDR,1),
+            "canBuy":!p.stats.staticDR
+        },
+        "uranium":{
+            "price":calculatePrices(shopData.uranium,1),
+            "canBuy":p.info.uranium<p.stats.urCarry
+        },
+        "quickHeal":{
+            "price":calculatePrices(shopData.quickHeal,p.stats.hpMAX),
+            "canBuy":!p.stats.quickHeal
+        }
+    };
 }

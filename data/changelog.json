@@ -16,5 +16,11 @@
         "version": "Alpha v1.1",
         "title": "Ship Specialization Update",
         "description": "> Added Map View<br>> New Map Generation Algorithm <br>> New Resources<br>> New UI <br>> New Super Store <br>> New Upgrade System <br>> 18 New items<br>> Customizable Skills <br>> Account Saving <br>> Faster Algorithm <br>> Can see shop safe zones from off screen shops <br>> Added screen resizing <br>> Action cancelling <br>> Wiki page"
+    },
+    {
+        "date":"10/25/17",
+        "version": "Alpha v1.2",
+        "title": "Clans and Bases",
+        "description": "> Live updating change log page <br>> test"
     }
 ]
