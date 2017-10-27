@@ -1133,7 +1133,8 @@ function startServer(){
                 p.info.teamRole = "LEADER";
 
                 saveTeam();
-            }else if(p!=null){
+            }
+            else if(p!=null){
                 //TODO: Error messaging
             }
         }

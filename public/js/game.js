@@ -6,7 +6,7 @@ var tick = 50;
 var mX, mY;
 var hover = [-1,-1];
 var shopMode = false;
-var cTab = 0;
+var curShopTab = 0;
 var gameStart = true;
 var settingsView = false;
 var radarAngle = 0;
@@ -20,6 +20,13 @@ var chatBlink = true;
 var tabs;
 var baseStore;
 var statInfo = false;
+
+//Team Data
+var joinTeamMenu = false;
+var createTeamMenu = false;
+var teamMenu = false;
+var curTeamTab = 0;
+var teamRec = [];
 
 //Chat data
 var chatMode = false;
@@ -474,6 +481,10 @@ function newData(){
 
         //Check for screen resize
         if($( document ).width()!=prevWid) screenResize();
+
+        if(me.info.teamID==-1){
+            joinTeamMenu = true;
+        }
 
         drawScreen();
         // drawMonitor();
@@ -1009,6 +1020,15 @@ function drawMonitor(ctx, width, height){
         }
         else if(shopMode && shop.withinShop=="SSHOP"){
             drawSShopMenu(ctx, width, height);
+        }
+        else if(joinTeamMenu){
+            drawJoinTeam(ctx, 0, 0, width, height);
+        }
+        else if(createTeamMenu){
+            drawCreateTeam(ctx, 0, 0, width, height);
+        }
+        else if(teamMenu){
+            drawTeamMenu(ctx, 0, 0, width, height);
         }
 
         //Draw grid hover
@@ -1657,19 +1677,19 @@ function drawSShopMenu(ctx, width, height){
     for(var i = 0; i < tabs.length+1; i++){
         ctx.beginPath();
         var tHei = 60;//(height/2)/(tabs.length+1);
-        if(i==cTab) ctx.fillStyle=colors.hudColor;
+        if(i==curShopTab) ctx.fillStyle=colors.hudColor;
         else ctx.fillStyle=colors.hudBackColor;
         ctx.strokeRect(width-startX+1,startY+tHei*i,25,tHei);
         ctx.fillRect(width-startX+1,startY+tHei*i,25,tHei);
 
-        if(i==cTab) ctx.fillStyle=colors.hudBackColor;
+        if(i==curShopTab) ctx.fillStyle=colors.hudBackColor;
         else ctx.fillStyle=colors.hudColor;
         ctx.fillText((i==tabs.length?"LO":"T"+(i+1)),width-startX+3,startY+35+tHei*i);
         ctx.stroke();
     }
 
     //Draw Shop Tab Contents
-    if(cTab < 5 && cTab > -1){
+    if(curShopTab < 5 && curShopTab > -1){
         //Store Labels
         ctx.fillStyle=colors.hudColor;
         ctx.font = "40px Courier";
@@ -1678,31 +1698,31 @@ function drawSShopMenu(ctx, width, height){
         ctx.font = "18px Courier";
         ctx.fillText("Press the key to do the following",startX+5,startY+85);
 
-        for(var i = 0; i < tabs[cTab].length; i++){
+        for(var i = 0; i < tabs[curShopTab].length; i++){
             ctx.beginPath();
-            if(tabs[cTab][i].canBuy && !canPurchase(tabs[cTab][i].price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium})) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            if(tabs[curShopTab][i].canBuy && !canPurchase(tabs[curShopTab][i].price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium})) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[curShopTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
             else ctx.fillStyle=colors.cantBuyColor;
-            ctx.fillText(" "+(i+1)+": "+tabs[cTab][i].label,startX+5,startY+110+i*25);
-            if(tabs[cTab][i].canBuy && me.info.gold < tabs[cTab][i].price.gold) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
-            ctx.fillText(tabs[cTab][i].price.gold+"g",width-startX-140,startY+110+i*25);
-            if(tabs[cTab][i].canBuy && me.info.iron < tabs[cTab][i].price.iron) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
-            ctx.fillText(tabs[cTab][i].price.iron+"i",width-startX-68,startY+110+i*25);
-            if(tabs[cTab][i].canBuy && me.info.uranium < tabs[cTab][i].price.uranium) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[cTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
-            ctx.fillText(tabs[cTab][i].price.uranium+"u",width-startX-30,startY+110+i*25);
+            ctx.fillText(" "+(i+1)+": "+tabs[curShopTab][i].label,startX+5,startY+110+i*25);
+            if(tabs[curShopTab][i].canBuy && me.info.gold < tabs[curShopTab][i].price.gold) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[curShopTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            ctx.fillText(tabs[curShopTab][i].price.gold+"g",width-startX-140,startY+110+i*25);
+            if(tabs[curShopTab][i].canBuy && me.info.iron < tabs[curShopTab][i].price.iron) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[curShopTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            ctx.fillText(tabs[curShopTab][i].price.iron+"i",width-startX-68,startY+110+i*25);
+            if(tabs[curShopTab][i].canBuy && me.info.uranium < tabs[curShopTab][i].price.uranium) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[curShopTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            ctx.fillText(tabs[curShopTab][i].price.uranium+"u",width-startX-30,startY+110+i*25);
 
             //upgrade bars
-            for(var u = 0; u < tabs[cTab][i].maxLvl; u++){
-                if(u < tabs[cTab][i].level) ctx.fillStyle = colors.upgradeColor;
+            for(var u = 0; u < tabs[curShopTab][i].maxLvl; u++){
+                if(u < tabs[curShopTab][i].level) ctx.fillStyle = colors.upgradeColor;
                 else ctx.fillStyle = colors.voidUpgradeColor;
                 ctx.fillRect(width-startX-200+u*10,startY+95+i*25,5,20);
             }
         }
     }
-    else if(cTab > -1){
+    else if(curShopTab > -1){
         //Edit Loadout Labels
         ctx.beginPath();
         ctx.fillStyle=colors.hudColor;
@@ -1856,17 +1876,196 @@ function drawRadarScan(ctx, width, height){
 }
 
 function drawJoinTeam(ctx, startX, startY, width, height){
-    
+    //Calculate Drawing Area
+    var sX = startX+width/8;
+    var sY = startY+height/10;
+    var wid = width-(sX-startX)*2;
+    var hei = height-(sY-startY)*2;
+
+    //Draw Box
+    ctx.beginPath();
+    ctx.strokeStyle = colors.hudColor;
+    ctx.fillStyle = colors.hudBackColor;
+    ctx.globalAlpha = 1.0;
+    ctx.strokeRect(sX,sY,wid,hei);
+    ctx.fillRect(sX,sY,wid,hei);
+    ctx.stroke();
+
+    //Seperator
+    ctx.strokeRect(sX,sY,wid,150);
+
+    //Suggested Teams
+    ctx.fillStyle = colors.hudColor;
+    ctx.font = "22px Courier";
+    ctx.fillText("Recommended Teams",sX+5,sY+25);
+
+    ctx.font = "bold 11pt Courier ";
+    for(var i = 0; i < teamRec.length; i++){
+        ctx.fillStyle = teamList[teamRec[i]].colors.areaColor;
+        ctx.fillRect(sX+wid/60+wid/3*i,sY+55,180,75);
+        ctx.fillStyle = "#000000";
+        ctx.fillText(teamList[teamRec[i]].name,sX+(wid/60-1+(100-teamList[teamRec[i]].name.length*5))+wid/3*i,sY+69);
+        ctx.fillStyle = teamList[teamRec[i]].colors.baseColor;
+        ctx.fillText(teamList[teamRec[i]].name,sX+(wid/60+(100-teamList[teamRec[i]].name.length*5))+wid/3*i,sY+70);
+    }
+
+    //Create Team Button
+
+    //Full Team List
+    sY = sY + 150;
+    ctx.fillStyle = colors.hudColor;
+    ctx.font = "14pt Courier";
+    ctx.strokeRect(sX+5,sY+30,wid-10,1);
+    ctx.fillText("TEAM NAME",sX+8,sY+20);
+    ctx.fillText("BASES",sX+220,sY+20);
+    ctx.fillText("PROFIT",sX+300,sY+20);
+    ctx.fillText("MEMBERS",sX+390,sY+20);
+
+    ctx.font = "11pt Courier";
+    var yAdj = 0;
+    for(var i = 0; i < teamList.length; i++){
+        if(teamList[i].joinStatus==="OPEN"){
+            ctx.fillText(teamList[i].name,sX+8,sY+50+20*yAdj);
+            ctx.fillStyle = teamList[i].colors.areaColor;
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(sX+220,sY+37+20*yAdj,60,17);
+            drawBase(ctx,sX+222,sY+37+20*yAdj, 17, teamList[i].colors.baseShape, 1, teamList[i].colors.baseColor);
+            drawBase(ctx,sX+242,sY+37+20*yAdj, 17, teamList[i].colors.baseShape, 2, teamList[i].colors.baseColor);
+            drawBase(ctx,sX+263,sY+37+20*yAdj, 17, teamList[i].colors.baseShape, 3, teamList[i].colors.baseColor);
+            ctx.fillStyle = colors.hudColor;
+            ctx.globalAlpha = 1.0;
+            ctx.fillText(teamList[i].profitDivide,sX+315,sY+50+20*yAdj);
+            ctx.fillText(teamList[i].size,sX+420,sY+50+20*yAdj);
+            yAdj++;
+        }
+    }
+
 }
 
 function drawCreateTeam(ctx, startX, startY, width, height){
-
+    var sX = startX+width/8;
+    var sY = startY+height/6;
+    var wid = width-(sX-startX)*2;
+    var hei = height-(sY-startY)*2;
+    ctx.beginPath();
+    ctx.strokeStyle = colors.hudColor;
+    ctx.fillStyle = colors.hudBackColor;
+    ctx.globalAlpha = 1.0;
+    ctx.strokeRect(sX,sY,wid,hei);
+    ctx.fillRect(sX,sY,wid,hei);
+    ctx.stroke();
 }
 
 function drawTeamMenu(ctx, startX, startY, width, height){
-
+    var sX = startX+width/4;
+    var sY = startY+height/4;
+    var wid = width-(sX-startX)*2;
+    var hei = height-(sY-startY)*2;
+    ctx.beginPath();
+    ctx.strokeStyle = colors.hudColor;
+    ctx.fillStyle = colors.hudBackColor;
+    ctx.globalAlpha = 1.0;
+    ctx.strokeRect(sX,sY,wid,hei);
+    ctx.fillRect(sX,sY,wid,hei);
+    ctx.stroke();
 }
 
+function drawBase(ctx, startX, startY, tileSize, type, lvl, color){
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 1.0;
+
+    if(type==="DIAMOND"){
+        ctx.beginPath();
+        ctx.save();
+        ctx.translate(tileSize/2+startX, tileSize/2+startY);
+        ctx.rotate(Math.PI / 4);
+        ctx.translate(-(tileSize/2 / 2), -(tileSize/2 / 2));
+        ctx.fillRect(0,0, tileSize/2, tileSize/2);
+        ctx.restore();
+        if(lvl>=2)
+            ctx.fillRect(tileSize/4+startX, tileSize/4+startY, tileSize/2, tileSize/2);
+        if(lvl==3){
+            ctx.globalAlpha = 0.7;
+            ctx.save();
+            ctx.translate(tileSize/2+startX, tileSize/2+startY);
+            ctx.rotate(Math.PI / 8);
+            ctx.translate(-(tileSize/2 / 2), -(tileSize/2 / 2));
+            ctx.fillRect(0,0, tileSize/2, tileSize/2);
+            ctx.rotate(Math.PI / 4);
+            ctx.translate(tileSize/10, -tileSize/4);
+            ctx.fillRect(0,0, tileSize/2, tileSize/2);
+            ctx.restore();
+        }
+        ctx.fill();
+    }
+    else if(type==="CIRCLE"){
+        if(lvl == 1){
+            ctx.beginPath();
+            ctx.arc(tileSize/2+startX,tileSize/2+startY,tileSize/4,0,2*Math.PI);
+            ctx.fill();
+        }else if(lvl == 2){
+            ctx.beginPath();
+            ctx.arc(tileSize/2+startX-tileSize/8,tileSize/2+startY,tileSize/4,0,2*Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(tileSize/2+startX+tileSize/8,tileSize/2+startY,tileSize/4,0,2*Math.PI);
+            ctx.fill();
+        }else if(lvl == 3){
+            ctx.beginPath();
+            ctx.arc(tileSize/2+startX-tileSize/8,tileSize/2+startY-tileSize/8,tileSize/5,0,2*Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(tileSize/2+startX+tileSize/8,tileSize/2+startY-tileSize/8,tileSize/5,0,2*Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(tileSize/2+startX-tileSize/8,tileSize/2+startY+tileSize/8,tileSize/5,0,2*Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(tileSize/2+startX+tileSize/8,tileSize/2+startY+tileSize/8,tileSize/5,0,2*Math.PI);
+            ctx.fill();
+        }
+    }
+    else if(type==="TRIANGLE"){
+        if(lvl == 1){
+            var path = new Path2D();
+            path.moveTo(startX+tileSize/2,startY+(tileSize-tileSize/4));
+            path.lineTo(startX+(tileSize-tileSize/6),startY+tileSize/4);
+            path.lineTo(startX+tileSize/6,startY+tileSize/4);
+            ctx.fill(path);
+        }
+        else if(lvl == 2){
+            var path = new Path2D();
+            path.moveTo(startX+tileSize/2,startY+tileSize/4);
+            path.lineTo(startX+(tileSize-tileSize/6),startY+(tileSize-tileSize/4));
+            path.lineTo(startX+tileSize/6,startY+(tileSize-tileSize/4));
+            ctx.fill(path);
+            path = new Path2D();
+            path.moveTo(startX+tileSize/2,startY+(tileSize-tileSize/4));
+            path.lineTo(startX+(tileSize-tileSize/6),startY+tileSize/4);
+            path.lineTo(startX+tileSize/6,startY+tileSize/4);
+            ctx.fill(path);
+        }
+        else if(lvl == 3){
+            var path = new Path2D();
+            path.moveTo(startX+tileSize/2,startY+(tileSize-tileSize/4));
+            path.lineTo(startX+(tileSize-tileSize/3),startY+tileSize/2);
+            path.lineTo(startX+tileSize/3,startY+tileSize/2);
+            ctx.fill(path);
+
+            path = new Path2D();
+            path.moveTo(startX+(tileSize-tileSize/3),startY+tileSize/2);
+            path.lineTo(startX+(tileSize-tileSize/6),startY+tileSize/4);
+            path.lineTo(startX+tileSize/2,startY+tileSize/4);
+            ctx.fill(path);
+
+            path = new Path2D();
+            path.moveTo(startX+tileSize/3,startY+tileSize/2);
+            path.lineTo(startX+tileSize/2,startY+tileSize/4);
+            path.lineTo(startX+tileSize/6,startY+tileSize/4);
+            ctx.fill(path);
+        }
+    }
+}
 
 //******************************************************************************
 // Event Handler Functions
@@ -1914,6 +2113,41 @@ function handleKeydown(e){
             chatMsg = chatMsg.substring(0,chatMsg.length-1);
             drawScreen();
         }
+    }
+    else if(me.info.teamID==-1){
+        joinTeamMenu = true;
+        var opts = [];
+        while(opts.length < 3){
+            var rand = parseInt(Math.random()*1000)%teamList.length;
+            if(opts.indexOf(rand) > -1 || teamList[rand].joinStatus!=="OPEN") continue;
+            opts.push(rand);
+        }
+        teamRec = opts;
+    }
+    else if(keyCode == 56){
+        joinTeamMenu = !joinTeamMenu;
+        teamMenu = false;
+        createTeamMenu = false;
+
+        if(joinTeamMenu){
+            var opts = [];
+            while(opts.length < 3){
+                var rand = parseInt(Math.random()*1000)%teamList.length;
+                if(opts.indexOf(rand) > -1 || teamList[rand].joinStatus!=="OPEN") continue;
+                opts.push(rand);
+            }
+            teamRec = opts;
+        }
+    }
+    else if(keyCode == 57){
+        createTeamMenu = !createTeamMenu;
+        joinTeamMenu = false;
+        teamMenu = false;
+    }
+    else if(keyCode == 48){
+        teamMenu = !teamMenu;
+        joinTeamMenu = false;
+        createTeamMenu = false;
     }
     else if(keyCode == 73){  //i
         statInfo = !statInfo;
@@ -1969,10 +2203,10 @@ function handleKeydown(e){
             }
         }
         else if(shop.withinShop==="SSHOP"){
-            if(cTab > -1 && cTab < 5) //In shop
-                for(var i = 0; i < tabs[cTab].length; i++){
+            if(curShopTab > -1 && curShopTab < 5) //In shop
+                for(var i = 0; i < tabs[curShopTab].length; i++){
                     if(keyCode == 49+i){
-                        makePurchase(tabs[cTab][i].pLabel);
+                        makePurchase(tabs[curShopTab][i].pLabel);
                         break;
                     }
                 }
@@ -2046,14 +2280,15 @@ function handleMousedown(e){
            var tHei = 60;
            for(var i = 0; i < tabs.length+1; i++){
                if(mY > startY+tHei*i && mY < startY+tHei*i+tHei){
-                   cTab = i;
+                   curShopTab = i;
                    break;
                }
            }
        }
 
     }
-    else if(!gameStart && !mapView && !shopMode){
+    else if(!gameStart && !mapView && !shopMode &&
+            !joinTeamMenu && !teamMenu && !createTeamMenu){
         var mid = parseInt(me.stats.radar/2);
         var cX = me.loc[0] - (mid-hover[0]);
         var cY = me.loc[1] - (mid-hover[1]);
