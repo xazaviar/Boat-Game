@@ -23,10 +23,16 @@ var statInfo = false;
 
 //Team Data
 var joinTeamMenu = false;
-var createTeamMenu = false;
+var teamRec = [];
+var joinTeamHover = -1;
+
+var createTeamMenu = true;
+var tName = '';
+var bColor = "#00FF00", aColor = "#FFFFFF", bShape = "DIAMOND";
+var createTeamHover = -1;
+
 var teamMenu = false;
 var curTeamTab = 0;
-var teamRec = [];
 
 //Chat data
 var chatMode = false;
@@ -482,12 +488,12 @@ function newData(){
         //Check for screen resize
         if($( document ).width()!=prevWid) screenResize();
 
-        if(me.info.teamID==-1){
-            joinTeamMenu = true;
+        if(me.info.teamID == -1){
+            if(!createTeamMenu)
+                joinTeamMenu = true;
         }
 
         drawScreen();
-        // drawMonitor();
         drawTimer();
         drawSideBar();
     });
@@ -671,7 +677,7 @@ function drawMonitor(ctx, width, height){
         ctx.fillText("Enter Name: "+name,width/8+35,height/4+60);
     }
     else if(mapView){
-        drawMap(ctx, 50, 50, width-200, height-200);
+        drawMap(ctx, 0, 0, width, height);
     }
     else{
         drawGridLines(ctx, width, height);
@@ -1894,22 +1900,58 @@ function drawJoinTeam(ctx, startX, startY, width, height){
     //Seperator
     ctx.strokeRect(sX,sY,wid,150);
 
+    joinTeamHover = -1;
+
     //Suggested Teams
     ctx.fillStyle = colors.hudColor;
     ctx.font = "22px Courier";
     ctx.fillText("Recommended Teams",sX+5,sY+25);
 
-    ctx.font = "bold 11pt Courier ";
+    if(teamRec.length == 0){
+        var opts = [];
+        while(opts.length < 3){
+            var rand = parseInt(Math.random()*1000)%teamList.length;
+            if(opts.indexOf(rand) > -1 || teamList[rand].joinStatus!=="OPEN") continue;
+            opts.push(rand);
+        }
+        teamRec = opts;
+    }
+
+    ctx.font = "bold 11pt Courier";
     for(var i = 0; i < teamRec.length; i++){
+        if(mX < sX+wid/60+wid/3*i+180 && mX > sX+wid/60+wid/3*i &&
+           mY < sY+130 && mY > sY+55){
+            ctx.globalAlpha = 1.0;
+            joinTeamHover = teamRec[i];
+        }else{
+            ctx.globalAlpha = 0.8;
+        }
         ctx.fillStyle = teamList[teamRec[i]].colors.areaColor;
         ctx.fillRect(sX+wid/60+wid/3*i,sY+55,180,75);
         ctx.fillStyle = "#000000";
         ctx.fillText(teamList[teamRec[i]].name,sX+(wid/60-1+(100-teamList[teamRec[i]].name.length*5))+wid/3*i,sY+69);
+        ctx.globalAlpha = 1.0;
         ctx.fillStyle = teamList[teamRec[i]].colors.baseColor;
         ctx.fillText(teamList[teamRec[i]].name,sX+(wid/60+(100-teamList[teamRec[i]].name.length*5))+wid/3*i,sY+70);
     }
 
     //Create Team Button
+    ctx.globalAlpha = 1.0;
+    ctx.font = "16px Courier";
+    if(mX < sX+wid-10 && mX > sX+wid-150 &&
+       mY < sY+30 && mY > sY+10){
+        ctx.fillStyle = colors.hudColor;
+        ctx.fillRect(sX+wid-150,sY+10,140,20);
+        ctx.fillStyle = colors.hudBackColor;
+        ctx.fillText("+ CREATE TEAM",sX+wid-145,sY+25);
+        joinTeamHover = "CREATE";
+    }
+    else{
+        ctx.strokeStyle = colors.hudColor;
+        ctx.strokeRect(sX+wid-150,sY+10,140,20);
+        ctx.fillStyle = colors.hudColor;
+        ctx.fillText("+ CREATE TEAM",sX+wid-145,sY+25);
+    }
 
     //Full Team List
     sY = sY + 150;
@@ -1919,34 +1961,49 @@ function drawJoinTeam(ctx, startX, startY, width, height){
     ctx.fillText("TEAM NAME",sX+8,sY+20);
     ctx.fillText("BASES",sX+220,sY+20);
     ctx.fillText("PROFIT",sX+300,sY+20);
-    ctx.fillText("MEMBERS",sX+390,sY+20);
+    ctx.fillText("TAX",sX+390,sY+20);
+    ctx.fillText("MEMBERS",sX+450,sY+20);
 
     ctx.font = "11pt Courier";
     var yAdj = 0;
     for(var i = 0; i < teamList.length; i++){
         if(teamList[i].joinStatus==="OPEN"){
-            ctx.fillText(teamList[i].name,sX+8,sY+50+20*yAdj);
+            if(mX < sX+wid-50 && mX > sX+6 &&
+               mY < sY+37+20*yAdj+17 && mY > sY+37+20*yAdj){
+                ctx.fillStyle = colors.hudColor;
+                ctx.globalAlpha = 0.3;
+                ctx.fillRect(sX+6,sY+37+20*yAdj,wid-50,17);
+                joinTeamHover = i;
+            }
             ctx.fillStyle = teamList[i].colors.areaColor;
             ctx.globalAlpha = 0.5;
             ctx.fillRect(sX+220,sY+37+20*yAdj,60,17);
             drawBase(ctx,sX+222,sY+37+20*yAdj, 17, teamList[i].colors.baseShape, 1, teamList[i].colors.baseColor);
             drawBase(ctx,sX+242,sY+37+20*yAdj, 17, teamList[i].colors.baseShape, 2, teamList[i].colors.baseColor);
             drawBase(ctx,sX+263,sY+37+20*yAdj, 17, teamList[i].colors.baseShape, 3, teamList[i].colors.baseColor);
+
+
             ctx.fillStyle = colors.hudColor;
             ctx.globalAlpha = 1.0;
+
+            ctx.fillText(teamList[i].name,sX+8,sY+50+20*yAdj);
             ctx.fillText(teamList[i].profitDivide,sX+315,sY+50+20*yAdj);
-            ctx.fillText(teamList[i].size,sX+420,sY+50+20*yAdj);
+            ctx.fillText(teamList[i].tax+"g",sX+400,sY+50+20*yAdj);
+            ctx.fillText(teamList[i].size,sX+480,sY+50+20*yAdj);
             yAdj++;
         }
     }
+    ctx.globalAlpha = 1.0;
 
 }
 
 function drawCreateTeam(ctx, startX, startY, width, height){
+    //Calcuate Draw Area
     var sX = startX+width/8;
     var sY = startY+height/6;
     var wid = width-(sX-startX)*2;
     var hei = height-(sY-startY)*2;
+
     ctx.beginPath();
     ctx.strokeStyle = colors.hudColor;
     ctx.fillStyle = colors.hudBackColor;
@@ -1954,6 +2011,24 @@ function drawCreateTeam(ctx, startX, startY, width, height){
     ctx.strokeRect(sX,sY,wid,hei);
     ctx.fillRect(sX,sY,wid,hei);
     ctx.stroke();
+
+
+    ctx.font = "16px Courier";
+    ctx.fillStyle = colors.hudBackColor;
+    ctx.fillText("Base Shape: ",sX-5,sY+10);
+    ctx.stroke();
+    drawBase(ctx,sX+90,sY+120, 30, "DIAMOND", 1, colors.hudColor);
+    drawBase(ctx,sX+120,sY+120, 30, "TRIANGLE", 1, colors.hudColor);
+    drawBase(ctx,sX+150,sY+120, 30, "CIRCLE", 1, colors.hudColor);
+
+
+    //Base Examples
+    ctx.fillStyle = aColor;
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(sX+wid-150,sY+20,140,440);
+    drawBase(ctx,sX+wid-145,sY+20, 130, bShape, 1, bColor);
+    drawBase(ctx,sX+wid-145,sY+160, 130, bShape, 2, bColor);
+    drawBase(ctx,sX+wid-145,sY+300, 130, bShape, 3, bColor);
 }
 
 function drawTeamMenu(ctx, startX, startY, width, height){
@@ -2115,14 +2190,8 @@ function handleKeydown(e){
         }
     }
     else if(me.info.teamID==-1){
-        joinTeamMenu = true;
-        var opts = [];
-        while(opts.length < 3){
-            var rand = parseInt(Math.random()*1000)%teamList.length;
-            if(opts.indexOf(rand) > -1 || teamList[rand].joinStatus!=="OPEN") continue;
-            opts.push(rand);
-        }
-        teamRec = opts;
+        if(!createTeamMenu)
+            joinTeamMenu = true;
     }
     else if(keyCode == 56){
         joinTeamMenu = !joinTeamMenu;
@@ -2130,13 +2199,7 @@ function handleKeydown(e){
         createTeamMenu = false;
 
         if(joinTeamMenu){
-            var opts = [];
-            while(opts.length < 3){
-                var rand = parseInt(Math.random()*1000)%teamList.length;
-                if(opts.indexOf(rand) > -1 || teamList[rand].joinStatus!=="OPEN") continue;
-                opts.push(rand);
-            }
-            teamRec = opts;
+            teamRec = [];
         }
     }
     else if(keyCode == 57){
@@ -2270,6 +2333,32 @@ function handleMousedown(e){
            saveColorScheme();
        }
        //    ctx.strokeRect(c.width/4+255,c.height/8+60+20*i+20,115,40);
+    }
+    else if(joinTeamMenu){
+        if(joinTeamHover==="CREATE"){
+            createTeamMenu = true;
+            joinTeamMenu = false;
+        }
+        else if(joinTeamHover>-1){
+
+        }
+    }
+    else if(createTeamMenu){
+        if(createTeamHover==="CREATE"){
+
+        }
+        else if(createTeamHover==="CANCEL"){
+            createTeamMenu = false;
+        }
+        else{
+            if(createTeamHover == 0){
+                bShape = "DIAMOND";
+            }else if(createTeamHover == 1){
+                bShape = "TRIANGLE";
+            }else if(createTeamHover == 2){
+                bShape = "CIRCLE";
+            }
+        }
     }
     else if(shopMode && shop.withinShop=="SSHOP"){
        //Change tabs
