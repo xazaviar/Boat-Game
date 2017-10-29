@@ -6,15 +6,15 @@ function init(){
     $("#color-picker1").hexColorPicker({
         "container":"dialog",
 		"colorModel":"hsl",
-		"pickerWidth":300,
-		"size":7,
+		// "pickerWidth":100,
+		"size":5,
 		"style":"hex"
     });
     $("#color-picker2").hexColorPicker({
         "container":"dialog",
 		"colorModel":"hsl",
-		"pickerWidth":300,
-		"size":7,
+		// "pickerWidth":100,
+		"size":5,
 		"style":"hex"
     });
 

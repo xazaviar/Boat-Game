@@ -341,7 +341,11 @@ function startServer(){
                 p = players[i];
                 p.info.connected = 0;
             }else if(players[i].stats.hp>0)
-                sendPlayers.push({"token":players[i].token, "name":players[i].info.name,"loc":players[i].loc,"stealthed":players[i].info.stealthed});
+                sendPlayers.push({"token":players[i].token,
+                                  "name":players[i].info.name,
+                                  "loc":players[i].loc,
+                                  "stealthed":players[i].info.stealthed,
+                                  "team":players[i].info.teamID});
         }
 
         if(p!=null){
@@ -365,7 +369,8 @@ function startServer(){
             for(var i = 0; i < sendPlayers.length; i++){
                 var isScanned = inScanned(p, sendPlayers[i].token);
                 var inVision = visionDistance(p.loc,sendPlayers[i].loc);
-                if(!isScanned && (!inVision || (inVision && sendPlayers[i].stealthed))){
+                var sameTeam = sendPlayers[i].team == p.info.teamID;
+                if(!isScanned && (!inVision || (inVision && sendPlayers[i].stealthed)) && !sameTeam){
                     sendPlayers.splice(i,1);
                     i--;
                 }else{
@@ -400,12 +405,15 @@ function startServer(){
                         "settings": teamData[t].settings
                     };
                 }
+                else if(teamData[t].status==="DELETED"){
+                    sendTeam[teamData[t].id] = {};
+                }
                 else{
                     sendTeam[teamData[t].id] = {
                         "id": teamData[t].id,
                         "name": teamData[t].name,
                         "colors": teamData[t].colors,
-                        "size": teamData[t].members.length+teamData[t].admins.length+1,
+                        "size": teamData[t].members.length,
                         "joinStatus": teamData[t].settings.membership,
                         "profitDivide": teamData[t].settings.profitDivide,
                         "tax": teamData[t].settings.tax
@@ -1090,7 +1098,7 @@ function startServer(){
         var baseColor = req.body.baseColor;
         var baseShape = req.body.baseShape;
 
-        if(token!=='' && teamName!=='' && areaColor!=='' && baseColor!=='' && baseShape !== ''){
+        if(token!=='' && teamName.length>3 && areaColor!=='' && baseColor!=='' && baseShape !== ''){
             //Validate token
             var p;
             for(var i = 0; i < players.length; i++){
@@ -1129,8 +1137,16 @@ function startServer(){
                     }
                 });
 
+                //Merge previous team
+                if(p.info.teamID > -1 && p.info.teamRole==="LEADER")
+                    mergeTeams(p.info.teamID, id, p);
+                else
+                    teamData[id].members.push([p.token,p.info.name]);
+
                 p.info.teamID = id;
                 p.info.teamRole = "LEADER";
+
+                p.battleLog.unshift({"type":"team", "msg": "You created the team "+teamData[id].name+"! Good Luck!"});
 
                 saveTeam();
             }
@@ -1143,7 +1159,7 @@ function startServer(){
     });
     app.post('/joinTeam', function(req, res){
         var token = req.body.token;
-        var teamId = req.body.id;
+        var teamID = req.body.id;
         var type = req.body.type; //merge, split, none
 
         //Validate token
@@ -1156,22 +1172,29 @@ function startServer(){
         }
         if(p!=null){
             if(type==="MERGE"){ //Merge Teams together
-                //Take all bases
-
-
-                //Take all members
-
+                mergeTeams(p.info.teamID,teamID,p);
             }
-            else if(type==="SPLIT"){
-                //Select new leader
+            else {
+                if(type==="SPLIT"){
+                    //Select new leader
 
 
+                }
+
+                //Remove from previous team
+                if(p.info.teamID>-1)
+                    removeFromTeam(p, p.info.teamID, false);
+
+                //Move to new team
+                p.info.teamID = teamID;
+                p.info.teamRole = "MEMBER";
+                teamData[teamID].members.push([p.token,p.info.name]);
+
+                messageGroup(teamData[teamID].members,
+                             p.info.name+" has joined the team!",
+                             "You are now a member of "+teamData[teamID].name+"."
+                             ,"team", p);
             }
-
-            //Move to new team
-            p.info.teamID = teamId;
-            p.info.teamRole = "MEMBER";
-            teamData[teamID].members.push([p.token,p.info.name]);
         }
 
         res.send('');
@@ -1471,6 +1494,7 @@ function roundCleanup(){
             triggeredTrap(players[i]);
             if(saveCountdown==saveRound){
                 savePlayer(players[i], false);
+                saveTeam();
             }
         }
     }
@@ -2392,7 +2416,7 @@ function saveTeam(){
 
 function teamValidation(base, area){
     if(base === area)
-        return "Base and area need to be different colors.";
+        return "Base and area need to be different colors";
 
     var hex = area.replace('#','');
     var ar = parseInt(hex.substring(0,2), 16);
@@ -2410,18 +2434,20 @@ function teamValidation(base, area){
         return "Base color is too similar to Area color";
 
     for(var b in teamData){
-        hex = teamData[b].colors.baseColor.replace('#','');
-        var br2 = parseInt(hex.substring(0,2), 16);
-        var bg2 = parseInt(hex.substring(2,4), 16);
-        var bb2 = parseInt(hex.substring(4,6), 16);
-        hex = teamData[b].colors.areaColor.replace('#','');
-        var ar2 = parseInt(hex.substring(0,2), 16);
-        var ag2 = parseInt(hex.substring(2,4), 16);
-        var ab2 = parseInt(hex.substring(4,6), 16);
+        if(teamData[b].status!=="DELETED"){
+            hex = teamData[b].colors.baseColor.replace('#','');
+            var br2 = parseInt(hex.substring(0,2), 16);
+            var bg2 = parseInt(hex.substring(2,4), 16);
+            var bb2 = parseInt(hex.substring(4,6), 16);
+            hex = teamData[b].colors.areaColor.replace('#','');
+            var ar2 = parseInt(hex.substring(0,2), 16);
+            var ag2 = parseInt(hex.substring(2,4), 16);
+            var ab2 = parseInt(hex.substring(4,6), 16);
 
-        if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
-           Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
-            return "Color combo has been taken";
+            if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
+               Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
+                return "Color combo has been taken";
+            }
         }
     }
 
@@ -2532,4 +2558,84 @@ function buildStore(p){
             "canBuy":!p.stats.quickHeal
         }
     };
+}
+
+function removeFromTeam(p, teamID, merge){
+    if(merge){
+        teamData[teamID] = {"id":teamID,"status":"DELETED"};
+    }else{
+        if(p.info.teamRole === "ADMIN"){
+            for(var a in teamData[teamID].admins){
+                if(teamData[teamID].admins[a][0]===p.token){
+                    teamData[teamID].admins.splice(a,1);
+                    break;
+                }
+            }
+        }
+
+        for(var m in teamData[teamID].members){
+            if(teamData[teamID].members[m][0]===p.token){
+                teamData[teamID].members.splice(m,1);
+                break;
+            }
+        }
+
+        messageGroup(teamData[teamID].members,
+                     p.info.name+" has left the team.","","team", null);
+        p.battleLog.unshift({"type":"team", "msg": "You left "+teamData[teamID].name+"."});
+    }
+}
+
+function messageGroup(group, msg, msgS, type, source){
+    if(type==="team"){
+        for(var i = 0; i < group.length; i++){
+            for(var p in players){
+                if(players[p].token === group[i][0]){
+                    if(source!=null){
+                        if(players[p].token===source.token){
+                            players[p].battleLog.unshift({"type":type, "msg": msgS});
+                            break;
+                        }
+                    }
+                    players[p].battleLog.unshift({"type":type, "msg": msg});
+                    break;
+                }
+            }
+        }
+    }
+    else{
+        for(var i = 0; i < group.length; i++){
+            if(players[i].token === source.token)
+                killer.battleLog.unshift({"type":type, "msg": msgS});
+            else
+                players[i].battleLog.unshift({"type":type, "msg": msg});
+        }
+    }
+}
+
+function mergeTeams(oldID, newID, p){
+    //Take all bases
+    //TODO: THIS SECTION
+
+    //Take all members
+    messageGroup(teamData[oldID].members,
+                 "Your team has been merged with "+teamData[newID].name+".",
+                 "You have merged your old team into "+teamData[newID].name+".","team", p);
+    messageGroup(teamData[newID].members,
+                "Your team has been merged with "+teamData[oldID].name+". Welcome your new members!",
+                "", "team", null);
+
+    for(var m in teamData[oldID].members){
+        for(var pp in players){
+            if(players[pp].token === teamData[oldID].members[m][0]){
+                players[pp].info.teamID = newID;
+                players[pp].info.teamRole = "MEMBER";
+                teamData[newID].members.push([players[pp].token,players[pp].info.name]);
+                break;
+            }
+        }
+    }
+
+    //Delete old team
+    removeFromTeam(p, oldID, true);
 }

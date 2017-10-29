@@ -2,20 +2,23 @@
     {
         "id": 0,
         "name": "Red Team",
-        "colors":{
+        "colors": {
             "baseColor": "#f20d0d",
             "areaColor": "#fdd7d7",
             "baseShape": "DIAMOND"
         },
-        "leader": ["----","BOAT_GAME"],
+        "leader": [
+            "----",
+            "BOAT_GAME"
+        ],
         "admins": [],
         "members": [],
-        "gold":0,
-        "iron":0,
-        "uranium":0,
-        "credits":0,
-        "income":0,
-        "settings":{
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": 0,
+        "settings": {
             "building": "TEAM",
             "ping": "ADMIN",
             "upgrading": "ADMIN",
@@ -27,20 +30,23 @@
     {
         "id": 1,
         "name": "Blue Team",
-        "colors":{
+        "colors": {
             "baseColor": "#1925e6",
             "areaColor": "#d9dbfb",
             "baseShape": "DIAMOND"
         },
-        "leader": ["---","BOAT_GAME"],
+        "leader": [
+            "---",
+            "BOAT_GAME"
+        ],
         "admins": [],
         "members": [],
-        "gold":0,
-        "iron":0,
-        "uranium":0,
-        "credits":0,
-        "income":0,
-        "settings":{
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": 0,
+        "settings": {
             "building": "TEAM",
             "ping": "ADMIN",
             "upgrading": "ADMIN",
@@ -52,20 +58,23 @@
     {
         "id": 2,
         "name": "Green Team",
-        "colors":{
+        "colors": {
             "baseColor": "#19e625",
             "areaColor": "#d9fbdb",
-            "baseShape": "TRIANGLE"
+            "baseShape": "DIAMOND"
         },
-        "leader": ["-----","BOAT_GAME"],
+        "leader": [
+            "-----",
+            "BOAT_GAME"
+        ],
         "admins": [],
         "members": [],
-        "gold":0,
-        "iron":0,
-        "uranium":0,
-        "credits":0,
-        "income":0,
-        "settings":{
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": 0,
+        "settings": {
             "building": "TEAM",
             "ping": "ADMIN",
             "upgrading": "ADMIN",
@@ -76,46 +85,24 @@
     },
     {
         "id": 3,
-        "name": "Test Team",
-        "colors":{
-            "baseColor": "#f20d0d",
-            "areaColor": "#957d6a",
-            "baseShape": "CIRCLE"
+        "name": "Yellow Team",
+        "colors": {
+            "baseColor": "#dae619",
+            "areaColor": "#f8fad1",
+            "baseShape": "DIAMOND"
         },
-        "leader": ["----_-","BOAT_GAME"],
+        "leader": [
+            "--",
+            "BOAT_GAME"
+        ],
         "admins": [],
         "members": [],
-        "gold":0,
-        "iron":0,
-        "uranium":0,
-        "credits":0,
-        "income":0,
-        "settings":{
-            "building": "TEAM",
-            "ping": "ADMIN",
-            "upgrading": "ADMIN",
-            "membership": "INVITE",
-            "profitDivide": "FAIR",
-            "tax": 0
-        }
-    },
-    {
-        "id": 4,
-        "name": "|||MASTER BLAZERS|||",
-        "colors":{
-            "baseColor": "#80f20d",
-            "areaColor": "#e6da19",
-            "baseShape": "CIRCLE"
-        },
-        "leader": ["-----","BOAT_GAME"],
-        "admins": [],
-        "members": [],
-        "gold":0,
-        "iron":0,
-        "uranium":0,
-        "credits":0,
-        "income":0,
-        "settings":{
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": 0,
+        "settings": {
             "building": "TEAM",
             "ping": "ADMIN",
             "upgrading": "ADMIN",
