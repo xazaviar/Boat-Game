@@ -10,7 +10,7 @@ var playerNameMaxLength = 16;
 var teamNameMaxLength = 25;
 
 //Map Building
-var mapSize = 24;
+var mapSize = 104;
 var rockSpread = .04;   //decimal as percent
 var shopSpread = .007;  //decimal as percent
 var specialShops = 2;   //even number is preferred
@@ -1132,7 +1132,7 @@ function startServer(){
                         "building": "TEAM",
                         "ping": "ADMIN",
                         "upgrading": "ADMIN",
-                        "membership": "OPEN",
+                        "membership": "INVITE",
                         "profitDivide": "FAIR",
                         "tax": 0
                     }

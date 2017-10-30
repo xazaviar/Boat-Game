@@ -38,6 +38,7 @@ var confirmHover = -1;
 var valueLock = -1;
 
 var teamMenu = false;
+var teamMenuHover = -1;
 var curTeamTab = 0;
 
 //Chat data
@@ -1591,6 +1592,7 @@ function drawMap(ctx, startX, startY, width, height){
     ctx.globalAlpha = 1.0;
     var tileSize = width/map.length;
 
+    //TODO: keep shops in draw area
     for(var x = 0; x < map.length; x++){
         for(var y = 0; y < map.length; y++){
             if(map[x][y]==="ROCK"){ //Rock
@@ -2282,11 +2284,12 @@ function drawCreateTeam(ctx, startX, startY, width, height){
 }
 
 function drawTeamMenu(ctx, startX, startY, width, height){
-    var sX = startX+width/4;
-    var sY = startY+height/4;
+    var sX = startX+width/8;
+    var sY = startY+height/6;
     var wid = width-(sX-startX)*2;
     var hei = height-(sY-startY)*2;
 
+    //Draw box
     ctx.beginPath();
     ctx.strokeStyle = colors.hudColor;
     ctx.fillStyle = colors.hudBackColor;
@@ -2294,6 +2297,56 @@ function drawTeamMenu(ctx, startX, startY, width, height){
     ctx.strokeRect(sX,sY,wid,hei);
     ctx.fillRect(sX,sY,wid,hei);
     ctx.stroke();
+
+    teamMenuHover = -1;
+
+    //Draw Tabs
+    ctx.strokeStyle=colors.hudColor;
+    ctx.fillStyle=colors.hudBackColor;
+    ctx.font = "18px Courier";
+    var teamTabs = ["SUM","MEM","LOOT","SET"];
+    for(var i = 0; i < teamTabs.length; i++){
+        ctx.beginPath();
+        var tHei = 60;
+        ctx.globalAlpha = 1.0;
+        if(i==curTeamTab) ctx.fillStyle=colors.hudColor;
+        else ctx.fillStyle=colors.hudBackColor;
+        ctx.strokeRect(sX+wid+1,sY+tHei*i,50,tHei);
+        ctx.fillRect(sX+wid+1,sY+tHei*i,50,tHei);
+
+        ctx.globalAlpha = 1.0;
+        if(i==curTeamTab) ctx.fillStyle=colors.hudBackColor;
+        else ctx.fillStyle=colors.hudColor;
+        ctx.fillText(teamTabs[i],sX+wid+3,sY+35+tHei*i);
+        ctx.stroke();
+
+        if(mX > sX+wid+1 && mX < sX+wid+51 &&
+           mY > sY+tHei*i && mY < sY+tHei*i+tHei){
+            teamMenuHover = i;
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle=colors.hudColor;
+            ctx.fillRect(sX+wid+1,sY+tHei*i,50,tHei);
+        }
+
+    }
+
+
+    //In Tabs
+    ctx.beginPath();
+    ctx.globalAlpha = 1.0;
+    if(curTeamTab==0){ //MAIN view tab
+        ctx.strokeRect(sX, sY+hei-5*wid/8, 5*wid/8, 5*wid/8);
+        drawMap(ctx, sX, sY+hei-5*wid/8, 5*wid/8, 5*wid/8);
+    }
+    else if(curTeamTab==1){ //Membership
+
+    }
+    else if(curTeamTab==2){ //Vault
+
+    }
+    else if(curTeamTab==3){ //Settings
+
+    }
 }
 
 function drawBase(ctx, startX, startY, tileSize, type, lvl, color){
@@ -2826,6 +2879,11 @@ function handleMousedown(e){
             }else if(createTeamHover == 2){
                 bShape = "CIRCLE";
             }
+        }
+    }
+    else if(teamMenu){
+        if(teamMenuHover < 4 && teamMenuHover > -1){
+            curTeamTab = teamMenuHover;
         }
     }
     else if(shopMode && shop.withinShop=="SSHOP"){
