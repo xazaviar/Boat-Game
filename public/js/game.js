@@ -1711,7 +1711,6 @@ function drawMap(ctx, startX, startY, width, height){
         }
     }
 
-
     for(var i = 0; i < players.length; i++){
         var eloc = players[i].loc; //Check if same player
         if(!(eloc[0]==me.loc[0] && eloc[1]==me.loc[1] && me.stats.hp>0)){
@@ -1723,6 +1722,8 @@ function drawMap(ctx, startX, startY, width, height){
             ctx.fill();
         }
     }
+
+    ctx.globalAlpha = 1.0;
 }
 
 function drawShopMenu(ctx, width, height){
@@ -2289,6 +2290,8 @@ function drawTeamMenu(ctx, startX, startY, width, height){
     var wid = width-(sX-startX)*2;
     var hei = height-(sY-startY)*2;
 
+    var id = me.info.teamID;
+
     //Draw box
     ctx.beginPath();
     ctx.strokeStyle = colors.hudColor;
@@ -2335,16 +2338,67 @@ function drawTeamMenu(ctx, startX, startY, width, height){
     ctx.beginPath();
     ctx.globalAlpha = 1.0;
     if(curTeamTab==0){ //MAIN view tab
+        ctx.fillStyle=colors.hudColor;
+        ctx.globalAlpha = 1.0;
+
+        //Draw Summary
+        ctx.font = "bold 22pt Courier";
+        ctx.fillText("TEAM SUMMARY",sX+5, sY+25);
+        ctx.font = "18pt Courier";
+        ctx.fillText("INCOME : "+teamList[id].income[0]+"g",sX+5, sY+50);
+        ctx.fillText("         "+teamList[id].income[1]+"c",sX+5, sY+70);
+        ctx.fillText("MEMBERS: "+teamList[id].members.length,sX+5, sY+90);
+
+        ctx.fillText("TEAM RANK  : "+teamList[id].rank,sX+250, sY+50);
+        ctx.fillText("TEAM POWER : "+teamList[id].power,sX+250, sY+70);
+        ctx.fillText("MAP CONTROL: "+teamList[id].mapControl+"%",sX+250, sY+90);
+
+        //Draw Objective
+        ctx.font = "bold 25pt Courier";
+        ctx.fillText("OBJECTIVE:",sX+5, sY+135);
+        ctx.font = "16pt Courier";
+        ctx.fillText("CAPTURE [BASE_NAME]",sX+210, sY+132);
+
+        //Draw Base Info
+        //TODO: make bases
+        ctx.font = "16pt Courier";
+        ctx.fillText("BASE INFO",sX+5*wid/8+10, sY+180);
+
+        //Draw Map
         ctx.strokeRect(sX, sY+hei-5*wid/8, 5*wid/8, 5*wid/8);
         drawMap(ctx, sX, sY+hei-5*wid/8, 5*wid/8, 5*wid/8);
     }
     else if(curTeamTab==1){ //Membership
+        ctx.fillStyle=colors.hudColor;
+        ctx.globalAlpha = 1.0;
+        ctx.font = "bold 22pt Courier";
+        ctx.fillText("MEMBERS",sX+5, sY+25);
+
 
     }
     else if(curTeamTab==2){ //Vault
+        ctx.fillStyle=colors.hudColor;
+        ctx.globalAlpha = 1.0;
+        ctx.font = "bold 22pt Courier";
+        ctx.fillText("THE VAULT",sX+5, sY+25);
+
+        ctx.font = "bold 40pt Courier";
+        ctx.fillStyle=colors.goldColor;
+        ctx.fillText("GOLD   : "+teamList[id].credits+"g",sX+wid/2-200, sY+hei/5);
+        ctx.fillStyle=colors.ironColor;
+        ctx.fillText("IRON   : "+teamList[id].credits+"i",sX+wid/2-200, sY+2*hei/5);
+        ctx.fillStyle=colors.uraniumColor;
+        ctx.fillText("URANIUM: "+teamList[id].credits+"u",sX+wid/2-200, sY+3*hei/5);
+        ctx.fillStyle=colors.hudColor;
+        ctx.fillText("CREDITS: "+teamList[id].credits+"c",sX+wid/2-200, sY+4*hei/5);
 
     }
     else if(curTeamTab==3){ //Settings
+        ctx.fillStyle=colors.hudColor;
+        ctx.globalAlpha = 1.0;
+        ctx.font = "bold 22pt Courier";
+        ctx.fillText("TEAM SETTINGS",sX+5, sY+25);
+
 
     }
 }

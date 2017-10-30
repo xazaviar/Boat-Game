@@ -402,7 +402,10 @@ function startServer(){
                         "uranium": teamData[t].uranium,
                         "credits": teamData[t].credits,
                         "income": teamData[t].income,
-                        "settings": teamData[t].settings
+                        "settings": teamData[t].settings,
+                        "power": calculateTeamPower(t),
+                        "mapControl": calculateMapControl(t),
+                        "rank": teamData[t].teamRank
                     };
                 }
                 else if(teamData[t].status==="DELETED"){
@@ -417,7 +420,8 @@ function startServer(){
                         "joinStatus": teamData[t].settings.membership,
                         "profitDivide": teamData[t].settings.profitDivide,
                         "tax": teamData[t].settings.tax,
-                        "power": 0.05
+                        "power": calculateTeamPower(t),
+                        "mapControl": calculateMapControl(t)
                     };
                 }
             }
@@ -1127,7 +1131,8 @@ function startServer(){
                     "iron":0,
                     "uranium":0,
                     "credits":0,
-                    "income":0,
+                    "income": [0,0], //[Gold, Credits]
+                    "teamRank": 1000,
                     "settings":{
                         "building": "TEAM",
                         "ping": "ADMIN",
@@ -2690,4 +2695,19 @@ function changeRole(token, teamID, role){
             break;
         }
     }
+}
+
+function calculateTeamPower(teamID){
+    var b1Val = 5, b2Val = 10, b3Val = 20;
+    var memVal = 5, areaVal = 1000;
+
+    return teamData[teamID].members.length*memVal;
+}
+
+function calculateMapControl(teamID){
+    return 0;
+}
+
+function rankTeams(){
+
 }
