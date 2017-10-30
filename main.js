@@ -416,7 +416,8 @@ function startServer(){
                         "size": teamData[t].members.length,
                         "joinStatus": teamData[t].settings.membership,
                         "profitDivide": teamData[t].settings.profitDivide,
-                        "tax": teamData[t].settings.tax
+                        "tax": teamData[t].settings.tax,
+                        "power": 0.05
                     };
                 }
             }
@@ -1131,7 +1132,7 @@ function startServer(){
                         "building": "TEAM",
                         "ping": "ADMIN",
                         "upgrading": "ADMIN",
-                        "membership": "INVITE",
+                        "membership": "OPEN",
                         "profitDivide": "FAIR",
                         "tax": 0
                     }
@@ -1158,6 +1159,8 @@ function startServer(){
         res.send('');
     });
     app.post('/joinTeam', function(req, res){
+        //TODO: CAN ONLY Join every ~200 Rounds
+
         var token = req.body.token;
         var teamID = req.body.id;
         var type = req.body.type; //merge, split, none
@@ -1177,7 +1180,25 @@ function startServer(){
             else {
                 if(type==="SPLIT"){
                     //Select new leader
-
+                    if(teamData[p.info.teamID].admins.length>0){
+                        var r = parseInt(Math.random()*100)%teamData[p.info.teamID].admins.length;
+                        changeRole(teamData[p.info.teamID].admins[r][0],p.info.teamID,"LEADER");
+                        messageGroup(teamData[p.info.teamID].members,
+                                     teamData[p.info.teamID].admins[r][1]+" is now the leader.",
+                                     "", "team", null);
+                    }
+                    else{
+                        while(true || teamData[p.info.teamID].members.length>1){
+                            var r = parseInt(Math.random()*100)%teamData[p.info.teamID].members.length;
+                            if(teamData[p.info.teamID].members[r][0]!==teamData[p.info.teamID].leader[0]){
+                                changeRole(teamData[p.info.teamID].members[r][0], p.info.teamID, "LEADER");
+                                messageGroup(teamData[p.info.teamID].members,
+                                             teamData[p.info.teamID].members[r][1]+" is now the leader.",
+                                             "", "team", null);
+                                break;
+                            }
+                        }
+                    }
 
                 }
 
@@ -1192,8 +1213,8 @@ function startServer(){
 
                 messageGroup(teamData[teamID].members,
                              p.info.name+" has joined the team!",
-                             "You are now a member of "+teamData[teamID].name+"."
-                             ,"team", p);
+                             "You are now a member of "+teamData[teamID].name+".",
+                             "team", p);
             }
         }
 
@@ -2638,4 +2659,35 @@ function mergeTeams(oldID, newID, p){
 
     //Delete old team
     removeFromTeam(p, oldID, true);
+}
+
+function changeRole(token, teamID, role){
+    var mem;
+    for(var p in players){
+        if(players[p].token === token){
+            if(role==="LEADER"){
+                if(players[p].info.teamRole==="ADMIN"){
+                    for(var a in teamData[teamID].admins){
+                        if(teamData[teamID].admins[a][0]===token){
+                            teamData[teamID].admins.splice(a,1);
+                            break;
+                        }
+                    }
+                }
+                teamData[teamID].leader = [players[p].token,players[p].name];
+            }else if(role==="ADMIN"){
+                teamData[teamID].admins.push([players[p].token,players[p].name]);
+            }else if(players[p].info.teamRole==="ADMIN"){
+                for(var a in teamData[teamID].admins){
+                    if(teamData[teamID].admins[a][0]===token){
+                        teamData[teamID].admins.splice(a,1);
+                        break;
+                    }
+                }
+            }
+
+            players[p].info.teamRole = role;
+            break;
+        }
+    }
 }

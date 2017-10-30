@@ -33,6 +33,10 @@ var bColor = "#00FF00", aColor = "#FFFFFF", bShape = "DIAMOND";
 var createTeamHover = -1;
 var createTeamError = "";
 
+var confirmDialog = -1;
+var confirmHover = -1;
+var valueLock = -1;
+
 var teamMenu = false;
 var curTeamTab = 0;
 
@@ -1173,6 +1177,10 @@ function drawMonitor(ctx, width, height){
             $(".input2").toggle(false);
         }
 
+        if(confirmDialog > -1){
+            drawConfirmDialog(ctx,0,0,width,height);
+        }
+
     }
 
     if(settingsView){
@@ -2036,9 +2044,21 @@ function drawJoinTeam(ctx, startX, startY, width, height){
         ctx.fillRect(sX+wid/60+wid/3*i,sY+55,180,75);
         ctx.fillStyle = "#000000";
         ctx.fillText(teamList[teamRec[i]].name,sX+(wid/60-1+(100-teamList[teamRec[i]].name.length*5))+wid/3*i,sY+69);
+        ctx.fillText("MEMBERS: "+teamList[teamRec[i]].size,sX+wid/60+5+wid/3*i-1,sY+85-1);
+        ctx.fillText("MAP    : "+(teamList[teamRec[i]].power*100)+"%",sX+wid/60+5+wid/3*i-1,sY+100-1);
+        ctx.fillText("BASES  : ",sX+wid/60+5+wid/3*i-1,sY+115-1);
+        drawBase(ctx,sX+wid/60+5+75+wid/3*i-1,sY+100-1, 20, teamList[teamRec[i]].colors.baseShape, 1, "#000000");
+        drawBase(ctx,sX+wid/60+5+95+wid/3*i-1,sY+100-1, 20, teamList[teamRec[i]].colors.baseShape, 2, "#000000");
+        drawBase(ctx,sX+wid/60+5+115+wid/3*i-1,sY+100-1, 20, teamList[teamRec[i]].colors.baseShape, 3, "#000000");
         ctx.globalAlpha = 1.0;
         ctx.fillStyle = teamList[teamRec[i]].colors.baseColor;
         ctx.fillText(teamList[teamRec[i]].name,sX+(wid/60+(100-teamList[teamRec[i]].name.length*5))+wid/3*i,sY+70);
+        ctx.fillText("MEMBERS: "+teamList[teamRec[i]].size,sX+wid/60+5+wid/3*i,sY+85);
+        ctx.fillText("MAP    : "+(teamList[teamRec[i]].power*100)+"%",sX+wid/60+5+wid/3*i,sY+100);
+        ctx.fillText("BASES  : ",sX+wid/60+5+wid/3*i,sY+115);
+        drawBase(ctx,sX+wid/60+5+75+wid/3*i,sY+100, 20, teamList[teamRec[i]].colors.baseShape, 1, teamList[teamRec[i]].colors.baseColor);
+        drawBase(ctx,sX+wid/60+5+95+wid/3*i,sY+100, 20, teamList[teamRec[i]].colors.baseShape, 2, teamList[teamRec[i]].colors.baseColor);
+        drawBase(ctx,sX+wid/60+5+115+wid/3*i,sY+100, 20, teamList[teamRec[i]].colors.baseShape, 3, teamList[teamRec[i]].colors.baseColor);
     }
 
     //Create Team Button
@@ -2134,8 +2154,8 @@ function drawCreateTeam(ctx, startX, startY, width, height){
     ctx.stroke();
 
     createTeamHover = -1;
-    $(".input1").toggle(true);
-    $(".input2").toggle(true);
+    $(".input1").toggle(!(confirmDialog>-1));
+    $(".input2").toggle(!(confirmDialog>-1));
 
     var baseIN = $("#color-picker1").val();
     if(baseIN!="") bColor = baseIN;
@@ -2266,6 +2286,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
     var sY = startY+height/4;
     var wid = width-(sX-startX)*2;
     var hei = height-(sY-startY)*2;
+
     ctx.beginPath();
     ctx.strokeStyle = colors.hudColor;
     ctx.fillStyle = colors.hudBackColor;
@@ -2371,6 +2392,152 @@ function drawBase(ctx, startX, startY, tileSize, type, lvl, color){
         }
     }
 }
+
+function drawConfirmDialog(ctx, startX, startY, width, height){
+    //Calculate Drawing Area
+    var sX = startX+width/3;
+    var sY = startY+height/2.4;
+    var wid = width-(sX-startX)*2;
+    var hei = height-(sY-startY)*2;
+
+    confirmHover = -1;
+
+    ctx.beginPath();
+    ctx.strokeStyle = colors.hudColor;
+    ctx.fillStyle = colors.hudBackColor;
+    ctx.globalAlpha = 1.0;
+    ctx.strokeRect(sX,sY,wid,hei);
+    ctx.fillRect(sX,sY,wid,hei);
+    ctx.stroke();
+
+    if(confirmDialog==0){ //Join Team
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("Are you sure you ",sX+25,sY+25);
+        ctx.fillText("want to join ",sX+25,sY+45);
+        ctx.fillText(teamList[valueLock].name+"?",sX+25,sY+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Join
+        if(mX < sX+105 && mX > sX+25 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("JOIN",sX+40,sY+hei-25);
+            confirmHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("JOIN",sX+40,sY+hei-25);
+        }
+
+        //Cancel
+        if(mX < sX+wid-25 && mX > sX+wid-105 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+            confirmHover = 1;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+        }
+    }
+    else if(confirmDialog==1){ //Create Team
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("Are you sure you ",sX+25,sY+25);
+        ctx.fillText("want to create ",sX+25,sY+45);
+        ctx.fillText(tName+"?",sX+25,sY+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Create
+        if(mX < sX+105 && mX > sX+25 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("CREATE",sX+30,sY+hei-25);
+            confirmHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("CREATE",sX+30,sY+hei-25);
+        }
+
+        //Cancel
+        if(mX < sX+wid-25 && mX > sX+wid-105 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+            confirmHover = 1;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+        }
+    }
+    else if(confirmDialog==2){ //Merge/Split
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("Would you like to ",sX+25,sY+25);
+        ctx.fillText("merge or split from",sX+25,sY+45);
+        ctx.fillText("your team?",sX+25,sY+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Join
+        if(mX < sX+105 && mX > sX+25 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("MERGE",sX+35,sY+hei-25);
+            confirmHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("MERGE",sX+35,sY+hei-25);
+        }
+
+        //Cancel
+        if(mX < sX+wid-25 && mX > sX+wid-105 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("SPLIT",sX+wid-95,sY+hei-25);
+            confirmHover = 1;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("SPLIT",sX+wid-95,sY+hei-25);
+        }
+    }
+}
+
 
 //******************************************************************************
 // Event Handler Functions
@@ -2577,25 +2744,76 @@ function handleMousedown(e){
        }
        //    ctx.strokeRect(c.width/4+255,c.height/8+60+20*i+20,115,40);
     }
+    else if(confirmDialog>-1){
+        if(confirmDialog==0){
+            if(confirmHover==0){ //join
+                var type = "none";
+
+                if(me.info.teamID>-1){
+                    if(me.info.teamRole==="LEADER" && teamList[me.info.teamID].members.length>1){
+                        confirmDialog = 2;
+                    }
+                    else{
+                        joinTeam(valueLock,type);
+                        confirmHover = -1;
+                        confirmDialog = -1;
+                        valueLock = -1;
+                    }
+                }
+                else{
+                    joinTeam(valueLock,type);
+                    confirmHover = -1;
+                    confirmDialog = -1;
+                    valueLock = -1;
+                }
+            }else if(confirmHover==1){
+                confirmHover = -1;
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+        }
+        else if(confirmDialog==1){
+            if(confirmHover==0){ //join
+                createTeam();
+                confirmHover = -1;
+                confirmDialog = -1;
+                valueLock = -1;
+            }else if(confirmHover==1){
+                confirmHover = -1;
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+        }
+        else if(confirmDialog==2){
+            if(confirmHover==0){
+                joinTeam(valueLock,"MERGE");
+                confirmHover = -1;
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+            else if(confirmHover==1){
+                joinTeam(valueLock,"SPLIT");
+                confirmHover = -1;
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+        }
+    }
     else if(joinTeamMenu){
         if(joinTeamHover==="CREATE"){
             createTeamMenu = true;
             joinTeamMenu = false;
         }
         else if(joinTeamHover>-1){
-            var type = "none";
-
-            if(me.info.teamID>-1)
-                if(me.info.teamRole==="LEADER" && teamList[me.info.teamID].admins.length==0 && teamList[me.info.teamID].members.length==0)
-                    type = "merge";
-
-            joinTeam(joinTeamHover,type);
+            confirmDialog = 0;
+            valueLock = joinTeamHover;
         }
     }
     else if(createTeamMenu){
         console.log(createTeamHover);
         if(createTeamHover==="CREATE"){
-            createTeam();
+            confirmDialog = 1;
+            valueLock = joinTeamHover;
         }
         else if(createTeamHover==="CANCEL"){
             createTeamMenu = false;

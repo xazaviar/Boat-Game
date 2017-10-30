@@ -12,7 +12,16 @@
             "BOAT_GAME"
         ],
         "admins": [],
-        "members": [],
+        "members": [
+            [
+                "nab2e9U3QCvsCKxpkBH5oLSCJZOnfeyiz1DAAARnZfdnjYdcjRtb4QJjJ1DT23lTKM28nTbXyEQJTT2kV81qiS87XuL4be3eu7zdl6Hd9vK70BZp7vqOlQ4yr1YyPY4eazfsbxju44gZzpfbWo8Ec4rLtdUlIOcYkjME1LDLZNbZu9Z4m6eOQgS96Kx9WAy62z4h4cap",
+                "dddd"
+            ],
+            [
+                "fhNDtiw2vDbDty5h8RcdztddYS5tHE5DY3uCfVvoLy7JIYFtGR6elvNSGn9hJ4ziFdxij0b5HnRnJpfpAS33QKGOPPp7FwFPElBrmBwxIbdwg9NYRrfitJSMXCMlIL48VUVRGlNg9CoaFQV3rdf6xMHwqPPWeEwac3XnfUtKzmCF1PVsFQwthhjQAoxxOdA7svFKE3Iu",
+                "asdfasdf"
+            ]
+        ],
         "gold": 0,
         "iron": 0,
         "uranium": 0,
@@ -68,7 +77,12 @@
             "BOAT_GAME"
         ],
         "admins": [],
-        "members": [],
+        "members": [
+            [
+                "pwFpdABOGdS69HyWNkstwxgZNAC8VstJKiD6zCftiGjQ8s12sNdn8YsP8JQlM2h6Wu9yfrHIsuSmvnqHU5wv46vrVLYFO4zfFwbiWNiaq6LOd7Aptpn3ujyaG1rMUkRrEwC73YsUg6FKJldXtYk2Udg4VljiR7uSblfIhThbzFSpz3qiE9GVjwIDIqdSqLqB5xfjqm5S",
+                "asdf"
+            ]
+        ],
         "gold": 0,
         "iron": 0,
         "uranium": 0,
@@ -96,7 +110,196 @@
             "BOAT_GAME"
         ],
         "admins": [],
+        "members": [
+            [
+                "hXnx3XH3YsaYxwWVjctAOoh2LruzW4dOsVjXXX6ERku8Vn8rem8Usm3hZ7q81Wt4b1JklpXhUyLlrmWprT9qW3FHEufT8SLGQSojQHIVErh6RKWKFlvDg7ZjxTfPdvCqJkdtJF5FpEGGdPmJBzIbaRdUHuhjwOFPZwJfrEApHboWnvxoO6TOTFH4PG3qoGl9lcG75zJM",
+                "asdf"
+            ],
+            [
+                "fxfDjXmkmXxACnFouvCl4unhuY2e2Kc3wv2DUacK34ZAjSIrrCht296jrVeexrMEG5G5xIVuA9W4JJeXkmTCNl4U8QdbHangmuaa9Or4cijgEHh6rvYaho7bDWsRc8LoDbAt0IIePdYFx1Z8HxeACq0uWqxPLNKuosjSIW0Mmol48oynzC64qprs9ew5uL5cAYccDgye",
+                "sdf"
+            ]
+        ],
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": 0,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 4,
+        "name": "Narwhals",
+        "colors": {
+            "baseColor": "#2d37d2",
+            "areaColor": "#a7f1f1",
+            "baseShape": "CIRCLE"
+        },
+        "leader": [
+            "CRCnGd6hQQKFyUYaJKpYImD6uqpz0SKt9GRgG7gU6COQpEUA7P4jkaQBO2GLiMhFEXkSu3fnunDhutGEs0C7fB8yLQGFWZCGG45GgCtYphA98XyVzi4oPFvhiqNVjfGUPeCSWn2YrONpOoWCmXDinGmrqLP2aJiaC6nvLEcctGvnBuUez9982wpVRlaEt8KUEUW5apiG",
+            "test"
+        ],
+        "admins": [],
+        "members": [
+            [
+                "CRCnGd6hQQKFyUYaJKpYImD6uqpz0SKt9GRgG7gU6COQpEUA7P4jkaQBO2GLiMhFEXkSu3fnunDhutGEs0C7fB8yLQGFWZCGG45GgCtYphA98XyVzi4oPFvhiqNVjfGUPeCSWn2YrONpOoWCmXDinGmrqLP2aJiaC6nvLEcctGvnBuUez9982wpVRlaEt8KUEUW5apiG",
+                "test"
+            ]
+        ],
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": 0,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "INVITE",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 5,
+        "name": "as_________________d",
+        "colors": {
+            "baseColor": "#e67419",
+            "areaColor": "#f20d9a",
+            "baseShape": "TRIANGLE"
+        },
+        "leader": [
+            "hXnx3XH3YsaYxwWVjctAOoh2LruzW4dOsVjXXX6ERku8Vn8rem8Usm3hZ7q81Wt4b1JklpXhUyLlrmWprT9qW3FHEufT8SLGQSojQHIVErh6RKWKFlvDg7ZjxTfPdvCqJkdtJF5FpEGGdPmJBzIbaRdUHuhjwOFPZwJfrEApHboWnvxoO6TOTFH4PG3qoGl9lcG75zJM",
+            "asdf"
+        ],
+        "admins": [],
+        "members": [
+            [
+                "hXnx3XH3YsaYxwWVjctAOoh2LruzW4dOsVjXXX6ERku8Vn8rem8Usm3hZ7q81Wt4b1JklpXhUyLlrmWprT9qW3FHEufT8SLGQSojQHIVErh6RKWKFlvDg7ZjxTfPdvCqJkdtJF5FpEGGdPmJBzIbaRdUHuhjwOFPZwJfrEApHboWnvxoO6TOTFH4PG3qoGl9lcG75zJM",
+                "asdf"
+            ],
+            [
+                "FX1eobr6N4Jqsz59VCvOh9UQmtcdiTZjAdDNhCDgmBEK4V6gM8i5qLHX1kqi7fmedSOlj2V5qBrzLLafKn6BOakDmBA2YaoHmukSOjPfruSTLx9BJTup1mI6AeAkCvNkVapwAJ3fQDfHuMBws2uIJ0vOx4XJRqeScPvlE71iaCFx7Q1aQ9BHxJLDfrvguuHkFJU66Onl",
+                "dddd"
+            ],
+            [
+                "tH9eeI4hFnMWSNp4wfTMwKDwSxaulbataskq82MVgU5LYPG8BzRsUcliDjMuvldBBiLFoTxws5k3zHxNBp6sf6x4ojY5f2R3tuCMTs2U68kG74a5XFNhrFtUp5PeQglmGZahVI9MXIKG7vLzRDUPpCSkibLs1ZAjVdfRopn2W5A3u12FQ4iS61AmzMLbDxUY66O8q2jC",
+                "asdf"
+            ]
+        ],
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": 0,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 6,
+        "name": "ASSBALLSTITS",
+        "colors": {
+            "baseColor": "#a9a456",
+            "areaColor": "#ff0071",
+            "baseShape": "TRIANGLE"
+        },
+        "leader": [
+            "G1eEr0lQVNGqi9bE8a3kv7agVqQ6GFGGiJ3S6lBNSyQLkLMidCUE27Lf7sBBQapqblhWtj0JM0yzJNOEskllRd9tPqiSgN2PlsufP8O9dsyTSpGnc9I31wpu9kHBUB7fiQYntKuhGvOTifDGFUgDs9LZ7MlgjDgPxQWKinOQ5uuX1ceDJUoHqjJcidG30JgDIUv25AFJ",
+            "asdf"
+        ],
+        "admins": [],
+        "members": [
+            [
+                "G1eEr0lQVNGqi9bE8a3kv7agVqQ6GFGGiJ3S6lBNSyQLkLMidCUE27Lf7sBBQapqblhWtj0JM0yzJNOEskllRd9tPqiSgN2PlsufP8O9dsyTSpGnc9I31wpu9kHBUB7fiQYntKuhGvOTifDGFUgDs9LZ7MlgjDgPxQWKinOQ5uuX1ceDJUoHqjJcidG30JgDIUv25AFJ",
+                "asdf"
+            ]
+        ],
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": 0,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "INVITE",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 7,
+        "name": "atesat",
+        "colors": {
+            "baseColor": "#997d66",
+            "areaColor": "#ff0071",
+            "baseShape": "TRIANGLE"
+        },
+        "leader": [
+            "tH9eeI4hFnMWSNp4wfTMwKDwSxaulbataskq82MVgU5LYPG8BzRsUcliDjMuvldBBiLFoTxws5k3zHxNBp6sf6x4ojY5f2R3tuCMTs2U68kG74a5XFNhrFtUp5PeQglmGZahVI9MXIKG7vLzRDUPpCSkibLs1ZAjVdfRopn2W5A3u12FQ4iS61AmzMLbDxUY66O8q2jC",
+            "asdf"
+        ],
+        "admins": [],
         "members": [],
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": 0,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "INVITE",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 8,
+        "status": "DELETED"
+    },
+    {
+        "id": 9,
+        "name": "atdd",
+        "colors": {
+            "baseColor": "#ff7100",
+            "areaColor": "#f20d9a",
+            "baseShape": "TRIANGLE"
+        },
+        "leader": [
+            "qlgDJy60aYvZVUX665sx4KNMHXYv3LUjmtb3ieMGYB1fQKSrJdM39PAJDtIRS61ildKHMaAPTnNAha3bsWELq7Zgum5RRMAC4fGGswh9Yswf7LRTR88RtH2PpfxzEuLVvAzUiUCB3q1ye0RzhMkyQRLayfE6eE8mOxQc7Qw0XkO2iTID0vf61QDbpAs99RoNbT6WquH4",
+            null
+        ],
+        "admins": [],
+        "members": [
+            [
+                "qlgDJy60aYvZVUX665sx4KNMHXYv3LUjmtb3ieMGYB1fQKSrJdM39PAJDtIRS61ildKHMaAPTnNAha3bsWELq7Zgum5RRMAC4fGGswh9Yswf7LRTR88RtH2PpfxzEuLVvAzUiUCB3q1ye0RzhMkyQRLayfE6eE8mOxQc7Qw0XkO2iTID0vf61QDbpAs99RoNbT6WquH4",
+                "BOAT"
+            ],
+            [
+                "gtSNIfKkXOmiQNDLuwvQn928x41WUT2R5AzYlx6NnSBmc4Tbvsl1ILjqHRfsnF9FvV3tkuQqEw1iSAvCHZhZWlMbALRHSQ41rdyE4yUrmor7MCeF6v1moJ3HcgN3mJIUc1uS4nXejT9iX1Sf64Q7UdPYyhKkUvVhUPgu1kCH1LghWO7Qkzf3ypfpBEJPGM2vcfM2KsdO",
+                "TEEEA"
+            ],
+            [
+                "qeUtXJyhOmXkFghExmteNVd8MZQ7b8EnubuaoQjY4bp2Ew2naV7sTQyI1fWZGV8j8KV6L0H8bMt92JeMLmlE1gI2eqNH4uFoA9x9iZ2loix8X4fltGs1lD2eqIOJDgdS36In6X0Tz3WEFbGHFeVyXoVQuUMCL4H9susDu3keIBvdP5dsjcATe3H5SADL71wqdmdgUlgs",
+                "asfd"
+            ]
+        ],
         "gold": 0,
         "iron": 0,
         "uranium": 0,
