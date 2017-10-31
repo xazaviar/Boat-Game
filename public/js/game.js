@@ -39,7 +39,9 @@ var valueLock = -1;
 
 var teamMenu = false;
 var teamMenuHover = -1;
+var teamScroll = 0;
 var curTeamTab = 0;
+var curSettings;
 
 //Chat data
 var chatMode = false;
@@ -2048,7 +2050,7 @@ function drawJoinTeam(ctx, startX, startY, width, height){
         ctx.fillStyle = "#000000";
         ctx.fillText(teamList[teamRec[i]].name,sX+(wid/60-1+(100-teamList[teamRec[i]].name.length*5))+wid/3*i,sY+69);
         ctx.fillText("MEMBERS: "+teamList[teamRec[i]].size,sX+wid/60+5+wid/3*i-1,sY+85-1);
-        ctx.fillText("MAP    : "+(teamList[teamRec[i]].power*100)+"%",sX+wid/60+5+wid/3*i-1,sY+100-1);
+        ctx.fillText("POWER  : "+teamList[teamRec[i]].power,sX+wid/60+5+wid/3*i-1,sY+100-1);
         ctx.fillText("BASES  : ",sX+wid/60+5+wid/3*i-1,sY+115-1);
         drawBase(ctx,sX+wid/60+5+75+wid/3*i-1,sY+100-1, 20, teamList[teamRec[i]].colors.baseShape, 1, "#000000");
         drawBase(ctx,sX+wid/60+5+95+wid/3*i-1,sY+100-1, 20, teamList[teamRec[i]].colors.baseShape, 2, "#000000");
@@ -2057,7 +2059,7 @@ function drawJoinTeam(ctx, startX, startY, width, height){
         ctx.fillStyle = teamList[teamRec[i]].colors.baseColor;
         ctx.fillText(teamList[teamRec[i]].name,sX+(wid/60+(100-teamList[teamRec[i]].name.length*5))+wid/3*i,sY+70);
         ctx.fillText("MEMBERS: "+teamList[teamRec[i]].size,sX+wid/60+5+wid/3*i,sY+85);
-        ctx.fillText("MAP    : "+(teamList[teamRec[i]].power*100)+"%",sX+wid/60+5+wid/3*i,sY+100);
+        ctx.fillText("POWER  : "+teamList[teamRec[i]].power,sX+wid/60+5+wid/3*i,sY+100);
         ctx.fillText("BASES  : ",sX+wid/60+5+wid/3*i,sY+115);
         drawBase(ctx,sX+wid/60+5+75+wid/3*i,sY+100, 20, teamList[teamRec[i]].colors.baseShape, 1, teamList[teamRec[i]].colors.baseColor);
         drawBase(ctx,sX+wid/60+5+95+wid/3*i,sY+100, 20, teamList[teamRec[i]].colors.baseShape, 2, teamList[teamRec[i]].colors.baseColor);
@@ -2370,17 +2372,58 @@ function drawTeamMenu(ctx, startX, startY, width, height){
     }
     else if(curTeamTab==1){ //Membership
         ctx.fillStyle=colors.hudColor;
+        ctx.strokeStyle=colors.hudColor;
         ctx.globalAlpha = 1.0;
         ctx.font = "bold 22pt Courier";
         ctx.fillText("MEMBERS",sX+5, sY+25);
 
+        //leader
+        ctx.font = "bold 16pt Courier";
+        ctx.fillText("LEADER",sX+5, sY+45);
+        ctx.strokeRect(sX+5,sY+55,220,30);
+        ctx.fillText(teamList[id].leader,sX+7, sY+75);
 
+        //Admins
+        ctx.font = "bold 16pt Courier";
+        ctx.fillText("ADMINS",sX+5, sY+115);
+        ctx.strokeRect(sX+5,sY+125,220,hei/2);
+
+        ctx.font = "14pt Courier";
+        for(var i = 0; i < Math.min(teamList[id].members.length,13); i++){
+            ctx.fillText(teamList[id].members[i],sX+8,sY+145+20*i);
+        }
+
+        //Members
+        ctx.font = "bold 16pt Courier";
+        ctx.fillText("GENERAL MEMBERS",sX+wid/2-20, sY+45);
+        ctx.strokeRect(sX+wid/2-20,sY+55,wid/2-10,hei-100);
+
+        //Draw Scrollbar
+        var listSize = 21;
+        if(teamScroll > teamList[id].members.length-listSize && teamList[id].members.length > listSize) teamScroll = teamList[id].members.length-listSize;
+        if(teamScroll > teamList[id].members.length) teamScroll = 0;
+
+        if(teamList[id].members.length > listSize){
+            ctx.beginPath();
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid-50,sY+60, 10, hei-110);
+            ctx.globalAlpha = 1.0;
+            var barsize = (listSize/teamList[id].members.length)*(hei-110);
+            ctx.fillRect(sX+wid-55,sY+60+teamScroll*((hei-110)-barsize)/(teamList[id].members.length-listSize),20,barsize);
+        }
+
+        ctx.font = "14pt Courier";
+        var drawAmount = Math.min(teamList[id].members.length, listSize);
+        for(var i = teamScroll, yAdj = 0; yAdj < drawAmount && i < teamList[id].members.length; i++, yAdj++){
+            ctx.fillText(teamList[id].members[i],sX+wid/2-10,sY+75+20*yAdj);
+        }
     }
     else if(curTeamTab==2){ //Vault
         ctx.fillStyle=colors.hudColor;
         ctx.globalAlpha = 1.0;
-        ctx.font = "bold 22pt Courier";
-        ctx.fillText("THE VAULT",sX+5, sY+25);
+        ctx.font = "bold 30pt Courier";
+        ctx.fillText("THE VAULT",sX+5, sY+35);
 
         ctx.font = "bold 40pt Courier";
         ctx.fillStyle=colors.goldColor;
@@ -2395,10 +2438,81 @@ function drawTeamMenu(ctx, startX, startY, width, height){
     }
     else if(curTeamTab==3){ //Settings
         ctx.fillStyle=colors.hudColor;
+        ctx.strokeStyle=colors.hudColor;
         ctx.globalAlpha = 1.0;
-        ctx.font = "bold 22pt Courier";
-        ctx.fillText("TEAM SETTINGS",sX+5, sY+25);
+        ctx.font = "bold 30pt Courier";
+        ctx.fillText("TEAM SETTINGS",sX+5, sY+35);
 
+
+        ctx.font = "bold 20pt Courier";
+        var setHei = sY+70;
+        ctx.fillText("MEMBERSHIP:", sX+5, setHei);
+        var opts = ["OPEN","INVITE","AD INV"];
+        ctx.font = "bold 16pt Courier";
+        for(var i = 0; i < opts.length; i++){
+            ctx.globalAlpha = 1.0;
+            if(curSettings.membership === opts[i]){
+                ctx.fillStyle=colors.hudColor;
+                ctx.fillRect(sX+5+i*120,setHei+15,110,20);
+                ctx.fillStyle=colors.hudBackColor;
+                ctx.fillText(opts[i],sX+15+i*120+(6-opts[i].length)*10,setHei+32);
+            }
+            else{
+                ctx.fillStyle=colors.hudColor;
+                ctx.strokeStyle=colors.hudColor;
+                ctx.strokeRect(sX+5+i*120,setHei+15,110,20);
+                ctx.fillText(opts[i],sX+15+i*120+(6-opts[i].length)*10,setHei+32);
+            }
+
+            if(mX < sX+5+i*120+110 && mX > sX+5+i*120 &&
+               mY < sY+105 && mY > sY+85){
+                teamMenuHover = ["MEMBERSHIP",opts[i]];
+                ctx.fillStyle=colors.hudColor;
+                ctx.globalAlpha = .5;
+                ctx.fillRect(sX+5+i*120,setHei+15,110,20);
+            }
+        }
+
+        ctx.font = "bold 20pt Courier";
+        setHei = sY+140;
+        ctx.fillText("CAN PING  :", sX+5, setHei);
+        opts = ["TEAM","ADMIN","LEADER"];
+        ctx.font = "bold 16pt Courier";
+        for(var i = 0; i < opts.length; i++){
+            ctx.globalAlpha = 1.0;
+            if(curSettings.membership === opts[i]){
+                ctx.fillStyle=colors.hudColor;
+                ctx.fillRect(sX+5+i*120,setHei+15,110,20);
+                ctx.fillStyle=colors.hudBackColor;
+                ctx.fillText(opts[i],sX+15+i*120+(6-opts[i].length)*10,setHei+32);
+            }
+            else{
+                ctx.fillStyle=colors.hudColor;
+                ctx.strokeStyle=colors.hudColor;
+                ctx.strokeRect(sX+5+i*120,setHei+15,110,20);
+                ctx.fillText(opts[i],sX+15+i*120+(6-opts[i].length)*10,setHei+32);
+            }
+
+            if(mX < sX+5+i*120+110 && mX > sX+5+i*120 &&
+               mY < sY+105 && mY > sY+85){
+                teamMenuHover = ["MEMBERSHIP",opts[i]];
+                ctx.fillStyle=colors.hudColor;
+                ctx.globalAlpha = .5;
+                ctx.fillRect(sX+5+i*120,setHei+15,110,20);
+            }
+        }
+
+        ctx.font = "bold 20pt Courier";
+        ctx.fillText("CAN BUILD :", sX+5, sY+200);
+        opts = ["TEAM","ADMIN","LEADER"];
+
+        ctx.font = "bold 20pt Courier";
+        ctx.fillText("PROF SPLIT:", sX+5, sY+225);
+        opts = ["FAIR","AD ONLY","LEADER"];
+
+        ctx.font = "bold 20pt Courier";
+        ctx.fillText("TAX       :", sX+5, sY+250);
+        opts = ["0%","25%","50%","75%","100%"];
 
     }
 }
@@ -2715,6 +2829,9 @@ function handleKeydown(e){
     else if(joinTeamMenu && keyCode == 27){
         joinTeamMenu = false;
     }
+    else if(teamMenu && keyCode == 27){
+        teamMenu = false;
+    }
     else if(keyCode == 56){
         joinTeamMenu = !joinTeamMenu;
         teamMenu = false;
@@ -2938,6 +3055,15 @@ function handleMousedown(e){
     else if(teamMenu){
         if(teamMenuHover < 4 && teamMenuHover > -1){
             curTeamTab = teamMenuHover;
+
+            if(curTeamTab==3){ //Snapshot settings
+                curSettings = teamList[me.info.teamID].settings;
+            }
+        }
+        else if(curTeamTab==3){
+            if(teamMenuHover[0]==="MEMBERSHIP"){
+                curSettings.membership = teamMenuHover[1];
+            }
         }
     }
     else if(shopMode && shop.withinShop=="SSHOP"){
@@ -3037,6 +3163,15 @@ function handleMouseWheel(e){
         }else if(e.deltaY > 0 && joinTeamScroll < teamList.length-22 && teamList.length > 22){
             joinTeamScroll++;
         }
+    }
+    else if(teamMenu){
+        if(e.deltaY < 0 && teamScroll > 0){
+            teamScroll--;
+        }else if(e.deltaY > 0){
+            teamScroll++;
+        }
+
+        if(teamScroll < 0) teamScroll = 0;
     }
 }
 
