@@ -1225,6 +1225,24 @@ function startServer(){
 
         res.send('');
     });
+    app.post('/updateTeamSettings',function(req, res){
+        var token = req.body.token;
+
+        var p;
+        for(var i = 0; i < players.length; i++){
+            if(players[i].token===token){
+                p = players[i];
+                break;
+            }
+        }
+        if(p!=null){
+            if(p.info.teamRole==='LEADER'){
+                teamData[p.info.teamID].settings = req.body.settings;
+            }
+        }
+
+        res.send('');
+    });
 
     app.get('/changelog', function (req, res) {
         jsonfile.readFile("data/changelog.json", function(err, obj) {

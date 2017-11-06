@@ -39,6 +39,7 @@ var valueLock = -1;
 
 var teamMenu = false;
 var teamMenuHover = -1;
+var teamSetSaved = false;
 var teamScroll = 0;
 var curTeamTab = 0;
 var curSettings;
@@ -722,6 +723,29 @@ function joinTeam(id, type){
     });
 }
 
+function updateTeamSettings(){
+    var dat = {
+        "token": me.token,
+        "settings": curSettings
+    };
+
+    $.ajax({
+        url: "/updateTeamSettings",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+            // console.log('Add Project Error: ' + error.message);
+            teamSetSaved = true;
+        }
+    });
+}
 
 
 //******************************************************************************
@@ -2134,7 +2158,7 @@ function drawJoinTeam(ctx, startX, startY, width, height){
 
             ctx.fillText(teamList[i].name,sX+8,sY+50+20*yAdj);
             ctx.fillText(teamList[i].profitDivide,sX+315,sY+50+20*yAdj);
-            ctx.fillText(teamList[i].tax+"g",sX+400,sY+50+20*yAdj);
+            ctx.fillText(teamList[i].tax+"%",sX+400,sY+50+20*yAdj);
             ctx.fillText(teamList[i].size,sX+480,sY+50+20*yAdj);
             yAdj++;
         }
@@ -2373,7 +2397,6 @@ function drawTeamMenu(ctx, startX, startY, width, height){
     else if(curTeamTab==1){ //Membership
         ctx.fillStyle=colors.hudColor;
         ctx.strokeStyle=colors.hudColor;
-        ctx.globalAlpha = 1.0;
         ctx.font = "bold 22pt Courier";
         ctx.fillText("MEMBERS",sX+5, sY+25);
 
@@ -2389,8 +2412,8 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         ctx.strokeRect(sX+5,sY+125,220,hei/2);
 
         ctx.font = "14pt Courier";
-        for(var i = 0; i < Math.min(teamList[id].members.length,13); i++){
-            ctx.fillText(teamList[id].members[i],sX+8,sY+145+20*i);
+        for(var i = 0; i < Math.min(teamList[id].admins.length,13); i++){
+            ctx.fillText(teamList[id].admins[i],sX+8,sY+145+20*i);
         }
 
         //Members
@@ -2400,8 +2423,8 @@ function drawTeamMenu(ctx, startX, startY, width, height){
 
         //Draw Scrollbar
         var listSize = 21;
-        if(teamScroll > teamList[id].members.length-listSize && teamList[id].members.length > listSize) teamScroll = teamList[id].members.length-listSize;
-        if(teamScroll > teamList[id].members.length) teamScroll = 0;
+        if(teamScroll > teamList[id].members.length || teamList[id].members.length <= listSize) teamScroll = 0;
+        else if(teamScroll > teamList[id].members.length-listSize && teamList[id].members.length > listSize) teamScroll = teamList[id].members.length-listSize;
 
         if(teamList[id].members.length > listSize){
             ctx.beginPath();
@@ -2443,78 +2466,113 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         ctx.font = "bold 30pt Courier";
         ctx.fillText("TEAM SETTINGS",sX+5, sY+35);
 
-
-        ctx.font = "bold 20pt Courier";
-        var setHei = sY+70;
-        ctx.fillText("MEMBERSHIP:", sX+5, setHei);
-        var opts = ["OPEN","INVITE","AD INV"];
-        ctx.font = "bold 16pt Courier";
-        for(var i = 0; i < opts.length; i++){
-            ctx.globalAlpha = 1.0;
-            if(curSettings.membership === opts[i]){
-                ctx.fillStyle=colors.hudColor;
-                ctx.fillRect(sX+5+i*120,setHei+15,110,20);
-                ctx.fillStyle=colors.hudBackColor;
-                ctx.fillText(opts[i],sX+15+i*120+(6-opts[i].length)*10,setHei+32);
-            }
-            else{
-                ctx.fillStyle=colors.hudColor;
-                ctx.strokeStyle=colors.hudColor;
-                ctx.strokeRect(sX+5+i*120,setHei+15,110,20);
-                ctx.fillText(opts[i],sX+15+i*120+(6-opts[i].length)*10,setHei+32);
-            }
-
-            if(mX < sX+5+i*120+110 && mX > sX+5+i*120 &&
-               mY < sY+105 && mY > sY+85){
-                teamMenuHover = ["MEMBERSHIP",opts[i]];
-                ctx.fillStyle=colors.hudColor;
-                ctx.globalAlpha = .5;
-                ctx.fillRect(sX+5+i*120,setHei+15,110,20);
-            }
+        //Draw locked status
+        if(me.info.teamRole!=="LEADER"){
+            ctx.fillStyle="#F00";
+            ctx.fillText("LOCKED",sX+wid-170, sY+35);
+        }
+        else if(teamSetSaved){
+            ctx.fillStyle="#F00";
+            ctx.fillText("SAVED",sX+wid-170, sY+35);
         }
 
-        ctx.font = "bold 20pt Courier";
-        setHei = sY+140;
-        ctx.fillText("CAN PING  :", sX+5, setHei);
-        opts = ["TEAM","ADMIN","LEADER"];
-        ctx.font = "bold 16pt Courier";
-        for(var i = 0; i < opts.length; i++){
-            ctx.globalAlpha = 1.0;
-            if(curSettings.membership === opts[i]){
-                ctx.fillStyle=colors.hudColor;
-                ctx.fillRect(sX+5+i*120,setHei+15,110,20);
-                ctx.fillStyle=colors.hudBackColor;
-                ctx.fillText(opts[i],sX+15+i*120+(6-opts[i].length)*10,setHei+32);
+        //Draw settings
+        var settingOptions = [
+            {
+                "text": "MEMBERSHIP :",
+                "input": "MEMBERSHIP",
+                "opts": ["OPEN","INVITE","AD INV"],
+                "curOpt": curSettings.membership
+            },
+            {
+                "text": "CAN PING :",
+                "input": "PING",
+                "opts": ["TEAM","ADMIN","LEADER"],
+                "curOpt": curSettings.ping
+            },
+            {
+                "text": "CAN BUILD :",
+                "input": "BUILD",
+                "opts": ["TEAM","ADMIN","LEADER"],
+                "curOpt": curSettings.building
+            },
+            {
+                "text": "CAN UPGRADE :",
+                "input": "UPGRADE",
+                "opts": ["ADMIN","LEADER"],
+                "curOpt": curSettings.upgrading
+            },
+            {
+                "text": "PROFIT SPLIT :",
+                "input": "PROFIT",
+                "opts": ["FAIR","AD ONLY","LEADER"],
+                "curOpt": curSettings.profitDivide
+            },
+            {
+                "text": "TAX :",
+                "input": "TAX",
+                "opts": [0,25,50,75,100],
+                "curOpt": curSettings.tax
             }
-            else{
-                ctx.fillStyle=colors.hudColor;
-                ctx.strokeStyle=colors.hudColor;
-                ctx.strokeRect(sX+5+i*120,setHei+15,110,20);
-                ctx.fillText(opts[i],sX+15+i*120+(6-opts[i].length)*10,setHei+32);
-            }
+        ];
 
-            if(mX < sX+5+i*120+110 && mX > sX+5+i*120 &&
-               mY < sY+105 && mY > sY+85){
-                teamMenuHover = ["MEMBERSHIP",opts[i]];
-                ctx.fillStyle=colors.hudColor;
-                ctx.globalAlpha = .5;
-                ctx.fillRect(sX+5+i*120,setHei+15,110,20);
+        var setHei = 0;
+        for(var set = 0; set < settingOptions.length; set++){
+            ctx.beginPath();
+            ctx.globalAlpha = 1.0;
+            ctx.fillStyle=colors.hudColor;
+            ctx.font = "bold 20pt Courier";
+            setHei = sY+70*(set+1);
+            ctx.fillText(settingOptions[set].text, sX+5, setHei);
+            ctx.font = "bold 16pt Courier";
+            var oLength = settingOptions[set].opts.length;
+            for(var i = 0; i < oLength; i++){
+                ctx.globalAlpha = 1.0;
+                if(settingOptions[set].curOpt == settingOptions[set].opts[i]){
+                    ctx.fillStyle=colors.hudColor;
+                    ctx.fillRect(sX+5+i*120,setHei+15,110,20);
+                    ctx.fillStyle=colors.hudBackColor;
+                    var oName = ""+settingOptions[set].opts[i];
+                    ctx.fillText(oName,sX+15+i*120+(7-oName.length)*8,setHei+32);
+                }
+                else{
+                    ctx.fillStyle=colors.hudColor;
+                    ctx.strokeStyle=colors.hudColor;
+                    ctx.strokeRect(sX+5+i*120,setHei+15,110,20);
+                    var oName = ""+settingOptions[set].opts[i];
+                    ctx.fillText(oName,sX+15+i*120+(7-oName.length)*8,setHei+32);
+                }
+
+                if(mX < sX+5+i*120+110 && mX > sX+5+i*120 &&
+                   mY < setHei+35 && mY > setHei+15 && me.info.teamRole==="LEADER"){
+                    teamMenuHover = [settingOptions[set].input,settingOptions[set].opts[i]];
+                    ctx.fillStyle=colors.hudColor;
+                    ctx.globalAlpha = .5;
+                    ctx.fillRect(sX+5+i*120,setHei+15,110,20);
+                }
             }
+            ctx.fill();
         }
 
+        //Draw save button
+        ctx.beginPath();
         ctx.font = "bold 20pt Courier";
-        ctx.fillText("CAN BUILD :", sX+5, sY+200);
-        opts = ["TEAM","ADMIN","LEADER"];
-
-        ctx.font = "bold 20pt Courier";
-        ctx.fillText("PROF SPLIT:", sX+5, sY+225);
-        opts = ["FAIR","AD ONLY","LEADER"];
-
-        ctx.font = "bold 20pt Courier";
-        ctx.fillText("TAX       :", sX+5, sY+250);
-        opts = ["0%","25%","50%","75%","100%"];
-
+        ctx.fillStyle=colors.hudColor;
+        setHei = sY+hei - 50;
+        if(mX < sX+wid-20 && mX > sX+wid-120 &&
+           mY < setHei+35 && mY > setHei && me.info.teamRole==="LEADER"){
+            teamMenuHover = "SAVE";
+            ctx.fillRect(sX+wid-120,setHei,100,35);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("SAVE",sX+wid-105,setHei+25);
+        }
+        else if(me.info.teamRole==="LEADER"){
+            ctx.strokeStyle=colors.hudColor;
+            ctx.strokeRect(sX+wid-120,setHei,100,35);
+            ctx.fillText("SAVE",sX+wid-105,setHei+25);
+        }
     }
+
 }
 
 function drawBase(ctx, startX, startY, tileSize, type, lvl, color){
@@ -3034,7 +3092,6 @@ function handleMousedown(e){
         }
     }
     else if(createTeamMenu){
-        console.log(createTeamHover);
         if(createTeamHover==="CREATE"){
             confirmDialog = 1;
             valueLock = joinTeamHover;
@@ -3060,9 +3117,36 @@ function handleMousedown(e){
                 curSettings = teamList[me.info.teamID].settings;
             }
         }
+        else if(curTeamTab==1){
+            console.log(teamMenuHover);
+        }
         else if(curTeamTab==3){
             if(teamMenuHover[0]==="MEMBERSHIP"){
                 curSettings.membership = teamMenuHover[1];
+                teamSetSaved = false;
+            }
+            else if(teamMenuHover[0]==="PING"){
+                curSettings.ping = teamMenuHover[1];
+                teamSetSaved = false;
+            }
+            else if(teamMenuHover[0]==="BUILD"){
+                curSettings.building = teamMenuHover[1];
+                teamSetSaved = false;
+            }
+            else if(teamMenuHover[0]==="UPGRADE"){
+                curSettings.upgrading = teamMenuHover[1];
+                teamSetSaved = false;
+            }
+            else if(teamMenuHover[0]==="PROFIT"){
+                curSettings.profitDivide = teamMenuHover[1];
+                teamSetSaved = false;
+            }
+            else if(teamMenuHover[0]==="TAX"){
+                curSettings.tax = teamMenuHover[1];
+                teamSetSaved = false;
+            }
+            else if(teamMenuHover==="SAVE"){
+                updateTeamSettings();
             }
         }
     }
