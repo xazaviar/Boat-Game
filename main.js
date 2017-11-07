@@ -131,7 +131,7 @@ function init(){
         for(var t in obj){
             teamData[obj[t].id] = obj[t];
         }
-        // console.log(teamData);
+        initTeamClean();
     });
 
 
@@ -160,40 +160,41 @@ function startServer(){
 
         var found = false;
         for(var i = 0; i < players.length; i++){
-            if(players[i].token === token){
-                found = true;
-                break;
-            }
+            if(players[i].status!=="DELETED")
+                if(players[i].token === token){
+                    found = true;
+                    break;
+                }
         }
 
         if(!found)
         jsonfile.readFile("data/playerData/"+token+".json", function(err, obj) {
             var data;
             if(err){
-                console.log(err);
+                // console.log(err);
+                console.log("Unknown token requested");
                 data = {
                     "error": "Invalid Token"
                 }
             }else{
-                players.push(obj);
+                var id = players.length;
+                players[id]= obj;
                 var name = ""
-                for(var i = players.length-1; i > -1; i--){
-                    if(players[i].token === token){
-                        players[i].battleLog = [];
-                        players[i].loc = spawn();
-                        name = players[i].info.name;
-                        break;
-                    }
-                }
+                players[id].battleLog = [];
+                players[id].id = id;
+                players[id].loc = spawn();
+                name = players[id].info.name;
                 data = {
                     "token": obj.token,
+                    "id": id,
                     "map": map,
                     "error":""
                 }
                 var msg = {"type":"server", "msg": ""+name+" has connected."};
                 console.log(msg.msg);
                 for(var m = 0; m < players.length; m++){
-                    players[m].battleLog.unshift(msg);
+                    if(players[m].status!=="DELETED")
+                        players[m].battleLog.unshift(msg);
                 }
 
             }
@@ -210,8 +211,10 @@ function startServer(){
         if(name==="") name = "random";
         var token =  generateToken();
         var sp = spawn();
+        var id = players.length;
 
         var newP = {
+            "id": id,
             "token": token,
             "info":{
                 "name": name,
@@ -234,7 +237,9 @@ function startServer(){
                 "hasInsurance": false,
                 "stealthed": false,
                 "trapped": 0,
-                "shipMass": 0
+                "shipMass": 0,
+                "powerLevel": 0,
+                "ping": 20
             },
             "loc": sp,
             "queue": [],
@@ -242,6 +247,7 @@ function startServer(){
             "scanned": [],
             "knownTraps": [],
             "battleLog": [],
+            "invites": [],
             "activeAttacks": [],
             "stats": {
                 "hp": statData.hpStart,
@@ -317,17 +323,19 @@ function startServer(){
 
         var data = {
             "token": token,
+            "id": id,
             "loc": sp,
             "map": map
         }
 
         res.send(data);
 
-        players.push(newP);
+        players[id] = newP;
 
         var msg = {"type":"server", "msg": ""+name+" has connected."};
         for(var m = 0; m < players.length; m++){
-            players[m].battleLog.unshift(msg);
+            if(players[m].status!=="DELETED")
+                players[m].battleLog.unshift(msg);
         }
     });
     app.get('/data/:token', function (req, res) {
@@ -337,15 +345,28 @@ function startServer(){
 
         var p;
         for(var i = 0; i < players.length; i++){
-            if(players[i].token===token){
-                p = players[i];
-                p.info.connected = 0;
-            }else if(players[i].stats.hp>0)
-                sendPlayers.push({"token":players[i].token,
-                                  "name":players[i].info.name,
-                                  "loc":players[i].loc,
-                                  "stealthed":players[i].info.stealthed,
-                                  "team":players[i].info.teamID});
+            if(players[i].status!=="DELETED"){
+                if(players[i].token===token){
+                    p = players[i];
+                    p.info.connected = 0;
+                    sendPlayers[i] = {};
+                }
+                else if(players[i].stats.hp>0){
+                    sendPlayers[i] = {
+                        "token":players[i].token,
+                        "id":players[i].id,
+                        "name":players[i].info.name,
+                        "loc":players[i].loc,
+                        "stealthed":players[i].info.stealthed,
+                        "team":players[i].info.teamID,
+                        "powerLevel":players[i].info.powerLevel,
+                        "ping":players[i].info.ping
+                    };
+                }
+            }
+            else{
+                sendPlayers[i] = {};
+            }
         }
 
         if(p!=null){
@@ -367,13 +388,15 @@ function startServer(){
             }
 
             for(var i = 0; i < sendPlayers.length; i++){
-                var isScanned = inScanned(p, sendPlayers[i].token);
-                var inVision = visionDistance(p.loc,sendPlayers[i].loc);
-                var sameTeam = sendPlayers[i].team == p.info.teamID;
-                if(!isScanned && (!inVision || (inVision && sendPlayers[i].stealthed)) && !sameTeam){
-                    sendPlayers.splice(i,1);
-                    i--;
-                }else{
+                if(typeof sendPlayers[i].loc !== "undefined"){
+                    var isScanned = inScanned(p, sendPlayers[i].token);
+                    var inVision = visionDistance(p.loc, sendPlayers[i].loc);
+                    var sameTeam = sendPlayers[i].team == p.info.teamID;
+                    if(!isScanned && (!inVision || (inVision && sendPlayers[i].stealthed)) && !sameTeam){
+                        delete sendPlayers[i].loc;
+                        delete sendPlayers[i].stealthed;
+                    }
+
                     //drop token
                     delete sendPlayers[i].token;
                 }
@@ -385,16 +408,28 @@ function startServer(){
                     var admins = [];
                     var members = [];
                     for(var a in teamData[t].admins){
-                        admins.push(teamData[t].admins[a][1]);
+                        admins.push({
+                            "id":teamData[t].admins[a].id,
+                            "name":teamData[t].admins[a].name,
+                            "powerLevel":teamData[t].admins[a].powerLevel
+                        });
                     }
                     for(var m in teamData[t].members){
-                        members.push(teamData[t].members[m][1]);
+                        members.push({
+                            "id":teamData[t].members[m].id,
+                            "name":teamData[t].members[m].name,
+                            "powerLevel":teamData[t].members[m].powerLevel
+                        });
                     }
                     sendTeam[teamData[t].id] = {
                         "id": teamData[t].id,
                         "name": teamData[t].name,
                         "colors": teamData[t].colors,
-                        "leader": teamData[t].leader[1],
+                        "leader": {
+                            "id":teamData[t].leader.id,
+                            "name":teamData[t].leader.name,
+                            "powerLevel":teamData[t].leader.powerLevel
+                        },
                         "admins": admins,
                         "members": members,
                         "gold": teamData[t].gold,
@@ -427,6 +462,8 @@ function startServer(){
             }
 
             //Update canUse
+            p.info.powerLevel = calculateIndividualPower(p);
+            updatePower(p);
             p.abilitySlots[0].canUse = canUseMod(p,p.abilitySlots[0].type);
             p.abilitySlots[1].canUse = canUseMod(p,p.abilitySlots[1].type);
 
@@ -450,15 +487,13 @@ function startServer(){
     });
     app.post('/updateQueue', function(req, res){
         //Get token
-        var token = req.body.token
+        var token = req.body.token;
+        var id = req.body.id;
 
         var p;
-        for(var i = 0; i < players.length; i++){
-            if(players[i].token===token){
-                p = players[i];
-                break;
-            }
-        }
+        if(players[id].status!=="DELETED")
+            if(players[id].token===token)
+                p = players[id];
 
         if(p!=null && phase==0 ){
             if(p.queue.length < 3 && p.stats.hp>0){
@@ -557,7 +592,8 @@ function startServer(){
                     else
                         p.battleLog.unshift({"type":"action", "msg": "You can't perform that action."});
                 }
-            }else if(p.stats.hp>0){
+            }
+            else if(p.stats.hp>0){
                 p.battleLog.unshift({"type":"action", "msg": "No action points available."});
             }
         }
@@ -569,15 +605,13 @@ function startServer(){
     app.post('/removeFromQueue', function(req,res){
         //Get token
         var token = req.body.token;
+        var id = req.body.id;
         var remove = req.body.remove;
 
         var p;
-        for(var i = 0; i < players.length; i++){
-            if(players[i].token===token){
-                p = players[i];
-                break;
-            }
-        }
+        if(players[id].status!=="DELETED")
+            if(players[id].token===token)
+                p = players[id];
 
         if(p!=null && phase==0){
             if(remove > -1 && remove < p.queue.length){
@@ -603,15 +637,13 @@ function startServer(){
     });
     app.post('/requestRespawn', function(req, res){
         //Get token
-        var token = req.body.token
+        var token = req.body.token;
+        var id = req.body.id;
 
         var p;
-        for(var i = 0; i < players.length; i++){
-            if(players[i].token===token){
-                p = players[i];
-                break;
-            }
-        }
+        if(players[id].status!=="DELETED")
+            if(players[id].token===token)
+                p = players[id];
 
         if(p!=null && p.stats.hp <= 0){
             p.loc = spawn();
@@ -625,15 +657,13 @@ function startServer(){
     });
     app.post('/makePurchase', function(req, res){
         //Get token
-        var token = req.body.token
+        var token = req.body.token;
+        var id = req.body.id;
 
         var p;
-        for(var i = 0; i < players.length; i++){
-            if(players[i].token===token){
-                p = players[i];
-                break;
-            }
-        }
+        if(players[id].status!=="DELETED")
+            if(players[id].token===token)
+                p = players[id];
 
         if(p!=null){
             var shop = buildStore(p);
@@ -1012,16 +1042,14 @@ function startServer(){
     app.post('/changeLoadout', function(req, res){
         //Get info
         var token = req.body.token;
+        var id = req.body.id;
         var slot = req.body.slot;
         var item = req.body.item;
 
         var p;
-        for(var i = 0; i < players.length; i++){
-            if(players[i].token===token){
-                p = players[i];
-                break;
-            }
-        }
+        if(players[id].status!=="DELETED")
+            if(players[id].token===token)
+                p = players[id];
 
         if(p!=null && item!=null && slot!=null){
             if(slot == 1 && p.stats.loadoutSize<2){ //Don't have slot
@@ -1076,16 +1104,14 @@ function startServer(){
     });
     app.post('/postChatMsg', function(req, res){
         var msg = req.body.msg;
-        var token = req.body.token
+        var token = req.body.token;
+        var id = req.body.id;
 
         if(msg!==""){
             var p;
-            for(var i = 0; i < players.length; i++){
-                if(players[i].token===token){
-                    p = players[i];
-                    break;
-                }
-            }
+            if(players[id].status!=="DELETED")
+                if(players[id].token===token)
+                    p = players[id];
 
             if(p!=null){
                 for(var i in players){
@@ -1098,6 +1124,7 @@ function startServer(){
 
     app.post('/createTeam', function(req, res){
         var token = req.body.token;
+        var id = req.body.id;
         var teamName = req.body.teamName;
         var areaColor = req.body.areaColor;
         var baseColor = req.body.baseColor;
@@ -1106,25 +1133,27 @@ function startServer(){
         if(token!=='' && teamName.length>3 && areaColor!=='' && baseColor!=='' && baseShape !== ''){
             //Validate token
             var p;
-            for(var i = 0; i < players.length; i++){
-                if(players[i].token===token){
-                    p = players[i];
-                    break;
-                }
-            }
+            if(players[id].status!=="DELETED")
+                if(players[id].token===token)
+                    p = players[id];
 
             var valid = teamValidation(baseColor, areaColor);
             if(p!=null && valid == true){
-                var id = teamData.length;
+                var tid = teamData.length;
                 teamData.push({
-                    "id": id,
+                    "id": tid,
                     "name": teamName,
                     "colors":{
                         "baseColor": baseColor,
                         "areaColor": areaColor,
                         "baseShape": baseShape
                     },
-                    "leader": [token, p.info.name],
+                    "leader": {
+                        "token": p.token,
+                        "id": p.id,
+                        "name": p.info.name,
+                        "powerLevel": p.info.powerLevel
+                    },
                     "admins": [],
                     "members": [],
                     "gold":0,
@@ -1145,14 +1174,19 @@ function startServer(){
 
                 //Merge previous team
                 if(p.info.teamID > -1 && p.info.teamRole==="LEADER")
-                    mergeTeams(p.info.teamID, id, p);
+                    mergeTeams(p.info.teamID, tid, p);
                 else
-                    teamData[id].members.push([p.token,p.info.name]);
+                    teamData[tid].members.push({
+                        "token": p.token,
+                        "id": p.id,
+                        "name": p.info.name,
+                        "powerLevel": p.info.powerLevel
+                    });
 
-                p.info.teamID = id;
+                p.info.teamID = tid;
                 p.info.teamRole = "LEADER";
 
-                p.battleLog.unshift({"type":"team", "msg": "You created the team "+teamData[id].name+"! Good Luck!"});
+                p.battleLog.unshift({"type":"team", "msg": "You created the team "+teamData[tid].name+"! Good Luck!"});
 
                 saveTeam();
             }
@@ -1167,17 +1201,16 @@ function startServer(){
         //TODO: CAN ONLY Join every ~200 Rounds
 
         var token = req.body.token;
-        var teamID = req.body.id;
+        var id = req.body.id;
+        var teamID = req.body.tid;
         var type = req.body.type; //merge, split, none
 
         //Validate token
         var p;
-        for(var i = 0; i < players.length; i++){
-            if(players[i].token===token){
-                p = players[i];
-                break;
-            }
-        }
+        if(players[id].status!=="DELETED")
+            if(players[id].token===token)
+                p = players[id];
+
         if(p!=null){
             if(type==="MERGE"){ //Merge Teams together
                 mergeTeams(p.info.teamID,teamID,p);
@@ -1187,18 +1220,18 @@ function startServer(){
                     //Select new leader
                     if(teamData[p.info.teamID].admins.length>0){
                         var r = parseInt(Math.random()*100)%teamData[p.info.teamID].admins.length;
-                        changeRole(teamData[p.info.teamID].admins[r][0],p.info.teamID,"LEADER");
+                        changeRole(teamData[p.info.teamID].admins[r].token,p.info.teamID,"LEADER");
                         messageGroup(teamData[p.info.teamID].members,
-                                     teamData[p.info.teamID].admins[r][1]+" is now the leader.",
+                                     teamData[p.info.teamID].admins[r].name+" is now the leader.",
                                      "", "team", null);
                     }
                     else{
-                        while(true || teamData[p.info.teamID].members.length>1){
+                        while(true && teamData[p.info.teamID].members.length>0){
                             var r = parseInt(Math.random()*100)%teamData[p.info.teamID].members.length;
-                            if(teamData[p.info.teamID].members[r][0]!==teamData[p.info.teamID].leader[0]){
-                                changeRole(teamData[p.info.teamID].members[r][0], p.info.teamID, "LEADER");
+                            if(teamData[p.info.teamID].members[r].token!==teamData[p.info.teamID].leader.token){
+                                changeRole(teamData[p.info.teamID].members[r].token, p.info.teamID, "LEADER");
                                 messageGroup(teamData[p.info.teamID].members,
-                                             teamData[p.info.teamID].members[r][1]+" is now the leader.",
+                                             teamData[p.info.teamID].members[r].name+" is now the leader.",
                                              "", "team", null);
                                 break;
                             }
@@ -1214,7 +1247,12 @@ function startServer(){
                 //Move to new team
                 p.info.teamID = teamID;
                 p.info.teamRole = "MEMBER";
-                teamData[teamID].members.push([p.token,p.info.name]);
+                teamData[teamID].members.push({
+                    "token": p.token,
+                    "id": p.id,
+                    "name": p.info.name,
+                    "powerLevel": p.info.powerLevel
+                });
 
                 messageGroup(teamData[teamID].members,
                              p.info.name+" has joined the team!",
@@ -1227,14 +1265,13 @@ function startServer(){
     });
     app.post('/updateTeamSettings',function(req, res){
         var token = req.body.token;
+        var id = req.body.id;
 
         var p;
-        for(var i = 0; i < players.length; i++){
-            if(players[i].token===token){
-                p = players[i];
-                break;
-            }
-        }
+        if(players[id].status!=="DELETED")
+            if(players[id].token===token)
+                p = players[id];
+
         if(p!=null){
             if(p.info.teamRole==='LEADER'){
                 teamData[p.info.teamID].settings = req.body.settings;
@@ -1258,23 +1295,23 @@ function startServer(){
     //Webpages
     //**************************************************************************
     app.get('/game', function (req, res) {
-        console.log("Got a GET request for the Game page");
+        // console.log("Got a GET request for the Game page");
         res.sendFile( __dirname + "/public/game.html" );
     });
     app.get('/wiki', function (req, res) {
-        console.log("Got a GET request for the Wiki page");
+        // console.log("Got a GET request for the Wiki page");
         res.sendFile( __dirname + "/public/wiki.html" );
     });
     app.get('/home', function (req, res) {
-        console.log("Got a GET request for the home page");
+        // console.log("Got a GET request for the home page");
         res.sendFile( __dirname + "/public/home.html" );
     });
     app.get('/admin', function (req, res) {
-        console.log("Got a GET request for the admin page");
+        // console.log("Got a GET request for the admin page");
         res.sendFile( __dirname + "/public/admin.html" );
     });
     app.get('/log', function (req, res) {
-        console.log("Got a GET request for the Change Log page");
+        // console.log("Got a GET request for the Change Log page");
         res.sendFile( __dirname + "/public/log.html" );
     });
     app.get('/*', function (req, res) {
@@ -1301,65 +1338,68 @@ function setupPhase(){
         countdown = countdownMax;
         var actAttacks = [];
         for(var i = 0; i < players.length; i++){
-            for(var a = players[i].queue.length; a < 3; a++){
-                players[i].queue.push({"type":"HOLD"});
-            }
-            if(players[i].queue.length>0 && (withinShop(players[i].loc)==null || attackFromShop)){ //Next round attacks
-                if(players[i].queue[0].type==="ATTACK" )
-                    actAttacks.push(players[i].queue[0].location);
-                else if(players[i].queue[0].type==="CANNON" && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
-                    var range = (p.stats.cannon>1?5:3);
-                    var mid = parseInt(range/2);
-                    for(var x = 0; x < range; x++){
-                        for(var y = 0; y < range; y++){
-                            var cX = location[0] - (mid-x);
-                            var cY = location[1] - (mid-y);
+            if(players[i].status!=="DELETED"){
+                for(var a = players[i].queue.length; a < 3; a++){
+                    players[i].queue.push({"type":"HOLD"});
+                }
+                if(players[i].queue.length>0 && (withinShop(players[i].loc)==null || attackFromShop)){ //Next round attacks
+                    if(players[i].queue[0].type==="ATTACK" )
+                        actAttacks.push(players[i].queue[0].location);
+                    else if(players[i].queue[0].type==="CANNON" && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
+                        var range = (p.stats.cannon>1?5:3);
+                        var mid = parseInt(range/2);
+                        for(var x = 0; x < range; x++){
+                            for(var y = 0; y < range; y++){
+                                var cX = location[0] - (mid-x);
+                                var cY = location[1] - (mid-y);
 
-                            if(cX < 0) cX += map.length;
-                            if(cY < 0) cY += map.length;
-                            if(cX >= map.length) cX -= map.length;
-                            if(cY >= map.length) cY -= map.length;
+                                if(cX < 0) cX += map.length;
+                                if(cY < 0) cY += map.length;
+                                if(cX >= map.length) cX -= map.length;
+                                if(cY >= map.length) cY -= map.length;
 
-                            actAttacks.push([cX,cY]);
+                                actAttacks.push([cX,cY]);
+                            }
+                        }
+                    }
+                    else if(players[i].queue[0].type==="RAILGUN" && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
+                        if(direction==="N"){
+                            for(var i = 1; i <= railgunRange; i++){
+                                var newY = players[i].loc[1]-i;
+                                if(newY < 0) newY += mapSize;
+                                actAttacks.push([players[i].loc[0],newY]);
+                            }
+                        }else if(direction==="E"){
+                            for(var i = 1; i <= railgunRange; i++){
+                                actAttacks.push([(players[i].loc[0]+i)%mapSize,players[i].loc[1]]);
+                            }
+                        }else if(direction==="S"){
+                            for(var i = 1; i <= railgunRange; i++){
+                                actAttacks.push([players[i].loc[0],(players[i].loc[1]+i)%mapSize]);
+                            }
+                        }else if(direction==="W"){
+                            for(var i = 1; i <= railgunRange; i++){
+                                var newX = players[i].loc[0]-i;
+                                if(newX < 0) newX += mapSize;
+                                actAttacks.push([newY,players[i].loc[1]]);
+                            }
                         }
                     }
                 }
-                else if(players[i].queue[0].type==="RAILGUN" && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
-                    if(direction==="N"){
-                        for(var i = 1; i <= railgunRange; i++){
-                            var newY = players[i].loc[1]-i;
-                            if(newY < 0) newY += mapSize;
-                            actAttacks.push([players[i].loc[0],newY]);
-                        }
-                    }else if(direction==="E"){
-                        for(var i = 1; i <= railgunRange; i++){
-                            actAttacks.push([(players[i].loc[0]+i)%mapSize,players[i].loc[1]]);
-                        }
-                    }else if(direction==="S"){
-                        for(var i = 1; i <= railgunRange; i++){
-                            actAttacks.push([players[i].loc[0],(players[i].loc[1]+i)%mapSize]);
-                        }
-                    }else if(direction==="W"){
-                        for(var i = 1; i <= railgunRange; i++){
-                            var newX = players[i].loc[0]-i;
-                            if(newX < 0) newX += mapSize;
-                            actAttacks.push([newY,players[i].loc[1]]);
-                        }
+                for(var a = 0; a < players[i].scanned.length; a++){
+                    players[i].scanned[a].rounds--;
+                    if(players[i].scanned[a].rounds==0){
+                        players[i].scanned.splice(a,1);
+                        a--;
                     }
-                }
-            }
-            for(var a = 0; a < players[i].scanned.length; a++){
-                players[i].scanned[a].rounds--;
-                if(players[i].scanned[a].rounds==0){
-                    players[i].scanned.splice(a,1);
-                    a--;
                 }
             }
         }
 
         //Show attacks that are coming
         for(var i = 0; i < players.length; i++){
-            players[i].activeAttacks = actAttacks;
+            if(players[i].status!=="DELETED")
+                players[i].activeAttacks = actAttacks;
         }
 
         setTimeout(function(){actionPhase()},aTick);
@@ -1374,84 +1414,86 @@ function actionPhase(){
 
     //Grab all actions
     for(var i = 0; i < players.length; i++){
-        players[i].activeAttacks = [];
-        if(players[i].stats.hp>0 && players[i].queue[0]!=null){
-            if(players[i].queue[0].type==="MOVE" && players[i].info.trapped<1){
-                moves.push({"player":players[i],"direction":players[i].queue[0].direction});
-            }else if(players[i].queue[0].type==="BLINK" && players[i].info.trapped<1){
-                blinks.push({"player":players[i],"location":players[i].queue[0].location});
-            }else if(players[i].queue[0].type==="ATTACK" && (withinShop(players[i].loc)==null || attackFromShop)){
-                attacks.push({"player":players[i], "location":players[i].queue[0].location});
-            }else if(players[i].queue[0].type==="CANNON" && (withinShop(players[i].loc)==null || attackFromShop) && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
-                cannons.push({"player":players[i], "location":players[i].queue[0].location});
-            }else if(players[i].queue[0].type==="RAILGUN" && (withinShop(players[i].loc)==null || attackFromShop) && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
-                railguns.push({"player":players[i], "direction":players[i].queue[0].direction});
-            }else if(players[i].queue[0].type==="LOOT" && (players[i].queue.length == 1 || players[i].queue[1].type!=="LOOT")){
-                loots.push(players[i]);
-            }else if(players[i].queue[0].type==="TRAP" && (players[i].queue.length == 1 || players[i].queue[1].type!=="TRAP")){
-                traps.push(players[i]);
-            }else if(players[i].queue[0].type==="SCAN" && players[i].queue.length == 1){
-                scans.push(players[i]);
-            }else if(players[i].queue[0].type==="STEALTH" && players[i].queue.length == 1){
-                stealths.push(players[i]);
-            }else if(players[i].queue[0].type==="DESTEALTH"){
-                destealths.push(players[i]);
-            }else if(players[i].queue[0].type==="QUICKHEAL"){
-                heals.push(players[i]);
-            }else if(players[i].queue[0].type==="ENERGY"){
-                engMods.push(players[i]);
-            }else if(players[i].queue[0].type==="HOLD" && players[i].stats.energy < players[i].stats.energyMAX){
-                players[i].stats.energy=players[i].stats.energy+statData.energyReg*(players[i].info.inCombat>0?1:2);
-                if (players[i].stats.energy > players[i].stats.energyMAX)
-                    players[i].stats.energy = players[i].stats.energyMAX;
-            }else if(players[i].info.trapped>1 && (players[i].queue[0].type==="MOVE" || players[i].queue[0].type==="BLINK")){
-                players[i].battleLog.unshift({"type":"action", "msg": "You can't move while trapped."});
-            }else if((players[i].queue[0].type==="ATTACK" || players[i].queue[0].type==="CANNON" || players[i].queue[0].type==="RAILGUN") && withinShop(players[i].loc)!=null){ //Must be fighting near a shop or cheating
-                players[i].battleLog.unshift({"type":"action", "msg": "You can't fight near a shop."});
-            }
+        if(players[i].status!=="DELETED"){
+            players[i].activeAttacks = [];
+            if(players[i].stats.hp>0 && players[i].queue[0]!=null){
+                if(players[i].queue[0].type==="MOVE" && players[i].info.trapped<1){
+                    moves.push({"player":players[i],"direction":players[i].queue[0].direction});
+                }else if(players[i].queue[0].type==="BLINK" && players[i].info.trapped<1){
+                    blinks.push({"player":players[i],"location":players[i].queue[0].location});
+                }else if(players[i].queue[0].type==="ATTACK" && (withinShop(players[i].loc)==null || attackFromShop)){
+                    attacks.push({"player":players[i], "location":players[i].queue[0].location});
+                }else if(players[i].queue[0].type==="CANNON" && (withinShop(players[i].loc)==null || attackFromShop) && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
+                    cannons.push({"player":players[i], "location":players[i].queue[0].location});
+                }else if(players[i].queue[0].type==="RAILGUN" && (withinShop(players[i].loc)==null || attackFromShop) && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
+                    railguns.push({"player":players[i], "direction":players[i].queue[0].direction});
+                }else if(players[i].queue[0].type==="LOOT" && (players[i].queue.length == 1 || players[i].queue[1].type!=="LOOT")){
+                    loots.push(players[i]);
+                }else if(players[i].queue[0].type==="TRAP" && (players[i].queue.length == 1 || players[i].queue[1].type!=="TRAP")){
+                    traps.push(players[i]);
+                }else if(players[i].queue[0].type==="SCAN" && players[i].queue.length == 1){
+                    scans.push(players[i]);
+                }else if(players[i].queue[0].type==="STEALTH" && players[i].queue.length == 1){
+                    stealths.push(players[i]);
+                }else if(players[i].queue[0].type==="DESTEALTH"){
+                    destealths.push(players[i]);
+                }else if(players[i].queue[0].type==="QUICKHEAL"){
+                    heals.push(players[i]);
+                }else if(players[i].queue[0].type==="ENERGY"){
+                    engMods.push(players[i]);
+                }else if(players[i].queue[0].type==="HOLD" && players[i].stats.energy < players[i].stats.energyMAX){
+                    players[i].stats.energy=players[i].stats.energy+statData.energyReg*(players[i].info.inCombat>0?1:2);
+                    if (players[i].stats.energy > players[i].stats.energyMAX)
+                        players[i].stats.energy = players[i].stats.energyMAX;
+                }else if(players[i].info.trapped>1 && (players[i].queue[0].type==="MOVE" || players[i].queue[0].type==="BLINK")){
+                    players[i].battleLog.unshift({"type":"action", "msg": "You can't move while trapped."});
+                }else if((players[i].queue[0].type==="ATTACK" || players[i].queue[0].type==="CANNON" || players[i].queue[0].type==="RAILGUN") && withinShop(players[i].loc)!=null){ //Must be fighting near a shop or cheating
+                    players[i].battleLog.unshift({"type":"action", "msg": "You can't fight near a shop."});
+                }
 
-            players[i].queue.splice(0,1); //pop from queue
+                players[i].queue.splice(0,1); //pop from queue
 
-            if(players[i].queue.length>0 && (withinShop(players[i].loc)==null || attackFromShop)){ //Next round attacks
-                if(players[i].queue[0].type==="ATTACK" )
-                    actAttacks.push(players[i].queue[0].location);
-                else if(players[i].queue[0].type==="CANNON" && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
-                    var range = (players[i].stats.cannon>1?5:3);
-                    var mid = parseInt(range/2);
-                    for(var x = 0; x < range; x++){
-                        for(var y = 0; y < range; y++){
-                            var cX = players[i].queue[0].location[0] - (mid-x);
-                            var cY = players[i].queue[0].location[1] - (mid-y);
+                if(players[i].queue.length>0 && (withinShop(players[i].loc)==null || attackFromShop)){ //Next round attacks
+                    if(players[i].queue[0].type==="ATTACK" )
+                        actAttacks.push(players[i].queue[0].location);
+                    else if(players[i].queue[0].type==="CANNON" && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
+                        var range = (players[i].stats.cannon>1?5:3);
+                        var mid = parseInt(range/2);
+                        for(var x = 0; x < range; x++){
+                            for(var y = 0; y < range; y++){
+                                var cX = players[i].queue[0].location[0] - (mid-x);
+                                var cY = players[i].queue[0].location[1] - (mid-y);
 
-                            if(cX < 0) cX += map.length;
-                            if(cY < 0) cY += map.length;
-                            if(cX >= map.length) cX -= map.length;
-                            if(cY >= map.length) cY -= map.length;
+                                if(cX < 0) cX += map.length;
+                                if(cY < 0) cY += map.length;
+                                if(cX >= map.length) cX -= map.length;
+                                if(cY >= map.length) cY -= map.length;
 
-                            actAttacks.push([cX,cY]);
+                                actAttacks.push([cX,cY]);
+                            }
                         }
                     }
-                }
-                else if(players[i].queue[0].type==="RAILGUN" && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
-                    if(players[i].queue[0].direction==="N"){
-                        for(var r = 1; r <= railgunRange; r++){
-                            var newY = players[i].loc[1]-r;
-                            if(newY < 0) newY += mapSize;
-                            actAttacks.push([players[i].loc[0],newY]);
-                        }
-                    }else if(players[i].queue[0].direction==="E"){
-                        for(var r = 1; r <= railgunRange; r++){
-                            actAttacks.push([(players[i].loc[0]+r)%mapSize,players[i].loc[1]]);
-                        }
-                    }else if(players[i].queue[0].direction==="S"){
-                        for(var r = 1; r <= railgunRange; r++){
-                            actAttacks.push([players[i].loc[0],(players[i].loc[1]+r)%mapSize]);
-                        }
-                    }else if(players[i].queue[0].direction==="W"){
-                        for(var r = 1; r <= railgunRange; r++){
-                            var newX = players[i].loc[0]-r;
-                            if(newX < 0) newX += mapSize;
-                            actAttacks.push([newY,players[i].loc[1]]);
+                    else if(players[i].queue[0].type==="RAILGUN" && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
+                        if(players[i].queue[0].direction==="N"){
+                            for(var r = 1; r <= railgunRange; r++){
+                                var newY = players[i].loc[1]-r;
+                                if(newY < 0) newY += mapSize;
+                                actAttacks.push([players[i].loc[0],newY]);
+                            }
+                        }else if(players[i].queue[0].direction==="E"){
+                            for(var r = 1; r <= railgunRange; r++){
+                                actAttacks.push([(players[i].loc[0]+r)%mapSize,players[i].loc[1]]);
+                            }
+                        }else if(players[i].queue[0].direction==="S"){
+                            for(var r = 1; r <= railgunRange; r++){
+                                actAttacks.push([players[i].loc[0],(players[i].loc[1]+r)%mapSize]);
+                            }
+                        }else if(players[i].queue[0].direction==="W"){
+                            for(var r = 1; r <= railgunRange; r++){
+                                var newX = players[i].loc[0]-r;
+                                if(newX < 0) newX += mapSize;
+                                actAttacks.push([newY,players[i].loc[1]]);
+                            }
                         }
                     }
                 }
@@ -1460,7 +1502,8 @@ function actionPhase(){
     }
 
     for(var i = 0; i < players.length; i++){
-        players[i].activeAttacks = actAttacks;
+        if(players[i].status!=="DELETED")
+            players[i].activeAttacks = actAttacks;
     }
 
     //Perform actions in order
@@ -1510,35 +1553,38 @@ function roundCleanup(){
 
     //Refresh energy levels and clear queues
     for(var i = 0; i < players.length; i++){
-        //disconnect lost players
-        players[i].info.connected++;
-        if(players[i].info.connected >= dcCountdown){
-            console.log("User "+players[i].info.name+" disconnected.");
-            var msg = {"type":"server", "msg": ""+players[i].info.name+" has disconnected."};
-            for(var m = 0; m < players.length; m++){
-                players[m].battleLog.unshift(msg);
-            }
-            savePlayer(players[i], true);
-        }else{
-            players[i].queue = [];
-            players[i].activeAttacks = [];
-            players[i].info.inCombat--;
-            players[i].info.stealthTime--;
-            players[i].info.trapped--;
-            if(players[i].info.stealthTime==0)
-                players[i].info.stealthed = false;
+        if(players[i].status!=="DELETED"){
+            //disconnect lost players
+            players[i].info.connected++;
+            if(players[i].info.connected >= dcCountdown){
+                console.log("User "+players[i].info.name+" disconnected.");
+                var msg = {"type":"server", "msg": ""+players[i].info.name+" has disconnected."};
+                for(var m = 0; m < players.length; m++){
+                    if(players[m].status!=="DELETED")
+                        players[m].battleLog.unshift(msg);
+                }
+                savePlayer(players[i], true);
+            }else{
+                players[i].queue = [];
+                players[i].activeAttacks = [];
+                players[i].info.inCombat--;
+                players[i].info.stealthTime--;
+                players[i].info.trapped--;
+                if(players[i].info.stealthTime==0)
+                    players[i].info.stealthed = false;
 
-            //Regen Energy
-            if(players[i].stats.hp>0 && !players[i].info.stealthed){
-                players[i].stats.energy = players[i].stats.energy + statData.energyReg*(players[i].info.inCombat>0?1:2);
-                if (players[i].stats.energy > players[i].stats.energyMAX)
-                    players[i].stats.energy = players[i].stats.energyMAX;
-            }
+                //Regen Energy
+                if(players[i].stats.hp>0 && !players[i].info.stealthed){
+                    players[i].stats.energy = players[i].stats.energy + statData.energyReg*(players[i].info.inCombat>0?1:2);
+                    if (players[i].stats.energy > players[i].stats.energyMAX)
+                        players[i].stats.energy = players[i].stats.energyMAX;
+                }
 
-            triggeredTrap(players[i]);
-            if(saveCountdown==saveRound){
-                savePlayer(players[i], false);
-                saveTeam();
+                triggeredTrap(players[i]);
+                if(saveCountdown==saveRound){
+                    savePlayer(players[i], false);
+                    saveTeam();
+                }
             }
         }
     }
@@ -1764,12 +1810,14 @@ function loot(p){
             }
 
             for(var i = 0; i < players.length; i++){
-                for(var k = 0; k < players[i].knownLocs.length; k++){
-                    if(players[i].knownLocs[k][0]==p.loc[0] && players[i].knownLocs[k][1]==p.loc[1]){
-                        players[i].knownLocs.splice(k,1);
+                if(players[i].status!=="DELETED"){
+                    for(var k = 0; k < players[i].knownLocs.length; k++){
+                        if(players[i].knownLocs[k][0]==p.loc[0] && players[i].knownLocs[k][1]==p.loc[1]){
+                            players[i].knownLocs.splice(k,1);
+                        }
                     }
+                    if(msg!=null) players[i].battleLog.unshift({"type":"server", "msg": msg});
                 }
-                if(msg!=null) players[i].battleLog.unshift({"type":"server", "msg": msg});
             }
         }
     }else{
@@ -1938,16 +1986,21 @@ function spotOccupied(location){
        map[location[0]][location[1]].type==="SHOP" ||
        map[location[0]][location[1]].type==="SSHOP")
         return true;
-    else for(var i = 0; i < players.length; i++)
-        if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0) return true;
+    else for(var i = 0; i < players.length; i++){
+        if(players[i].status!=="DELETED")
+            if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0) return true;
+    }
+
 
 
     return false;
 }
 
 function playerInSpot(location, ignore){
-    for(var i = 0; i < players.length; i++)
-        if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0 && players[i]!=ignore) return players[i];
+    for(var i = 0; i < players.length; i++){
+        if(players[i].status!=="DELETED")
+            if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0 && players[i]!=ignore) return players[i];
+    }
     return null;
 }
 
@@ -2356,10 +2409,11 @@ function death(p, killer){
     //Alert the world of a kill
     var msg = ""+killer.info.name+" has killed "+p.info.name+".";
     for(var m = 0; m < players.length; m++){
-        if(players[m].token === killer.token)
-            killer.battleLog.unshift({"type":"server", "msg": "You have killed "+p.info.name});
-        else
-            players[m].battleLog.unshift({"type":"server", "msg": msg});
+        if(players[m].status!=="DELETED")
+            if(players[m].token === killer.token)
+                killer.battleLog.unshift({"type":"server", "msg": "You have killed "+p.info.name});
+            else
+                players[m].battleLog.unshift({"type":"server", "msg": msg});
     }
 }
 
@@ -2436,16 +2490,39 @@ function savePlayer(p, del){
     jsonfile.writeFile('data/playerData/'+writePlayer.token+".json", writePlayer, {spaces: 4},function(err){
         if(err){
             console.log(err);
-        }else if(del){
+        }
+        else if(del){
             while(!canDelete){
                 var k = 0;
             }
-            for(var i in players){
-                if(players[i].token===writePlayer.token){
-                    players.splice(i,1);
-                    break;
+            var teamID = p.info.teamID;
+            var token = p.token;
+
+
+            if(teamID > -1 && teamID < teamData.length){
+                if(teamData[teamID].status !== "DELETED"){
+                    if(p.info.teamRole==="LEADER"){
+                        teamData[teamID].leader.id = -1;
+                    }
+                    else if(p.info.teamRole==="ADMIN"){
+                        for(var a in teamData[teamID].admins){
+                            if(teamData[teamID].admins[a].token===token){
+                                teamData[teamID].admins[a].id = -1;
+                                break;
+                            }
+                        }
+                    }
+
+                    for(var m in teamData[teamID].members){
+                        if(teamData[teamID].members[m].token===token){
+                            teamData[teamID].members[m].id = -1;
+                            break;
+                        }
+                    }
                 }
             }
+
+            players[p.id] = {"id":p.id,"status":"DELETED"};
         }
     });
 }
@@ -2607,10 +2684,11 @@ function buildStore(p){
 function removeFromTeam(p, teamID, merge){
     if(merge){
         teamData[teamID] = {"id":teamID,"status":"DELETED"};
-    }else{
+    }
+    else{
         if(p.info.teamRole === "ADMIN"){
             for(var a in teamData[teamID].admins){
-                if(teamData[teamID].admins[a][0]===p.token){
+                if(teamData[teamID].admins[a].token===p.token){
                     teamData[teamID].admins.splice(a,1);
                     break;
                 }
@@ -2618,7 +2696,7 @@ function removeFromTeam(p, teamID, merge){
         }
 
         for(var m in teamData[teamID].members){
-            if(teamData[teamID].members[m][0]===p.token){
+            if(teamData[teamID].members[m].token===p.token){
                 teamData[teamID].members.splice(m,1);
                 break;
             }
@@ -2633,26 +2711,27 @@ function removeFromTeam(p, teamID, merge){
 function messageGroup(group, msg, msgS, type, source){
     if(type==="team"){
         for(var i = 0; i < group.length; i++){
-            for(var p in players){
-                if(players[p].token === group[i][0]){
-                    if(source!=null){
-                        if(players[p].token===source.token){
-                            players[p].battleLog.unshift({"type":type, "msg": msgS});
-                            break;
-                        }
+            if(group[i].id > -1){
+                var sendOut = false;
+                if(source!=null){
+                    if(players[group[i].id].token===source.token){
+                        sendOut = true;
+                        players[group[i].id].battleLog.unshift({"type":type, "msg": msgS});
                     }
-                    players[p].battleLog.unshift({"type":type, "msg": msg});
-                    break;
+                }
+                else if(!sendOut){
+                    players[group[i].id].battleLog.unshift({"type":type, "msg": msg});
                 }
             }
         }
     }
     else{
-        for(var i = 0; i < group.length; i++){
-            if(players[i].token === source.token)
-                killer.battleLog.unshift({"type":type, "msg": msgS});
-            else
-                players[i].battleLog.unshift({"type":type, "msg": msg});
+        for(var i = 0; i < players.length; i++){
+            if(players[i].status!=="DELETED")
+                if(players[i].token === source.token)
+                    killer.battleLog.unshift({"type":type, "msg": msgS});
+                else
+                    players[i].battleLog.unshift({"type":type, "msg": msg});
         }
     }
 }
@@ -2671,10 +2750,15 @@ function mergeTeams(oldID, newID, p){
 
     for(var m in teamData[oldID].members){
         for(var pp in players){
-            if(players[pp].token === teamData[oldID].members[m][0]){
+            if(players[pp].token === teamData[oldID].members[m].token){
                 players[pp].info.teamID = newID;
                 players[pp].info.teamRole = "MEMBER";
-                teamData[newID].members.push([players[pp].token,players[pp].info.name]);
+                teamData[newID].members.push({
+                    "token": players[pp].token,
+                    "id": players[pp].id,
+                    "name": players[pp].info.name,
+                    "powerLevel": players[pp].info.powerLevel
+                });
                 break;
             }
         }
@@ -2685,24 +2769,35 @@ function mergeTeams(oldID, newID, p){
 }
 
 function changeRole(token, teamID, role){
-    var mem;
     for(var p in players){
         if(players[p].token === token){
             if(role==="LEADER"){
                 if(players[p].info.teamRole==="ADMIN"){
                     for(var a in teamData[teamID].admins){
-                        if(teamData[teamID].admins[a][0]===token){
+                        if(teamData[teamID].admins[a].token===token){
                             teamData[teamID].admins.splice(a,1);
                             break;
                         }
                     }
                 }
-                teamData[teamID].leader = [players[p].token,players[p].name];
-            }else if(role==="ADMIN"){
-                teamData[teamID].admins.push([players[p].token,players[p].name]);
-            }else if(players[p].info.teamRole==="ADMIN"){
+                teamData[teamID].leader = {
+                    "token": players[p].token,
+                    "id": players[p].id,
+                    "name": players[p].info.name,
+                    "powerLevel": players[p].info.powerLevel
+                };
+            }
+            else if(role==="ADMIN"){
+                teamData[teamID].admins.push({
+                    "token": players[p].token,
+                    "id": players[p].id,
+                    "name": players[p].info.name,
+                    "powerLevel": players[p].info.powerLevel
+                });
+            }
+            else if(players[p].info.teamRole==="ADMIN"){
                 for(var a in teamData[teamID].admins){
-                    if(teamData[teamID].admins[a][0]===token){
+                    if(teamData[teamID].admins[a].token===token){
                         teamData[teamID].admins.splice(a,1);
                         break;
                     }
@@ -2722,10 +2817,58 @@ function calculateTeamPower(teamID){
     return teamData[teamID].members.length*memVal;
 }
 
+function calculateIndividualPower(p){
+    return p.info.shipMass*25;
+}
+
 function calculateMapControl(teamID){
     return 0;
 }
 
 function rankTeams(){
+    return 0;
+}
 
+function updatePower(p){
+    var teamID = p.info.teamID;
+    var token = p.token;
+
+    if(teamID > -1){
+        if(teamData[teamID].status !== "DELETED"){
+            if(p.info.teamRole==="LEADER"){
+                teamData[teamID].leader.powerLevel = p.info.powerLevel;
+            }
+            else if(p.info.teamRole==="ADMIN"){
+                for(var a in teamData[teamID].admins){
+                    if(teamData[teamID].admins[a].token===token){
+                        teamData[teamID].admins[a].powerLevel = p.info.powerLevel;
+                        break;
+                    }
+                }
+            }
+
+            for(var m in teamData[teamID].members){
+                if(teamData[teamID].members[m].token===token){
+                    teamData[teamID].members[m].powerLevel = p.info.powerLevel;
+                    break;
+                }
+            }
+        }
+    }
+
+}
+
+function initTeamClean(){
+    for(var t in teamData){
+        if(teamData[t].status!=="DELETED"){
+            teamData[t].leader.id = -1;
+            for(var a in teamData[t].admins){
+                teamData[t].admins[a].id = -1;
+            }
+            for(var m in teamData[t].members){
+                teamData[t].members[m].id = -1;
+            }
+        }
+
+    }
 }

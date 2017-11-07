@@ -20,6 +20,7 @@ var chatBlink = true;
 var tabs;
 var baseStore;
 var statInfo = false;
+var saveOnStartup = false;
 
 //Team Data
 var joinTeamMenu = false;
@@ -43,6 +44,11 @@ var teamSetSaved = false;
 var teamScroll = 0;
 var curTeamTab = 0;
 var curSettings;
+
+//PlayerList
+var playerListMenu = false;
+var playerListHover = -1;
+var playerListScroll = 0
 
 //Chat data
 var chatMode = false;
@@ -159,9 +165,11 @@ function tokenInit(token){
             console.log("token: "+data.token);
             if(data.token!==undefined){
                 me.token = data.token;
+                me.id = data.id;
                 map = data.map;
 
-                document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
+                if(saveOnStartup)
+                    document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
                 gameStart = false;
                 setInterval(function(){newData();},tick);
             }
@@ -180,9 +188,11 @@ function init(){
         console.log("token: "+data.token);
         if(data.token!==undefined){
             me.token = data.token;
+            me.id = data.id;
             map = data.map;
 
-            document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
+            if(saveOnStartup)
+                document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
             gameStart = false;
             setInterval(function(){newData();},tick);
         }
@@ -530,6 +540,7 @@ function newData(){
 function updateQueue(action){
     var dat = {
         "token": me.token,
+        "id": me.id,
         "action": action
     };
 
@@ -552,7 +563,8 @@ function updateQueue(action){
 
 function requestRespawn(){
     var dat = {
-        "token": me.token
+        "token": me.token,
+        "id": me.id
     };
 
     $.ajax({
@@ -598,6 +610,7 @@ function makePurchase(item){
 function changeLoadout(slot,item){
     var dat = {
         "token": me.token,
+        "id": me.id,
         "slot": slot,
         "item": item
     };
@@ -622,6 +635,7 @@ function changeLoadout(slot,item){
 function sendChatMsg(){
     var dat = {
         "token": me.token,
+        "id": me.id,
         "msg": chatMsg
     };
 
@@ -646,6 +660,7 @@ function sendChatMsg(){
 function removeFromQueue(i){
     var dat = {
         "token": me.token,
+        "id": me.id,
         "remove": i
     };
 
@@ -671,6 +686,7 @@ function createTeam(){
     if(valid==true){
         var dat = {
             "token": me.token,
+            "id": me.id,
             "teamName": tName,
             "areaColor": aColor,
             "baseColor": bColor,
@@ -702,7 +718,8 @@ function createTeam(){
 function joinTeam(id, type){
     var dat = {
         "token": me.token,
-        "id": id,
+        "id": me.id,
+        "tid": id,
         "type": type
     };
 
@@ -726,6 +743,7 @@ function joinTeam(id, type){
 function updateTeamSettings(){
     var dat = {
         "token": me.token,
+        "id": me.id,
         "settings": curSettings
     };
 
@@ -938,37 +956,39 @@ function drawMonitor(ctx, width, height){
 
         }
 
-        //Draw enemy Ships
+        //Draw player Ships
         ctx.strokeStyle=colors.enemyColor;
         ctx.fillStyle=colors.enemyColor;
         for(var i = 0; i < players.length; i++){
-            var eloc = players[i].loc; //Check if same player
-            if(!(eloc[0]==me.loc[0] && eloc[1]==me.loc[1] && me.stats.hp>0)){
+            if(typeof players[i].loc !== "undefined"){
+                var eloc = players[i].loc; //Check if same player
+                if(!(eloc[0]==me.loc[0] && eloc[1]==me.loc[1] && me.stats.hp>0)){
 
-                if(players[i].team==me.info.teamID){
-                    ctx.fillStyle=colors.hudColor;
-                    ctx.strokeStyle=colors.hudColor;
+                    if(players[i].team==me.info.teamID){
+                        ctx.fillStyle=colors.hudColor;
+                        ctx.strokeStyle=colors.hudColor;
+                    }
+                    else {
+                        ctx.fillStyle=colors.enemyColor;
+                        ctx.strokeStyle=colors.enemyColor;
+                    }
+
+                    var t = parseInt(me.stats.radar/2);
+                    var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
+                    var cX = (eloc[0] + xAdj)%map.length, cY = (eloc[1] + yAdj)%map.length;
+
+                    if(cX<0)cX+=map.length;
+                    if(cY<0)cY+=map.length;
+
+                    ctx.beginPath();
+                    ctx.arc(cX*tileSize+tileSize/2,cY*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
+                    if(!players[i].stealthed)
+                        ctx.fill();
+                    else
+                        ctx.stroke();
+                    ctx.font = "14px Courier";
+                    ctx.fillText(players[i].name,cX*tileSize+tileSize/2-(players[i].name.length*4),cY*tileSize+tileSize/2-tileSize/4);
                 }
-                else {
-                    ctx.fillStyle=colors.enemyColor;
-                    ctx.strokeStyle=colors.enemyColor;
-                }
-
-                var t = parseInt(me.stats.radar/2);
-                var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
-                var cX = (eloc[0] + xAdj)%map.length, cY = (eloc[1] + yAdj)%map.length;
-
-                if(cX<0)cX+=map.length;
-                if(cY<0)cY+=map.length;
-
-                ctx.beginPath();
-                ctx.arc(cX*tileSize+tileSize/2,cY*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
-                if(!players[i].stealthed)
-                    ctx.fill();
-                else
-                    ctx.stroke();
-                ctx.font = "14px Courier";
-                ctx.fillText(players[i].name,cX*tileSize+tileSize/2-(players[i].name.length*4),cY*tileSize+tileSize/2-tileSize/4);
             }
         }
 
@@ -1154,6 +1174,10 @@ function drawMonitor(ctx, width, height){
         else if(teamMenu){
             drawTeamMenu(ctx, 0, 0, width, height);
         }
+        else if(playerListMenu){
+            drawPlayerList(ctx, 0, 0, width, height)
+        }
+
         //Draw grid hover
         else if(mX > -1 && mY > -1 && mX < width && mY < height && !settingsView){
             ctx.beginPath();
@@ -1738,14 +1762,16 @@ function drawMap(ctx, startX, startY, width, height){
     }
 
     for(var i = 0; i < players.length; i++){
-        var eloc = players[i].loc; //Check if same player
-        if(!(eloc[0]==me.loc[0] && eloc[1]==me.loc[1] && me.stats.hp>0)){
-            if(players[i].team==me.info.teamID) ctx.fillStyle=colors.hudColor;
-            else ctx.fillStyle=colors.enemyColor;
+        if(typeof players[i].loc !== "undefined"){
+            var eloc = players[i].loc; //Check if same player
+            if(!(eloc[0]==me.loc[0] && eloc[1]==me.loc[1] && me.stats.hp>0)){
+                if(players[i].team==me.info.teamID) ctx.fillStyle=colors.hudColor;
+                else ctx.fillStyle=colors.enemyColor;
 
-            ctx.beginPath();
-            ctx.arc(eloc[0]*tileSize+tileSize/2+startX,eloc[1]*tileSize+tileSize/2+startY,tileSize/5,0,2*Math.PI);
-            ctx.fill();
+                ctx.beginPath();
+                ctx.arc(eloc[0]*tileSize+tileSize/2+startX,eloc[1]*tileSize+tileSize/2+startY,tileSize/5,0,2*Math.PI);
+                ctx.fill();
+            }
         }
     }
 
@@ -2043,7 +2069,7 @@ function drawJoinTeam(ctx, startX, startY, width, height){
     //Seperator
     ctx.strokeRect(sX,sY,wid,150);
 
-    joinTeamHover = -1;8
+    joinTeamHover = -1;
 
     //Suggested Teams
     ctx.fillStyle = colors.hudColor;
@@ -2369,7 +2395,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
 
         //Draw Summary
         ctx.font = "bold 22pt Courier";
-        ctx.fillText("TEAM SUMMARY",sX+5, sY+25);
+        ctx.fillText(teamList[id].name+"'s SUMMARY",sX+5, sY+25);
         ctx.font = "18pt Courier";
         ctx.fillText("INCOME : "+teamList[id].income[0]+"g",sX+5, sY+50);
         ctx.fillText("         "+teamList[id].income[1]+"c",sX+5, sY+70);
@@ -2403,43 +2429,56 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         //leader
         ctx.font = "bold 16pt Courier";
         ctx.fillText("LEADER",sX+5, sY+45);
-        ctx.strokeRect(sX+5,sY+55,220,30);
-        ctx.fillText(teamList[id].leader,sX+7, sY+75);
+        ctx.strokeRect(sX+5,sY+55,250,30);
+        if(teamList[id].leader.id>-1) ctx.fillStyle=colors.hudColor;
+        else ctx.fillStyle = colors.cantBuyColor;
+        ctx.fillText(teamList[id].leader.name+"@@@@@@@",sX+7, sY+75);
+        ctx.fillText(teamList[id].leader.powerLevel,sX+217, sY+75);
 
         //Admins
+        ctx.fillStyle=colors.hudColor;
         ctx.font = "bold 16pt Courier";
         ctx.fillText("ADMINS",sX+5, sY+115);
-        ctx.strokeRect(sX+5,sY+125,220,hei/2);
+        ctx.strokeRect(sX+5,sY+125,250,hei/2);
 
         ctx.font = "14pt Courier";
         for(var i = 0; i < Math.min(teamList[id].admins.length,13); i++){
-            ctx.fillText(teamList[id].admins[i],sX+8,sY+145+20*i);
+            if(teamList[id].admins[i].id>-1) ctx.fillStyle=colors.hudColor;
+            else ctx.fillStyle = colors.cantBuyColor;
+            ctx.fillText(teamList[id].admins[i].name,sX+8,sY+145+20*i);
+            ctx.fillText(teamList[id].admins[i].powerLevel,sX+218,sY+145+20*i);
         }
 
         //Members
+        ctx.fillStyle=colors.hudColor;
         ctx.font = "bold 16pt Courier";
         ctx.fillText("GENERAL MEMBERS",sX+wid/2-20, sY+45);
         ctx.strokeRect(sX+wid/2-20,sY+55,wid/2-10,hei-100);
 
+        var memList = filterMemberList(teamList[id].members, teamList[id].admins, teamList[id].leader);
+
         //Draw Scrollbar
         var listSize = 21;
-        if(teamScroll > teamList[id].members.length || teamList[id].members.length <= listSize) teamScroll = 0;
-        else if(teamScroll > teamList[id].members.length-listSize && teamList[id].members.length > listSize) teamScroll = teamList[id].members.length-listSize;
+        if(teamScroll > memList.length || memList.length <= listSize) teamScroll = 0;
+        else if(teamScroll > memList.length-listSize && memList.length > listSize) teamScroll = memList.length-listSize;
 
-        if(teamList[id].members.length > listSize){
+        if(memList.length > listSize){
             ctx.beginPath();
             ctx.globalAlpha = 0.5;
             ctx.fillStyle = colors.hudColor;
             ctx.fillRect(sX+wid-50,sY+60, 10, hei-110);
             ctx.globalAlpha = 1.0;
-            var barsize = (listSize/teamList[id].members.length)*(hei-110);
-            ctx.fillRect(sX+wid-55,sY+60+teamScroll*((hei-110)-barsize)/(teamList[id].members.length-listSize),20,barsize);
+            var barsize = (listSize/memList.length)*(hei-110);
+            ctx.fillRect(sX+wid-55,sY+60+teamScroll*((hei-110)-barsize)/(memList.length-listSize),20,barsize);
         }
 
         ctx.font = "14pt Courier";
-        var drawAmount = Math.min(teamList[id].members.length, listSize);
-        for(var i = teamScroll, yAdj = 0; yAdj < drawAmount && i < teamList[id].members.length; i++, yAdj++){
-            ctx.fillText(teamList[id].members[i],sX+wid/2-10,sY+75+20*yAdj);
+        var drawAmount = Math.min(memList.length, listSize);
+        for(var i = teamScroll, yAdj = 0; yAdj < drawAmount && i < memList.length; i++, yAdj++){
+            if(memList[i].id>-1) ctx.fillStyle=colors.hudColor;
+            else ctx.fillStyle = colors.cantBuyColor;
+            ctx.fillText(memList[i].name,sX+wid/2-10,sY+75+20*yAdj);
+            ctx.fillText(memList[i].powerLevel,sX+wid/2+200,sY+75+20*yAdj);
         }
     }
     else if(curTeamTab==2){ //Vault
@@ -2532,14 +2571,14 @@ function drawTeamMenu(ctx, startX, startY, width, height){
                     ctx.fillStyle=colors.hudColor;
                     ctx.fillRect(sX+5+i*120,setHei+15,110,20);
                     ctx.fillStyle=colors.hudBackColor;
-                    var oName = ""+settingOptions[set].opts[i];
+                    var oName = ""+settingOptions[set].opts[i]+(settingOptions[set].input==="TAX"?"%":"");
                     ctx.fillText(oName,sX+15+i*120+(7-oName.length)*8,setHei+32);
                 }
                 else{
                     ctx.fillStyle=colors.hudColor;
                     ctx.strokeStyle=colors.hudColor;
                     ctx.strokeRect(sX+5+i*120,setHei+15,110,20);
-                    var oName = ""+settingOptions[set].opts[i];
+                    var oName = ""+settingOptions[set].opts[i]+(settingOptions[set].input==="TAX"?"%":"");
                     ctx.fillText(oName,sX+15+i*120+(7-oName.length)*8,setHei+32);
                 }
 
@@ -2573,6 +2612,83 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         }
     }
 
+}
+
+function drawPlayerList(ctx, startX, startY, width, height){
+    //Calculate Drawing Area
+    var sX = startX+width/8;
+    var sY = startY+height/10;
+    var wid = width-(sX-startX)*2;
+    var hei = height-(sY-startY)*2;
+
+    //Draw Box
+    ctx.beginPath();
+    ctx.strokeStyle = colors.hudColor;
+    ctx.fillStyle = colors.hudBackColor;
+    ctx.globalAlpha = 1.0;
+    ctx.strokeRect(sX,sY,wid,hei);
+    ctx.fillRect(sX,sY,wid,hei);
+    ctx.stroke();
+
+    playerListHover = -1;
+
+    ctx.fillStyle = colors.hudColor;
+    ctx.font = "bold 24pt Courier";
+    ctx.fillText("PLAYERS",sX+8,sY+30);
+    ctx.font = "12pt Courier";
+    ctx.fillText("(click to invite)",sX+wid-180,sY+14);
+
+    //Draw Scrollbar
+    var listSize = 28;
+    if(playerListScroll > players.length || players.length <= listSize) playerListScroll = 0;
+    else if(playerListScroll > players.length-listSize && players.length > listSize) playerListScroll = players.length-listSize;
+
+    if(players.length > listSize){
+        ctx.beginPath();
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = colors.hudColor;
+        ctx.fillRect(sX+wid-20,sY+75,10,hei-85);
+        ctx.globalAlpha = 1.0;
+        var barsize = (listSize/players.length)*(hei-85);
+        ctx.fillRect(sX+wid-25,sY+75+playerListScroll*((hei-85)-barsize)/(players.length-listSize),20,barsize);
+    }
+
+    //Draw list
+    ctx.beginPath();
+    ctx.globalAlpha = 1.0;
+    sY += 40;
+    ctx.fillStyle = colors.hudColor;
+    ctx.font = "14pt Courier";
+    ctx.strokeRect(sX+5,sY+30,wid-40,1);
+    ctx.fillText("NAME",sX+8,sY+20);
+    ctx.fillText("TEAM",sX+170,sY+20);
+    ctx.fillText("POWER",sX+370,sY+20);
+    ctx.fillText("PING",sX+460,sY+20);
+
+    ctx.font = "11pt Courier";
+    var yAdj = 0, drawAmount = Math.min(players.length, listSize);
+
+    for(var i = playerListScroll; yAdj < drawAmount && i < players.length; i++){
+        if(typeof players[i].name !=="undefined"){
+            if(mX < sX+wid-50 && mX > sX+6 &&
+               mY < sY+37+20*yAdj+17 && mY > sY+37+20*yAdj){
+                ctx.fillStyle = colors.hudColor;
+                ctx.globalAlpha = 0.3;
+                ctx.fillRect(sX+6,sY+37+20*yAdj,wid-50,17);
+                playerListHover = i;
+            }
+
+            ctx.fillStyle = colors.hudColor;
+            ctx.globalAlpha = 1.0;
+
+            ctx.fillText(players[i].name,sX+8,sY+50+20*yAdj);
+            ctx.fillText(teamList[players[i].team].name,sX+170,sY+50+20*yAdj);
+            ctx.fillText(players[i].powerLevel,sX+390,sY+50+20*yAdj);
+            ctx.fillText(players[i].ping+"ms",sX+460,sY+50+20*yAdj);
+            yAdj++;
+        }
+    }
+    ctx.globalAlpha = 1.0;
 }
 
 function drawBase(ctx, startX, startY, tileSize, type, lvl, color){
@@ -2848,7 +2964,7 @@ function handleKeypress(e){
 function handleKeydown(e){
     var keyCode = e.which || e.keyCode;
 
-    if (keyCode == 27 && !shopMode && !createTeamMenu && !joinTeamMenu && !teamMenu){ //Open Menu (esc)
+    if (keyCode == 27 && !shopMode && !createTeamMenu && !joinTeamMenu && !teamMenu && !playerListMenu){ //Open Menu (esc)
         settingsView = !settingsView;
         if(!settingsView)
             $(".modal").toggle(false);
@@ -2884,25 +3000,38 @@ function handleKeydown(e){
         if(!createTeamMenu)
             joinTeamMenu = true;
     }
-    else if(joinTeamMenu && keyCode == 27){
+    else if(keyCode == 27){
         joinTeamMenu = false;
-    }
-    else if(teamMenu && keyCode == 27){
+        playerListMenu = false;
         teamMenu = false;
+        createTeamMenu = false;
+        shopMode = false;
     }
     else if(keyCode == 56){
         joinTeamMenu = !joinTeamMenu;
         teamMenu = false;
         createTeamMenu = false;
+        playerListMenu = false;
+        shopMode = false;
 
         if(joinTeamMenu){
             teamRec = [];
         }
     }
+    else if(keyCode == 57){
+        playerListMenu = !playerListMenu;
+        joinTeamMenu = false;
+        createTeamMenu = false;
+        joinTeamMenu = false;
+        shopMode = false;
+        console.log("HIT");
+    }
     else if(keyCode == 48){
         teamMenu = !teamMenu;
         joinTeamMenu = false;
         createTeamMenu = false;
+        playerListMenu = false;
+        shopMode = false;
     }
     else if(keyCode == 73){  //i
         statInfo = !statInfo;
@@ -3150,6 +3279,11 @@ function handleMousedown(e){
             }
         }
     }
+    else if(playerListMenu){
+        if(playerListHover > -1){
+            console.log(playerListHover);
+        }
+    }
     else if(shopMode && shop.withinShop=="SSHOP"){
        //Change tabs
        var startX = c.width/8;
@@ -3256,6 +3390,15 @@ function handleMouseWheel(e){
         }
 
         if(teamScroll < 0) teamScroll = 0;
+    }
+    if(playerListMenu){
+        if(e.deltaY<0 && playerListScroll > 0){
+            playerListScroll--;
+        }else if(e.deltaY > 0 ){
+            playerListScroll++;
+        }
+
+        if(playerListScroll < 0) playerListScroll = 0;
     }
 }
 
@@ -3420,4 +3563,41 @@ function teamValidation(base, area){
     }
 
     return true;
+}
+
+function filterMemberList(members, admins, leader){
+    var mems = [];
+    for(var m in members){
+        // if(members[m].id != leader.id){
+        //     var adm = false;
+        //     for(var a in admins){
+        //         if(members[m].id != admins[a].id){
+        //             adm = true;
+        //             break;
+        //         }
+        //     }
+        //     if(!adm)
+        //         mems.push({
+        //             "id":members[m].id,
+        //             "name":members[m].name,
+        //             "powerLevel":members[m].powerLevel
+        //         });
+        // }
+        mems.push({
+            "id":members[m].id,
+            "name":members[m].name,
+            "powerLevel":members[m].powerLevel
+        });
+    }
+
+    //Sort the list
+    mems.sort(function(a, b){
+        var idA = a.id, idB = b.id;
+
+        if(idA > idB) return -1;
+        if(idA < idB) return 1;
+        return 0;
+    });
+
+    return mems;
 }
