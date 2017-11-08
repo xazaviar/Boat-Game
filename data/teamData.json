@@ -35,7 +35,7 @@
             },
             {
                 "token": "Woc9hARtI2vT2MCAsV4WzFsguBWQKWII505UIRvu2Cv7maW2K76d3hxByLq4L6Vq7zIxNGzxnPk3gmovVXttmV11Blw745Th9lUUfqVMDP7czImSWjm3gJUolSpfmdIPlvx53YJwg8aKnClGYsO2yI9Qb0L2dATH4aoUJlGYMOgGKMeUmFnBnJfEORCwYPmwHvLXhIVc",
-                "id": 0,
+                "id": -1,
                 "name": "asdf",
                 "powerLevel": 0
             },
@@ -167,7 +167,139 @@
             },
             {
                 "token": "kS5kyQRbL92ngMVQDvwTAd4H5doz0iETK8OepdFDrWCCuxwMLomYzMlWnBQnLFG5hg8U7QRfM5fFfRuXLOGM0l43rnMZpjCPIk1fAcDvZECpIRMjJ2lwKyUrMLjkXut2Dteo1KY1r0MnPe53YyWuCHoQpCViUQ1tx24IE2mM7lNIqV2StlrlCMFg7vnveKP4RewHvssb",
-                "id": 25,
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "OYJNW3zvfXXFoeOk45uad4Bo2ttfLv19NCpCTLYbb6PSvchVTJyb3hsqlKbmHLKn3kfftioyl6kkGzBd7DSVtFleox1lpeCrioePrOGZpcIOlEc9MAual73APWhlmIscZtpHyM1eq3vHr5eJGrm4YxSUsKwjLKitYd4gUJlQBo7eVC7IrbeytyLORhWlLGbYPoqPB3le",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "jRXaXdrgjNUHXedYcnzjeLPChv7WtQXmVFHMmIVut7LLTuJSVWlfc4qesINCsQnnoahSE1U297oJm69tqb9sYupnwzApCnlBTPITMWLYFEVImtJkPBfyfzrWixaevhMPcRptl9WscZpBj4BssT318t2PcEqPz7qDwcaBQMckSWYSD56NK5csKJcz0FkytB8Pbc6Corkt",
+                "id": -1,
+                "name": "fghj",
+                "powerLevel": 0
+            },
+            {
+                "token": "I3SbfrTTYrlqdUJhYhJ8sgCrif6sQVXhqN6ekzL9HAl4at6vTMvQsEof41H6cHNv8mmx6OBzdlbk39z43UaELznsYtxpyEqwBcF81T5q4YUbhYLgt28A9BXO7AT7wJ4egKWPOCxHMooBnbIQyWsQzryn01vcQERER7QwWrOdZHmCjydnGeTF12trG9UCdteYy8S77n9S",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "hdhrG3qyBBdj5QLWFjFwXSLXB6sUVVQFcMUMc4gQYlyaz7TAtWXq82Be5vnwAT6g2hGJEgMK06CCgRJGdOzxrLcIXNukZNbDmFO1vtqV47PQim28ef4RVbN3fet81Mx2s1aKBoLYuyWNrrTCpILnhWIiKqZD7swRBaSbsdYYOh8qm2DH3VOdJeHqPekF6ZCDOssEuxNM",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "uQzen7vjm3mLBIT8TPqf5qkq4Nxnzc0NzKrud8brsyg62sJYJMgmq5iCs2Mpn48jtVdKL4M9mSN9L3O4mTLSDwubeONFFglnbMOrHrOo6cZhk22Bckr4H15ip1bvXBHPVREuL9YpOxBYLyITvOS9SRn1YbKPxerTkQYzANVKhDDzFbh7teXzkWoFxySh2KX8Dx1HrK2a",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "KeNmu7crj71qEcRRoRfXKloIDDBIqD57aPXbB0s7Izern4OKBtD6r0msLV2494vaaMU4qLIFWAaVbJvQrZ8zAWtgjziDJ3WANZslzLgWazPXxWKKyU7NeRFkD8DS2fyt6sWtN44wWxVUErIKqXaOhobc7ephI7P0LW2mAh7deVwLwN9694Cn7ER1cUVzkpcG3XvcjXpt",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "l5NkNJcjf6uMbcmiaB9i9GW5Rm2POtROaSPZ174rApZr1r637cI3YyS6QM7vg6tlxMY5YWr1tjDWiwDK9AfByHvflpNeokCzoHuyr72DNkzHdvhqBL2U5WpHIenrO2XX3KjGsAl5RoevH3mOBbmIAP8bjLbgzEFhOBmdrSxzMa08qU4F9lHgyh1c7Nv0LwpTrNnEU04o",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "tp1o2idu8tH0fztkvlPdIik3EwFNMgESvpQjycfvMyvTACXFEAaPF9m99jlvHa28DPQEnKCpovBlXSCQ2HKxNtktrxXiA3cPGtEwKS69jEEVJ7Ko4cgmeF245eB7ykxcpLBlcHynpfBlNejmNWNH8Y4WnfBXznyIvNiNvx3vmjlgTr4I97vCzlKy95af3MC5CwiCzRgA",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "FHCtlCr6hjzepJANTF4QqH2U4Vj7BPbraTPWz6NBGfMYyE8epr3SkFrCLTjXSQGs63k4DP28KoRQ9g6pZ1WhHGvge5gCZYafukxFkyiNCcGk1W1OVRbYzeIUsf4ZI4xk9EebE5p13wfnOwNLUU4Vk8GI43GmoGae2Vmvat0cagGaqN63b4uSVTRK2jdVEMsCPaby3KMG",
+                "id": -1,
+                "name": "asfd",
+                "powerLevel": 0
+            },
+            {
+                "token": "5IvfTBsEG2hsuGobCDBMVvS9Gtp8cHNF2ESkfahoVWGi84aaLWAkHPtJFn3IvqztfC04KIDXOkvA1bMLTWjYKPmx86LqHLkTZCcepncmpf8tvhu26aw2gdkRb2crPheALy8xzZtlqvr4uffOeFiPs7A2NlwuSDczrZsQnlgAVFKNNEykj9KsK9FuSIy6LByqEECUQ4JD",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "T5YhXvZ7Cjbr3dHlKDDbcDn7KEpWPSocTOHSYrthVYkTbWGJiJu5VgP7v8MOwulmk493JDTcp5rDvQW9CNi7RmgFYenJVvYWBLtC0RogIcPje3mtQYE7ypNtxDUCEHRivdwUDjgockhLMUhuUSxG6lyTq0f2yKEhlsBxkADYRAWKqYMduJjnNDLHgDfwW4XtILbCzPFr",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "jdJrMPRPlJhcMsbDjaqewC4e68Qx3oaIJHfNlrtMc8FaMaE39fsKfbNUIlrlEU60lVzp8cNsaXD1cJF6nEK0181LcfwWeyiRWjxB6kX7xyT3mUQGtULysb1mlSh8nB1WJHJQtrJ0yGsxiUg5lKEBOgLnTvh9cj3o5S8dXF9iNZxWVP3nfBjkblDPibYQcX9ki8nfH1wl",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "jwPHyPJllpjqSq4s7963QU8d2fHD8QkMw62DNilA1vsUswiriY4htfD8DVAVnB5cBlQfoJwPxrUqRSPBI9FKaGTn3iXSyu3ShhjArIG5soVmchogwzObfTPOOjvNKPcCfTQUwJzjmEP3ImGXnu7s3I53sF7jmUCQyZtpkXOC9VCoum6Y2zgmUuJImkcgPFi2bcNz2zK0",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "7vWAU8nteUOtQbb6g7zseq7RRhKEQpmYophKQdXCA2DwAJS7NlRe4l7HNEtU4lDBlp0kOy5vqrKDHLh1v3JTuf1hEecGHiHoFqpDKst07Kn9Q9gc5ssf7vpe45NaqrVlsfKCldCLTeylGLDvNI8ThCEc6ySycWWemWrVOjjwGHSY6aHN6O1is7WbMLNrQLO7rfHHPjSx",
+                "id": -1,
+                "name": "sdfg",
+                "powerLevel": 0
+            },
+            {
+                "token": "T0iooqzKCI0lU1vQdJweuWgieGTnfdKMjEDTjTwWaLXrytjijvqEb2czGWll36TJCV1kAThQxTbs4sQOE5jhcYAViWSQI33NkSuBC5cotp7XFmus1BpudwYMNSdUpLdeRbsbmmefIqvNKqR3AmFUDywq0mtLeQuPt51e2jTLvxnnEhTO7a8U51dyOhz7BzkYts9ItQSQ",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "SuybPg4LNtgOXyfLgb1M4Z2eXxhqByRsbDqoqCDI8FknPzs0HNjWashMSQxRr7ixiw0ISR1xgNu7eDc7bIPj4BnG8yHG2fRAEKTEVcXGbcQSsuqKsvmaoTEeYt1rrXI2FSc6cGsccfOLohBvkJp8qFDWyGUmvGT7GekatnAQtnInwIogRUNiaLYnuMlc63XbCvAw63Sn",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "hv5SQPRzt3gM0jabDVlInIlnrDsyHQ9NsE9lnWB5hon4IZAgyBbAk1oy6GV2tgKR2DUY5MReOh7MefpOTxgpBUvjfMg977kfXDCdS1hufHzcUkoAwL9Q5tSeW6eJinnY4MuDn88lbir7vUhxVGzFfddMGQqOVaqNr6cyblvSDGs3iCdS7cFmF4GnDfyi6vVEMUm5Y8O2",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "zEhLJbodC7L7fCSUPoA7ccuSNCNsDzqhupGIpUxvt5mUH9KXpCodi6ajeDdoCJw8ovB9mQcWZAGIFFzDtJ2z5V5FisXJOAyus55nwRcfxWOjCgXOlooUpnnQJXisT2npGFSbFQXT0GB4V8plLH453gadYS86mhd2BhIFOxNlAf1cbafPSKbLPb65hLAKrbELbK7mWudt",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "LSqoLDuYPEZxemtMfL6WuEvXvFjPHSE3aqO6Yey06qIkH2ANlcUH7zDPczIULHkBpiP7ucygTdLgKA6MqwwBSqiiRCMgZA9nkzPxAbDdMdCaaMezuIX0WN9OCUegBgD5sr8claBwDyHQcoCSxsCbF9i9q6CPBAm2jUN1XLt7i4rk4bu5RFN11i7P5dnT8twSJwMqx2FG",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "X4C6fEY5OXyRXt4dIL5xmWLqqBXXFgbyAicEfj1FS4MucL9ME9dkBCmShwRVPO5Yp3PFGWUCCrlDYvUm7ThHYoccVj11xthUbmFtMWBPCHpziLOJbmvyYbaXk9CVvuj5LOf1gbhIJ3S37YrUOLvgR8kWIbozhdaO3iK5hYzKkXGuhWk785dvq9MDyTuGJX9QCgjSD6Bb",
+                "id": -1,
+                "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "beSsqdzRyeUOO5TMHvCnNt3KdlThkuQl8C4piG1bJwjJYGYASkuaejGSfOh9Jmmg3NWUifyIEApywyrzrzGnwuGxtbFjRwRlWY0p9x0wLTz7Rx5IjdK8wkUZZLIAeVtCmlReJA7Xm8uSkEdfb1v66IOWoCvmHH38G9zk1CWDj6e3zG7kU7SjJxm4cwyXJWMpPMnx3uTT",
+                "id": 38,
+                "name": "sdfg",
+                "powerLevel": 0
+            },
+            {
+                "token": "Cww2kEwDUiw5oVM4cdDwewd279lhxGJ8tKiEqeF88GgkhrUkktSAFa5nmkDwqs5leDj5u3WS8TqDbyVwalC947dKe2jNMGSpoyFmfh8zlpGQmlb1A6wtys9Nkd7852dPXo35jKhWVDsnhN9V73jrGWgfWZqQSXS2vvIoEi6uJcWT4GfJlYH2wbM3OvzKi9xStHPZITjg",
+                "id": -1,
                 "name": "asdf",
                 "powerLevel": 0
             }
@@ -216,6 +348,18 @@
                 "token": "cvIvhQv2z7NahnhHmk57lRuKShivVtlQRFWSB6hv6j58DVbcTbW3WtmEUmcBC8KjS1B2MJmcHh4FDmlDqRnTunXmmV6X0TKsetk2o2I4neGmETBpJl36do3bQMotMeXl134dJdpfKO1RvPdGSZzhgr7K9HC14UHmRpEqkoZIkUhLVUlQHjNC3incDnpI9dfrfH2ktNti",
                 "id": -1,
                 "name": "asdf",
+                "powerLevel": 0
+            },
+            {
+                "token": "SrcvJBVCrVYJUXlEIXMwhIuVhSRs8crmxkOT1pEtMHImp8yaNdByBQpINXfyVZ9OjeOkNIGxgaQuDG9xrkLJigtOFoUeTQi1C4W2ClL3aS7d4iR8Qcc6uaadwY37Yd49S7G49NZ5pxp9WBDNBoGs1DdVqKgGG3lmni8DeYKwvvqeDinA4DXaV2VcOrQtBfED7vgjmpSZ",
+                "id": -1,
+                "name": "fda",
+                "powerLevel": 0
+            },
+            {
+                "token": "JCn3HeQmx7wSzHCow1GvBB1k3d0pLaO6jLyJNLmqvJPFhBrhofQsG2YCUGSJEg8eCbz9Hlm9NDytkKLgYYQDQA6v1FYw7AaXMmGJb6HZVKS0IwNr6FdOG277zsJNwE3F5IrsGtPBMJCy9p48XAX9JRLXmS0wvjmBfxjPKULBVNaI2nJkOMSCcHj6n9LriiBfAj1ACH94",
+                "id": 40,
+                "name": "asdf_",
                 "powerLevel": 0
             }
         ],
@@ -315,7 +459,7 @@
         },
         "leader": {
             "token": "JxnMII2gcWxotAkXL1Yr2VWlam1gmzfw4aOIult8Brda5gdF80O1BpPR9lbGp3BMtoCeyBHKfTeHstpYmBGlTKY7v2KJJ6bb51lTS7ic43xyXrdjQsoEuhfrueauTbewXu1AehgSxRAnNWe7qbgARpe8mciRpPZXDi2lHaRzj3QEW6bjcmIfTSFfxbxxMq7xq4nqW3Up",
-            "id": 7,
+            "id": -1,
             "name": "a;lkjsdf;laksjdf",
             "powerLevel": 0
         },
@@ -323,7 +467,7 @@
         "members": [
             {
                 "token": "JxnMII2gcWxotAkXL1Yr2VWlam1gmzfw4aOIult8Brda5gdF80O1BpPR9lbGp3BMtoCeyBHKfTeHstpYmBGlTKY7v2KJJ6bb51lTS7ic43xyXrdjQsoEuhfrueauTbewXu1AehgSxRAnNWe7qbgARpe8mciRpPZXDi2lHaRzj3QEW6bjcmIfTSFfxbxxMq7xq4nqW3Up",
-                "id": 7,
+                "id": -1,
                 "name": "a;lkjsdf;laksjdf",
                 "powerLevel": 0
             }
@@ -342,6 +486,47 @@
             "ping": "ADMIN",
             "upgrading": "ADMIN",
             "membership": "INVITE",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 5,
+        "name": "TESt team",
+        "colors": {
+            "baseColor": "#80ad52",
+            "areaColor": "#ff0071",
+            "baseShape": "CIRCLE"
+        },
+        "leader": {
+            "token": "JCn3HeQmx7wSzHCow1GvBB1k3d0pLaO6jLyJNLmqvJPFhBrhofQsG2YCUGSJEg8eCbz9Hlm9NDytkKLgYYQDQA6v1FYw7AaXMmGJb6HZVKS0IwNr6FdOG277zsJNwE3F5IrsGtPBMJCy9p48XAX9JRLXmS0wvjmBfxjPKULBVNaI2nJkOMSCcHj6n9LriiBfAj1ACH94",
+            "id": 40,
+            "name": "asdf_",
+            "powerLevel": 0
+        },
+        "admins": [],
+        "members": [
+            {
+                "token": "JCn3HeQmx7wSzHCow1GvBB1k3d0pLaO6jLyJNLmqvJPFhBrhofQsG2YCUGSJEg8eCbz9Hlm9NDytkKLgYYQDQA6v1FYw7AaXMmGJb6HZVKS0IwNr6FdOG277zsJNwE3F5IrsGtPBMJCy9p48XAX9JRLXmS0wvjmBfxjPKULBVNaI2nJkOMSCcHj6n9LriiBfAj1ACH94",
+                "id": 40,
+                "name": "asdf_",
+                "powerLevel": 0
+            }
+        ],
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": [
+            0,
+            0
+        ],
+        "teamRank": 1000,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
             "profitDivide": "FAIR",
             "tax": 0
         }

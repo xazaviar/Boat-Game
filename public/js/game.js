@@ -2,7 +2,6 @@ var offsetX;
 var offsetY;
 var offsetX2;
 var offsetY2;
-var tick = 50;
 var mX, mY;
 var hover = [-1,-1];
 var shopMode = false;
@@ -21,6 +20,13 @@ var tabs;
 var baseStore;
 var statInfo = false;
 var saveOnStartup = false;
+
+//Auto d/c
+var autoDCLimit = 120; //~10 minutes
+var autoDCCount = 0;
+var intervalTimer;
+var tick = 50;
+var lastRound = -1;
 
 //Team Data
 var joinTeamMenu = false;
@@ -171,7 +177,7 @@ function tokenInit(token){
                 if(saveOnStartup)
                     document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
                 gameStart = false;
-                setInterval(function(){newData();},tick);
+                intervalTimer = setInterval(function(){newData();},tick);
             }
         }else{
             errorMsg = data.error;
@@ -194,7 +200,7 @@ function init(){
             if(saveOnStartup)
                 document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
             gameStart = false;
-            setInterval(function(){newData();},tick);
+            intervalTimer = setInterval(function(){newData();},tick);
         }
     });
 }
@@ -532,9 +538,21 @@ function newData(){
         drawScreen();
         drawTimer();
         drawSideBar();
+
+
+        if(game.phase == 0 && lastRound == 3){
+            autoDCCount++;
+        }
+        lastRound = game.phase;
     });
 
     blink = !blink;
+
+    if(autoDCCount > autoDCLimit){
+        clearInterval(intervalTimer);
+        confirmDialog = 3;
+        drawScreen();
+    }
 }
 
 function updateQueue(action){
@@ -2432,7 +2450,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         ctx.strokeRect(sX+5,sY+55,250,30);
         if(teamList[id].leader.id>-1) ctx.fillStyle=colors.hudColor;
         else ctx.fillStyle = colors.cantBuyColor;
-        ctx.fillText(teamList[id].leader.name+"@@@@@@@",sX+7, sY+75);
+        ctx.fillText(teamList[id].leader.name,sX+7, sY+75);
         ctx.fillText(teamList[id].leader.powerLevel,sX+217, sY+75);
 
         //Admins
@@ -2443,9 +2461,18 @@ function drawTeamMenu(ctx, startX, startY, width, height){
 
         ctx.font = "14pt Courier";
         for(var i = 0; i < Math.min(teamList[id].admins.length,13); i++){
+            if(mX < sX+255 && mX > sX+5 &&
+               mY < sY+145+20*i && mY > sY+125+20*i && me.info.teamRole==="LEADER"){
+                ctx.fillStyle = colors.hudColor;
+                ctx.globalAlpha = 0.3;
+                ctx.fillRect(sX+8,sY+129+20*i,243,20);
+                teamMenuHover = {"id":teamList[id].admins[i].id,"type":"ADMIN"};
+            }
+
+            ctx.globalAlpha = 1.0;
             if(teamList[id].admins[i].id>-1) ctx.fillStyle=colors.hudColor;
             else ctx.fillStyle = colors.cantBuyColor;
-            ctx.fillText(teamList[id].admins[i].name,sX+8,sY+145+20*i);
+            ctx.fillText(teamList[id].admins[i].name,sX+10,sY+145+20*i);
             ctx.fillText(teamList[id].admins[i].powerLevel,sX+218,sY+145+20*i);
         }
 
@@ -2475,6 +2502,18 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         ctx.font = "14pt Courier";
         var drawAmount = Math.min(memList.length, listSize);
         for(var i = teamScroll, yAdj = 0; yAdj < drawAmount && i < memList.length; i++, yAdj++){
+            if(mX < sX+wid-30 && mX > sX+wid/2-20 &&
+               mY < sY+75+20*yAdj && mY > sY+55+20*yAdj &&
+               (me.info.teamRole==="LEADER" || me.info.teamRole==="ADMIN")){
+                ctx.fillStyle = colors.hudColor;
+                ctx.globalAlpha = 0.3;
+                ctx.fillRect(sX+wid/2-15,sY+58+20*yAdj,wid/2-50,20);
+                teamMenuHover = {"id":memList[i].id,"type":"MEM"};
+            }
+
+            ctx.globalAlpha = 1.0;
+
+
             if(memList[i].id>-1) ctx.fillStyle=colors.hudColor;
             else ctx.fillStyle = colors.cantBuyColor;
             ctx.fillText(memList[i].name,sX+wid/2-10,sY+75+20*yAdj);
@@ -2639,18 +2678,19 @@ function drawPlayerList(ctx, startX, startY, width, height){
     ctx.fillText("(click to invite)",sX+wid-180,sY+14);
 
     //Draw Scrollbar
+    var filteredList = filterPlayerList(players);
     var listSize = 28;
-    if(playerListScroll > players.length || players.length <= listSize) playerListScroll = 0;
-    else if(playerListScroll > players.length-listSize && players.length > listSize) playerListScroll = players.length-listSize;
+    if(playerListScroll > filteredList.length || filteredList.length <= listSize) playerListScroll = 0;
+    else if(playerListScroll > filteredList.length-listSize && filteredList.length > listSize) playerListScroll = filteredList.length-listSize;
 
-    if(players.length > listSize){
+    if(filteredList.length > listSize){
         ctx.beginPath();
         ctx.globalAlpha = 0.5;
         ctx.fillStyle = colors.hudColor;
         ctx.fillRect(sX+wid-20,sY+75,10,hei-85);
         ctx.globalAlpha = 1.0;
-        var barsize = (listSize/players.length)*(hei-85);
-        ctx.fillRect(sX+wid-25,sY+75+playerListScroll*((hei-85)-barsize)/(players.length-listSize),20,barsize);
+        var barsize = (listSize/filteredList.length)*(hei-85);
+        ctx.fillRect(sX+wid-25,sY+75+playerListScroll*((hei-85)-barsize)/(filteredList.length-listSize),20,barsize);
     }
 
     //Draw list
@@ -2666,25 +2706,28 @@ function drawPlayerList(ctx, startX, startY, width, height){
     ctx.fillText("PING",sX+460,sY+20);
 
     ctx.font = "11pt Courier";
-    var yAdj = 0, drawAmount = Math.min(players.length, listSize);
+    var yAdj = 0, drawAmount = Math.min(filteredList.length, listSize);
 
-    for(var i = playerListScroll; yAdj < drawAmount && i < players.length; i++){
-        if(typeof players[i].name !=="undefined"){
+    for(var i = playerListScroll; yAdj < drawAmount && i < filteredList.length; i++){
+        if(typeof filteredList[i].name !=="undefined"){
             if(mX < sX+wid-50 && mX > sX+6 &&
                mY < sY+37+20*yAdj+17 && mY > sY+37+20*yAdj){
                 ctx.fillStyle = colors.hudColor;
                 ctx.globalAlpha = 0.3;
                 ctx.fillRect(sX+6,sY+37+20*yAdj,wid-50,17);
-                playerListHover = i;
+                playerListHover = filteredList[i].id;
             }
 
             ctx.fillStyle = colors.hudColor;
             ctx.globalAlpha = 1.0;
 
-            ctx.fillText(players[i].name,sX+8,sY+50+20*yAdj);
-            ctx.fillText(teamList[players[i].team].name,sX+170,sY+50+20*yAdj);
-            ctx.fillText(players[i].powerLevel,sX+390,sY+50+20*yAdj);
-            ctx.fillText(players[i].ping+"ms",sX+460,sY+50+20*yAdj);
+            ctx.fillText(filteredList[i].name,sX+8,sY+50+20*yAdj);
+            if(filteredList[i].team>-1)
+                ctx.fillText(teamList[filteredList[i].team].name,sX+170,sY+50+20*yAdj);
+            else
+                ctx.fillText("N/A",sX+170,sY+50+20*yAdj);
+            ctx.fillText(filteredList[i].powerLevel,sX+390,sY+50+20*yAdj);
+            ctx.fillText(filteredList[i].ping+"ms",sX+460,sY+50+20*yAdj);
             yAdj++;
         }
     }
@@ -2931,6 +2974,48 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillText("SPLIT",sX+wid-95,sY+hei-25);
         }
     }
+    else if(confirmDialog==3){ //D/C reconnect?
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("You were afk for too ",sX+25,sY+25);
+        ctx.fillText(" long. You have been ",sX+25,sY+45);
+        ctx.fillText("     disconnected.   ",sX+25,sY+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Join
+        if(mX < sX+105 && mX > sX+25 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid/2-40,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("RECON",sX+wid/2-30,sY+hei-25);
+            confirmHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("RECON",sX+35,sY+hei-25);
+        }
+
+        // //Cancel
+        // if(mX < sX+wid-25 && mX > sX+wid-105 &&
+        //    mY < sY+hei-15 && mY > sY+hei-45){
+        //     ctx.fillStyle = colors.hudColor;
+        //     ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
+        //     ctx.fillStyle = colors.hudBackColor;
+        //     ctx.fillText("QUIT",sX+wid-90,sY+hei-25);
+        //     confirmHover = 1;
+        // }
+        // else{
+        //     ctx.strokeStyle = colors.hudColor;
+        //     ctx.strokeRect(sX+wid-105,sY+hei-45,80,30);
+        //     ctx.fillStyle = colors.hudColor;
+        //     ctx.fillText("QUIT",sX+wid-90,sY+hei-25);
+        // }
+    }
 }
 
 
@@ -2959,6 +3044,8 @@ function handleKeypress(e){
         }
         drawScreen();
     }
+
+    autoDCCount = 0;
 }
 
 function handleKeydown(e){
@@ -3022,9 +3109,8 @@ function handleKeydown(e){
         playerListMenu = !playerListMenu;
         joinTeamMenu = false;
         createTeamMenu = false;
-        joinTeamMenu = false;
+        teamMenu = false;
         shopMode = false;
-        console.log("HIT");
     }
     else if(keyCode == 48){
         teamMenu = !teamMenu;
@@ -3119,6 +3205,7 @@ function handleKeydown(e){
         mapView = false;
     }
 
+    autoDCCount = 0;
 }
 
 function handleMousedown(e){
@@ -3207,6 +3294,12 @@ function handleMousedown(e){
                 confirmHover = -1;
                 confirmDialog = -1;
                 valueLock = -1;
+            }
+        }
+        else if(confirmDialog==3){
+            if(confirmHover==0){
+                document.cookie = "token="+me.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
+                location.reload();
             }
         }
     }
@@ -3327,6 +3420,8 @@ function handleMousedown(e){
         else
             updateQueue({"type":"ATTACK","location":[cX, cY]})
      }
+
+    autoDCCount = 0;
 }
 
 function handleMousemove(e){
@@ -3372,6 +3467,8 @@ function handleMousedown2(e){
             statInfo = true;
         }
     }
+
+    autoDCCount = 0;
 }
 
 function handleMouseWheel(e){
@@ -3400,6 +3497,8 @@ function handleMouseWheel(e){
 
         if(playerListScroll < 0) playerListScroll = 0;
     }
+
+    autoDCCount = 0;
 }
 
 
@@ -3600,4 +3699,14 @@ function filterMemberList(members, admins, leader){
     });
 
     return mems;
+}
+
+function filterPlayerList(list){
+    var newList = [];
+    for(var i = 0; i < list.length; i++){
+        if(typeof list[i].id !=="undefined")
+            newList.push(list[i]);
+    }
+
+    return newList;
 }
