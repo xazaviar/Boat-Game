@@ -1,10 +1,11 @@
 var jsonfile = require('jsonfile');
 var changelog;
-var version = "Alpha v1.1";
+var version = "Alpha v1.2";
 
 //Globals
 var port = 8081;
 var players = [];
+var playerSize = 0;
 var tokenSize = 200;
 var playerNameMaxLength = 16;
 var teamNameMaxLength = 25;
@@ -122,17 +123,30 @@ function init(){
         }
         shopData = obj;
     });
-    jsonfile.readFile("data/teamdata.json", function(err, obj) {
+    jsonfile.readFile("data/gamedata.json", function(err, obj) {
         if(err){
             console.log(err);
             process.exit(1);
         }
-        teamData = [];
-        for(var t in obj){
-            teamData[obj[t].id] = obj[t];
+        playerSize = obj.playerSize;
+
+        for(var i = 0; i < playerSize; i++){
+            players[i] = {"id":i,"status":"DELETED"};
         }
-        initTeamClean();
+
+        jsonfile.readFile("data/teamdata.json", function(err, obj) {
+            if(err){
+                console.log(err);
+                process.exit(1);
+            }
+            teamData = [];
+            for(var t in obj){
+                teamData[obj[t].id] = obj[t];
+            }
+            initTeamClean();
+        });
     });
+
 
 
     //Start server
@@ -176,14 +190,15 @@ function startServer(){
                 data = {
                     "error": "Invalid Token"
                 }
-            }else{
-                var id = players.length;
-                players[id]= obj;
+            }
+            else{
+                var id = obj.id;
+                players[id] = obj;
                 var name = ""
                 players[id].battleLog = [];
-                players[id].id = id;
                 players[id].loc = spawn();
                 name = players[id].info.name;
+                changeOnlineStatus(players[id], true);
                 data = {
                     "token": obj.token,
                     "id": id,
@@ -211,7 +226,8 @@ function startServer(){
         if(name==="") name = "random";
         var token =  generateToken();
         var sp = spawn();
-        var id = players.length;
+        var id = playerSize;
+        playerSize++;
 
         var newP = {
             "id": id,
@@ -318,7 +334,6 @@ function startServer(){
             "storage":[]
         };
 
-
         console.log("New user "+name+" joined.");
 
         var data = {
@@ -328,9 +343,8 @@ function startServer(){
             "map": map
         }
 
-        res.send(data);
-
         players[id] = newP;
+        res.send(data);
 
         var msg = {"type":"server", "msg": ""+name+" has connected."};
         for(var m = 0; m < players.length; m++){
@@ -411,14 +425,16 @@ function startServer(){
                         admins.push({
                             "id":teamData[t].admins[a].id,
                             "name":teamData[t].admins[a].name,
-                            "powerLevel":teamData[t].admins[a].powerLevel
+                            "powerLevel":teamData[t].admins[a].powerLevel,
+                            "online": teamData[t].admins[a].online
                         });
                     }
                     for(var m in teamData[t].members){
                         members.push({
                             "id":teamData[t].members[m].id,
                             "name":teamData[t].members[m].name,
-                            "powerLevel":teamData[t].members[m].powerLevel
+                            "powerLevel":teamData[t].members[m].powerLevel,
+                            "online":teamData[t].members[m].online
                         });
                     }
                     sendTeam[teamData[t].id] = {
@@ -428,7 +444,8 @@ function startServer(){
                         "leader": {
                             "id":teamData[t].leader.id,
                             "name":teamData[t].leader.name,
-                            "powerLevel":teamData[t].leader.powerLevel
+                            "powerLevel":teamData[t].leader.powerLevel,
+                            "online":teamData[t].leader.online,
                         },
                         "admins": admins,
                         "members": members,
@@ -1152,7 +1169,8 @@ function startServer(){
                         "token": p.token,
                         "id": p.id,
                         "name": p.info.name,
-                        "powerLevel": p.info.powerLevel
+                        "powerLevel": p.info.powerLevel,
+                        "online": true
                     },
                     "admins": [],
                     "members": [],
@@ -1180,7 +1198,8 @@ function startServer(){
                         "token": p.token,
                         "id": p.id,
                         "name": p.info.name,
-                        "powerLevel": p.info.powerLevel
+                        "powerLevel": p.info.powerLevel,
+                        "online": true
                     });
 
                 p.info.teamID = tid;
@@ -1188,7 +1207,7 @@ function startServer(){
 
                 p.battleLog.unshift({"type":"team", "msg": "You created the team "+teamData[tid].name+"! Good Luck!"});
 
-                saveTeam();
+                saveGameData();
             }
             else if(p!=null){
                 //TODO: Error messaging
@@ -1251,7 +1270,8 @@ function startServer(){
                     "token": p.token,
                     "id": p.id,
                     "name": p.info.name,
-                    "powerLevel": p.info.powerLevel
+                    "powerLevel": p.info.powerLevel,
+                    "online": true
                 });
 
                 messageGroup(teamData[teamID].members,
@@ -1583,7 +1603,7 @@ function roundCleanup(){
                 triggeredTrap(players[i]);
                 if(saveCountdown==saveRound){
                     savePlayer(players[i], false);
-                    saveTeam();
+                    saveGameData();
                 }
             }
         }
@@ -2495,40 +2515,25 @@ function savePlayer(p, del){
             while(!canDelete){
                 var k = 0;
             }
-            var teamID = p.info.teamID;
-            var token = p.token;
-
-
-            if(teamID > -1 && teamID < teamData.length){
-                if(teamData[teamID].status !== "DELETED"){
-                    if(p.info.teamRole==="LEADER"){
-                        teamData[teamID].leader.id = -1;
-                    }
-                    else if(p.info.teamRole==="ADMIN"){
-                        for(var a in teamData[teamID].admins){
-                            if(teamData[teamID].admins[a].token===token){
-                                teamData[teamID].admins[a].id = -1;
-                                break;
-                            }
-                        }
-                    }
-
-                    for(var m in teamData[teamID].members){
-                        if(teamData[teamID].members[m].token===token){
-                            teamData[teamID].members[m].id = -1;
-                            break;
-                        }
-                    }
-                }
-            }
+            changeOnlineStatus(p,false);
 
             players[p.id] = {"id":p.id,"status":"DELETED"};
         }
     });
 }
 
-function saveTeam(){
-    jsonfile.writeFile('data/teamData.json', teamData, {spaces: 4},function(err){
+function saveGameData(){
+    jsonfile.writeFile('data/teamdata.json', teamData, {spaces: 4},function(err){
+        if(err){
+            console.log(err);
+        }
+    });
+
+    var data = {
+        "playerSize":playerSize
+    };
+
+    jsonfile.writeFile('data/gamedata.json', data, {spaces: 4},function(err){
         if(err){
             console.log(err);
         }
@@ -2757,7 +2762,8 @@ function mergeTeams(oldID, newID, p){
                     "token": players[pp].token,
                     "id": players[pp].id,
                     "name": players[pp].info.name,
-                    "powerLevel": players[pp].info.powerLevel
+                    "powerLevel": players[pp].info.powerLevel,
+                    "online": teamData[oldID].members[m].online
                 });
                 break;
             }
@@ -2784,7 +2790,8 @@ function changeRole(token, teamID, role){
                     "token": players[p].token,
                     "id": players[p].id,
                     "name": players[p].info.name,
-                    "powerLevel": players[p].info.powerLevel
+                    "powerLevel": players[p].info.powerLevel,
+                    "online": players[p].info.connected >= dcCountdown
                 };
             }
             else if(role==="ADMIN"){
@@ -2792,7 +2799,8 @@ function changeRole(token, teamID, role){
                     "token": players[p].token,
                     "id": players[p].id,
                     "name": players[p].info.name,
-                    "powerLevel": players[p].info.powerLevel
+                    "powerLevel": players[p].info.powerLevel,
+                    "online": players[p].info.connected >= dcCountdown
                 });
             }
             else if(players[p].info.teamRole==="ADMIN"){
@@ -2833,7 +2841,7 @@ function updatePower(p){
     var teamID = p.info.teamID;
     var token = p.token;
 
-    if(teamID > -1){
+    if(teamID > -1 && teamID < teamData.length){
         if(teamData[teamID].status !== "DELETED"){
             if(p.info.teamRole==="LEADER"){
                 teamData[teamID].leader.powerLevel = p.info.powerLevel;
@@ -2861,14 +2869,44 @@ function updatePower(p){
 function initTeamClean(){
     for(var t in teamData){
         if(teamData[t].status!=="DELETED"){
-            teamData[t].leader.id = -1;
+            teamData[t].leader.online = false;
             for(var a in teamData[t].admins){
-                teamData[t].admins[a].id = -1;
+                teamData[t].admins[a].online = false;
             }
             for(var m in teamData[t].members){
-                teamData[t].members[m].id = -1;
+                teamData[t].members[m].online = false;
             }
         }
 
+    }
+
+    saveGameData();
+}
+
+function changeOnlineStatus(p, status){
+    var teamID = p.info.teamID;
+    var token = p.token;
+
+    if(teamID > -1 && teamID < teamData.length){
+        if(teamData[teamID].status !== "DELETED"){
+            if(p.info.teamRole==="LEADER"){
+                teamData[teamID].leader.online = status;
+            }
+            else if(p.info.teamRole==="ADMIN"){
+                for(var a in teamData[teamID].admins){
+                    if(teamData[teamID].admins[a].token===token){
+                        teamData[teamID].admins[a].online = status;
+                        break;
+                    }
+                }
+            }
+
+            for(var m in teamData[teamID].members){
+                if(teamData[teamID].members[m].token===token){
+                    teamData[teamID].members[m].online = status;
+                    break;
+                }
+            }
+        }
     }
 }

@@ -1411,7 +1411,7 @@ function drawSideBar(){
         ctx.beginPath();
         ctx.fillStyle = colors.hudColor;
         ctx.font = "18px Courier";
-        ctx.fillText("ID   : "+me.info.name,5,sCardHei+20);
+        ctx.fillText("NAME : "+me.info.name,5,sCardHei+20);
         if(me.info.teamID>-1){
             ctx.fillText("TEAM : "+teamList[me.info.teamID].name,5,sCardHei+40);
             ctx.fillText("ROLE : "+me.info.teamRole,5,sCardHei+60);
@@ -2448,7 +2448,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         ctx.font = "bold 16pt Courier";
         ctx.fillText("LEADER",sX+5, sY+45);
         ctx.strokeRect(sX+5,sY+55,250,30);
-        if(teamList[id].leader.id>-1) ctx.fillStyle=colors.hudColor;
+        if(teamList[id].leader.online) ctx.fillStyle=colors.hudColor;
         else ctx.fillStyle = colors.cantBuyColor;
         ctx.fillText(teamList[id].leader.name,sX+7, sY+75);
         ctx.fillText(teamList[id].leader.powerLevel,sX+217, sY+75);
@@ -2470,7 +2470,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
             }
 
             ctx.globalAlpha = 1.0;
-            if(teamList[id].admins[i].id>-1) ctx.fillStyle=colors.hudColor;
+            if(teamList[id].admins[i].online) ctx.fillStyle=colors.hudColor;
             else ctx.fillStyle = colors.cantBuyColor;
             ctx.fillText(teamList[id].admins[i].name,sX+10,sY+145+20*i);
             ctx.fillText(teamList[id].admins[i].powerLevel,sX+218,sY+145+20*i);
@@ -2514,7 +2514,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
             ctx.globalAlpha = 1.0;
 
 
-            if(memList[i].id>-1) ctx.fillStyle=colors.hudColor;
+            if(memList[i].online) ctx.fillStyle=colors.hudColor;
             else ctx.fillStyle = colors.cantBuyColor;
             ctx.fillText(memList[i].name,sX+wid/2-10,sY+75+20*yAdj);
             ctx.fillText(memList[i].powerLevel,sX+wid/2+200,sY+75+20*yAdj);
@@ -2985,7 +2985,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
         ctx.font = "20px Courier";
 
         //Join
-        if(mX < sX+105 && mX > sX+25 &&
+        if(mX < sX+wid/2+40 && mX > sX+wid/2-40 &&
            mY < sY+hei-15 && mY > sY+hei-45){
             ctx.fillStyle = colors.hudColor;
             ctx.fillRect(sX+wid/2-40,sY+hei-45,80,30);
@@ -2995,26 +2995,161 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
         }
         else{
             ctx.strokeStyle = colors.hudColor;
-            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.strokeRect(sX+wid/2-40,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudColor;
-            ctx.fillText("RECON",sX+35,sY+hei-25);
+            ctx.fillText("RECON",sX+wid/2-30,sY+hei-25);
+        }
+    }
+    else if(confirmDialog==4){ //Action
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("ACTIONS",sX+25,sY+25);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Promote
+        if(mX < sX+wid/2+40 && mX > sX+wid/2-40 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid/2-40,sY+45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("PROMOTE",sX+wid/2-40,sY+65);
+            confirmHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+wid/2-40,sY+45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("PROMOTE",sX+wid/2-40,sY+65);
         }
 
-        // //Cancel
-        // if(mX < sX+wid-25 && mX > sX+wid-105 &&
-        //    mY < sY+hei-15 && mY > sY+hei-45){
-        //     ctx.fillStyle = colors.hudColor;
-        //     ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
-        //     ctx.fillStyle = colors.hudBackColor;
-        //     ctx.fillText("QUIT",sX+wid-90,sY+hei-25);
-        //     confirmHover = 1;
-        // }
-        // else{
-        //     ctx.strokeStyle = colors.hudColor;
-        //     ctx.strokeRect(sX+wid-105,sY+hei-45,80,30);
-        //     ctx.fillStyle = colors.hudColor;
-        //     ctx.fillText("QUIT",sX+wid-90,sY+hei-25);
-        // }
+    }
+    else if(confirmDialog==5){ //promote
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("Are you sure you ",sX+25,sY+25);
+        ctx.fillText("want to promote ",sX+25,sY+45);
+        ctx.fillText(players[valueLock].name+"?",sX+25,sY+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Promote
+        if(mX < sX+105 && mX > sX+25 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("PROMOTE",sX+26,sY+hei-25);
+            confirmHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("PROMOTE",sX+26,sY+hei-25);
+        }
+
+        //Cancel
+        if(mX < sX+wid-25 && mX > sX+wid-105 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+            confirmHover = 1;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+        }
+    }
+    else if(confirmDialog==6){ //demote
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("Are you sure you ",sX+25,sY+25);
+        ctx.fillText("want to demote ",sX+25,sY+45);
+        ctx.fillText(players[valueLock].name+"?",sX+25,sY+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Demote
+        if(mX < sX+105 && mX > sX+25 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("DEMOTE",sX+28,sY+hei-25);
+            confirmHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("DEMOTE",sX+28,sY+hei-25);
+        }
+
+        //Cancel
+        if(mX < sX+wid-25 && mX > sX+wid-105 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+            confirmHover = 1;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+        }
+    }
+    else if(confirmDialog==7){ //remove
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("Are you sure you ",sX+25,sY+25);
+        ctx.fillText("want to remove ",sX+25,sY+45);
+        ctx.fillText(players[valueLock].name+"?",sX+25,sY+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Remove
+        if(mX < sX+105 && mX > sX+25 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("REMOVE",sX+28,sY+hei-25);
+            confirmHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("REMOVE",sX+28,sY+hei-25);
+        }
+
+        //Cancel
+        if(mX < sX+wid-25 && mX > sX+wid-105 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+            confirmHover = 1;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+        }
     }
 }
 
@@ -3302,6 +3437,21 @@ function handleMousedown(e){
                 location.reload();
             }
         }
+        else if(confirmDialog==4){
+            if(confirmHover==0){
+                confirmDialog = 5;
+            }
+            else if(confirmHover==1){
+                confirmDialog = 6;
+            }
+            else if(confirmHover==2){
+                confirmDialog = 7;
+            }
+            else if(confirmHover==3){
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+        }
     }
     else if(joinTeamMenu){
         if(joinTeamHover==="CREATE"){
@@ -3341,6 +3491,10 @@ function handleMousedown(e){
         }
         else if(curTeamTab==1){
             console.log(teamMenuHover);
+            if(teamMenuHover!=-1){
+                valueLock = teamMenuHover.id;
+                confirmDialog = 4;
+            }
         }
         else if(curTeamTab==3){
             if(teamMenuHover[0]==="MEMBERSHIP"){
@@ -3506,7 +3660,6 @@ function handleMouseWheel(e){
 // Utility Functions
 //******************************************************************************
 function displayModal(color, _callback){
-    var first = false;
     $(".modal").toggle(true);
     $("#custom").off('change.spectrum');
     $(document).off('click');
@@ -3685,16 +3838,17 @@ function filterMemberList(members, admins, leader){
         mems.push({
             "id":members[m].id,
             "name":members[m].name,
-            "powerLevel":members[m].powerLevel
+            "powerLevel":members[m].powerLevel,
+            "online": members[m].online
         });
     }
 
     //Sort the list
     mems.sort(function(a, b){
-        var idA = a.id, idB = b.id;
+        var idA = a.online, idB = b.online;
 
-        if(idA > idB) return -1;
-        if(idA < idB) return 1;
+        if(idA && !idB) return -1;
+        if(!idA && idB) return 1;
         return 0;
     });
 
