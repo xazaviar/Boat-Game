@@ -28,24 +28,22 @@ var intervalTimer;
 var tick = 50;
 var lastRound = -1;
 
+var mouseHover = -1;
+
 //Team Data
 var joinTeamMenu = false;
 var teamRec = [];
-var joinTeamHover = -1;
 var joinTeamScroll = 0;
 
 var createTeamMenu = false;
 var tName = '';
 var bColor = "#00FF00", aColor = "#FFFFFF", bShape = "DIAMOND";
-var createTeamHover = -1;
 var createTeamError = "";
 
 var confirmDialog = -1;
-var confirmHover = -1;
 var valueLock = -1;
 
 var teamMenu = false;
-var teamMenuHover = -1;
 var teamSetSaved = false;
 var teamScroll = 0;
 var curTeamTab = 0;
@@ -53,7 +51,6 @@ var curSettings;
 
 //PlayerList
 var playerListMenu = false;
-var playerListHover = -1;
 var playerListScroll = 0
 
 //Chat data
@@ -222,6 +219,7 @@ function newData(){
         activeAttacks = data.user.activeAttacks;
 
         firstData = true;
+        if(curSettings==null && me.info.teamID>-1) curSettings = teamList[me.info.teamID].settings;
 
         //Update Tabs
         baseStore = [
@@ -724,8 +722,12 @@ function createTeam(){
             },
             error: function(xhr, status, error){
                 createTeamError = "";
-                createTeamHover = -1;
+                mouseHover = -1;
+                $(".input1").toggle(false);
+                $(".input2").toggle(false);
                 createTeamMenu = false;
+                teamMenu = true;
+                curTeamTab = 3;
             }
         });
     }else{
@@ -779,6 +781,106 @@ function updateTeamSettings(){
         error: function(xhr, status, error){
             // console.log('Add Project Error: ' + error.message);
             teamSetSaved = true;
+        }
+    });
+}
+
+function promote(id){
+    var dat = {
+        "token": me.token,
+        "id": me.id,
+        "target": id
+    };
+
+    $.ajax({
+        url: "/promote",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+            confirmDialog = -1;
+            valueLock = -1;
+        }
+    });
+}
+
+function demote(id){
+    var dat = {
+        "token": me.token,
+        "id": me.id,
+        "target": id
+    };
+
+    $.ajax({
+        url: "/demote",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+            confirmDialog = -1;
+            valueLock = -1;
+        }
+    });
+}
+
+function remove(id){
+    var dat = {
+        "token": me.token,
+        "id": me.id,
+        "target": id
+    };
+
+    $.ajax({
+        url: "/remove",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+            confirmDialog = -1;
+            valueLock = -1;
+        }
+    });
+}
+
+function invite(id){
+    var dat = {
+        "token": me.token,
+        "id": me.id,
+        "target": id
+    };
+
+    $.ajax({
+        url: "/invite",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+            confirmDialog = -1;
+            valueLock = -1;
         }
     });
 }
@@ -1427,7 +1529,7 @@ function drawSideBar(){
         ctx.fillText("KILLS: "+me.info.kills+" | DEATHS: "+me.info.deaths,5,sCardHei+160);
         ctx.fillText("SCANS: "+me.info.scans+" | HAULS: "+me.info.hauls,5,sCardHei+180);
         ctx.fillText("TRAPS: "+me.info.traps,5,sCardHei+200);
-        ctx.fillText("SAVED: "+(cookie!=""?"TRUE":"FALSE"),5,sCardHei+220);
+        ctx.fillText("SAVED: "+(cookie===me.token?"TRUE":"FALSE"),5,sCardHei+220);
 
         //Toggle Save button
         ctx.font = "24px Courier";
@@ -1766,7 +1868,7 @@ function drawMap(ctx, startX, startY, width, height){
                     ctx.beginPath();
                     ctx.fillStyle = colors.hudColor;
                     ctx.strokeStyle = colors.hudColor;
-                    ctx.arc(x*tileSize+tileSize/2+startX,y*tileSize+tileSize/2+startY,tileSize/4,0,2*Math.PI);
+                    ctx.arc(x*tileSize+tileSize/2+startX,y*tileSize+tileSize/2+startY, tileSize/4 ,0,2*Math.PI);
                     ctx.fill();
 
                     ctx.beginPath();
@@ -2087,7 +2189,7 @@ function drawJoinTeam(ctx, startX, startY, width, height){
     //Seperator
     ctx.strokeRect(sX,sY,wid,150);
 
-    joinTeamHover = -1;
+    mouseHover = -1;
 
     //Suggested Teams
     ctx.fillStyle = colors.hudColor;
@@ -2109,7 +2211,7 @@ function drawJoinTeam(ctx, startX, startY, width, height){
         if(mX < sX+wid/60+wid/3*i+180 && mX > sX+wid/60+wid/3*i &&
            mY < sY+130 && mY > sY+55){
             ctx.globalAlpha = 1.0;
-            joinTeamHover = teamRec[i];
+            mouseHover = teamRec[i];
         }else{
             ctx.globalAlpha = 0.8;
         }
@@ -2143,7 +2245,7 @@ function drawJoinTeam(ctx, startX, startY, width, height){
         ctx.fillRect(sX+wid-150,sY+10,140,20);
         ctx.fillStyle = colors.hudBackColor;
         ctx.fillText("+ CREATE TEAM",sX+wid-145,sY+25);
-        joinTeamHover = "CREATE";
+        mouseHover = "CREATE";
     }
     else{
         ctx.strokeStyle = colors.hudColor;
@@ -2187,7 +2289,7 @@ function drawJoinTeam(ctx, startX, startY, width, height){
                 ctx.fillStyle = colors.hudColor;
                 ctx.globalAlpha = 0.3;
                 ctx.fillRect(sX+6,sY+37+20*yAdj,wid-50,17);
-                joinTeamHover = i;
+                mouseHover = i;
             }
             ctx.fillStyle = teamList[i].colors.areaColor;
             ctx.globalAlpha = 0.5;
@@ -2226,7 +2328,7 @@ function drawCreateTeam(ctx, startX, startY, width, height){
     ctx.fillRect(sX,sY,wid,hei);
     ctx.stroke();
 
-    createTeamHover = -1;
+    mouseHover = -1;
     $(".input1").toggle(!(confirmDialog>-1));
     $(".input2").toggle(!(confirmDialog>-1));
 
@@ -2253,7 +2355,7 @@ function drawCreateTeam(ctx, startX, startY, width, height){
         if(mX < sX+200+i*30 && mX > sX+170+i*30 &&
            mY < sY+120 && mY > sY+90){
             ctx.strokeRect(sX+170+30*i,sY+90,30,30);
-            createTeamHover = i;
+            mouseHover = i;
         }
         if(bShape===styles[i]){
             ctx.globalAlpha = 0.5;
@@ -2283,7 +2385,7 @@ function drawCreateTeam(ctx, startX, startY, width, height){
        mY < sY+145 && mY > sY+125){
         ctx.strokeStyle = colors.hudColor;
         ctx.strokeRect(sX+170,sY+125,150,20);
-        createTeamHover = "BASE";
+        mouseHover = "BASE";
     }
 
 
@@ -2307,7 +2409,7 @@ function drawCreateTeam(ctx, startX, startY, width, height){
        mY < sY+175 && mY > sY+155){
         ctx.strokeStyle = colors.hudColor;
         ctx.strokeRect(sX+170,sY+155,150,20);
-        createTeamHover = "AREA";
+        mouseHover = "AREA";
     }
 
 
@@ -2343,7 +2445,7 @@ function drawCreateTeam(ctx, startX, startY, width, height){
         ctx.fillRect(sX+wid/2-75,sY+hei-45,150,30);
         ctx.fillStyle = colors.hudBackColor;
         ctx.fillText("CREATE TEAM",sX+wid/2-65,sY+hei-25);
-        createTeamHover = "CREATE";
+        mouseHover = "CREATE";
     }
     else{
         ctx.strokeStyle = colors.hudColor;
@@ -2371,7 +2473,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
     ctx.fillRect(sX,sY,wid,hei);
     ctx.stroke();
 
-    teamMenuHover = -1;
+    mouseHover = -1;
 
     //Draw Tabs
     ctx.strokeStyle=colors.hudColor;
@@ -2395,7 +2497,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
 
         if(mX > sX+wid+1 && mX < sX+wid+51 &&
            mY > sY+tHei*i && mY < sY+tHei*i+tHei){
-            teamMenuHover = i;
+            mouseHover = i;
             ctx.globalAlpha = 0.5;
             ctx.fillStyle=colors.hudColor;
             ctx.fillRect(sX+wid+1,sY+tHei*i,50,tHei);
@@ -2466,7 +2568,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
                 ctx.fillStyle = colors.hudColor;
                 ctx.globalAlpha = 0.3;
                 ctx.fillRect(sX+8,sY+129+20*i,243,20);
-                teamMenuHover = {"id":teamList[id].admins[i].id,"type":"ADMIN"};
+                mouseHover = {"id":teamList[id].admins[i].id,"type":"ADMIN"};
             }
 
             ctx.globalAlpha = 1.0;
@@ -2508,7 +2610,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
                 ctx.fillStyle = colors.hudColor;
                 ctx.globalAlpha = 0.3;
                 ctx.fillRect(sX+wid/2-15,sY+58+20*yAdj,wid/2-50,20);
-                teamMenuHover = {"id":memList[i].id,"type":"MEM"};
+                mouseHover = {"id":memList[i].id,"type":"MEM"};
             }
 
             ctx.globalAlpha = 1.0;
@@ -2583,7 +2685,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
             {
                 "text": "PROFIT SPLIT :",
                 "input": "PROFIT",
-                "opts": ["FAIR","AD ONLY","LEADER"],
+                "opts": ["FAIR","AD 50%","AD ONLY","LD 50%","LEADER"],
                 "curOpt": curSettings.profitDivide
             },
             {
@@ -2623,7 +2725,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
 
                 if(mX < sX+5+i*120+110 && mX > sX+5+i*120 &&
                    mY < setHei+35 && mY > setHei+15 && me.info.teamRole==="LEADER"){
-                    teamMenuHover = [settingOptions[set].input,settingOptions[set].opts[i]];
+                    mouseHover = [settingOptions[set].input,settingOptions[set].opts[i]];
                     ctx.fillStyle=colors.hudColor;
                     ctx.globalAlpha = .5;
                     ctx.fillRect(sX+5+i*120,setHei+15,110,20);
@@ -2639,7 +2741,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         setHei = sY+hei - 50;
         if(mX < sX+wid-20 && mX > sX+wid-120 &&
            mY < setHei+35 && mY > setHei && me.info.teamRole==="LEADER"){
-            teamMenuHover = "SAVE";
+            mouseHover = "SAVE";
             ctx.fillRect(sX+wid-120,setHei,100,35);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("SAVE",sX+wid-105,setHei+25);
@@ -2669,7 +2771,7 @@ function drawPlayerList(ctx, startX, startY, width, height){
     ctx.fillRect(sX,sY,wid,hei);
     ctx.stroke();
 
-    playerListHover = -1;
+    mouseHover = -1;
 
     ctx.fillStyle = colors.hudColor;
     ctx.font = "bold 24pt Courier";
@@ -2715,7 +2817,7 @@ function drawPlayerList(ctx, startX, startY, width, height){
                 ctx.fillStyle = colors.hudColor;
                 ctx.globalAlpha = 0.3;
                 ctx.fillRect(sX+6,sY+37+20*yAdj,wid-50,17);
-                playerListHover = filteredList[i].id;
+                mouseHover = filteredList[i].id;
             }
 
             ctx.fillStyle = colors.hudColor;
@@ -2838,7 +2940,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
     var wid = width-(sX-startX)*2;
     var hei = height-(sY-startY)*2;
 
-    confirmHover = -1;
+    mouseHover = -1;
 
     ctx.beginPath();
     ctx.strokeStyle = colors.hudColor;
@@ -2865,7 +2967,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+25,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("JOIN",sX+40,sY+hei-25);
-            confirmHover = 0;
+            mouseHover = 0;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -2881,7 +2983,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
-            confirmHover = 1;
+            mouseHover = 1;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -2907,7 +3009,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+25,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("CREATE",sX+30,sY+hei-25);
-            confirmHover = 0;
+            mouseHover = 0;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -2923,7 +3025,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
-            confirmHover = 1;
+            mouseHover = 1;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -2949,7 +3051,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+25,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("MERGE",sX+35,sY+hei-25);
-            confirmHover = 0;
+            mouseHover = 0;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -2965,7 +3067,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("SPLIT",sX+wid-95,sY+hei-25);
-            confirmHover = 1;
+            mouseHover = 1;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -2991,7 +3093,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+wid/2-40,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("RECON",sX+wid/2-30,sY+hei-25);
-            confirmHover = 0;
+            mouseHover = 0;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -3003,26 +3105,32 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
     else if(confirmDialog==4){ //Action
         ctx.fillStyle = colors.hudColor;
         ctx.font = "18px Courier";
-        ctx.fillText("ACTIONS",sX+25,sY+25);
+        ctx.fillText("ACTIONS",sX+wid/2-45,sY+25);
         ctx.beginPath();
         ctx.globalAlpha = 1.0;
         ctx.font = "20px Courier";
 
-        //Promote
-        if(mX < sX+wid/2+40 && mX > sX+wid/2-40 &&
-           mY < sY+hei-15 && mY > sY+hei-45){
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillRect(sX+wid/2-40,sY+45,80,30);
-            ctx.fillStyle = colors.hudBackColor;
-            ctx.fillText("PROMOTE",sX+wid/2-40,sY+65);
-            confirmHover = 0;
+        var actOpts = ["PROMOTE","DEMOTE","REMOVE","CANCEL"];
+        for(var i = 0; i < actOpts.length; i++){
+            var yAdj = parseInt(i/2);
+            if(valueLock.type!=="MEM" || (actOpts[i]!=="DEMOTE" && valueLock.type==="MEM")){
+                if(mX < sX+120+120*(i%2) && mX > sX+20+120*(i%2) &&
+                   mY < sY+75+yAdj*50 && mY > sY+45+yAdj*50){
+                    ctx.fillStyle = colors.hudColor;
+                    ctx.fillRect(sX+20+120*(i%2),sY+45+yAdj*50,100,30);
+                    ctx.fillStyle = colors.hudBackColor;
+                    ctx.fillText(actOpts[i],sX+25+120*(i%2),sY+65+yAdj*50);
+                    mouseHover = i;
+                }
+                else{
+                    ctx.strokeStyle = colors.hudColor;
+                    ctx.strokeRect(sX+20+120*(i%2),sY+45+yAdj*50,100,30);
+                    ctx.fillStyle = colors.hudColor;
+                    ctx.fillText(actOpts[i],sX+25+120*(i%2),sY+65+yAdj*50);
+                }
+            }
         }
-        else{
-            ctx.strokeStyle = colors.hudColor;
-            ctx.strokeRect(sX+wid/2-40,sY+45,80,30);
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillText("PROMOTE",sX+wid/2-40,sY+65);
-        }
+
 
     }
     else if(confirmDialog==5){ //promote
@@ -3030,23 +3138,23 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
         ctx.font = "18px Courier";
         ctx.fillText("Are you sure you ",sX+25,sY+25);
         ctx.fillText("want to promote ",sX+25,sY+45);
-        ctx.fillText(players[valueLock].name+"?",sX+25,sY+65);
+        ctx.fillText(players[valueLock.id].name+"?",sX+25,sY+65);
         ctx.beginPath();
         ctx.globalAlpha = 1.0;
         ctx.font = "20px Courier";
 
         //Promote
-        if(mX < sX+105 && mX > sX+25 &&
+        if(mX < sX+115 && mX > sX+25 &&
            mY < sY+hei-15 && mY > sY+hei-45){
             ctx.fillStyle = colors.hudColor;
-            ctx.fillRect(sX+25,sY+hei-45,80,30);
+            ctx.fillRect(sX+25,sY+hei-45,90,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("PROMOTE",sX+26,sY+hei-25);
-            confirmHover = 0;
+            mouseHover = 0;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
-            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.strokeRect(sX+25,sY+hei-45,90,30);
             ctx.fillStyle = colors.hudColor;
             ctx.fillText("PROMOTE",sX+26,sY+hei-25);
         }
@@ -3058,7 +3166,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
-            confirmHover = 1;
+            mouseHover = 1;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -3072,7 +3180,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
         ctx.font = "18px Courier";
         ctx.fillText("Are you sure you ",sX+25,sY+25);
         ctx.fillText("want to demote ",sX+25,sY+45);
-        ctx.fillText(players[valueLock].name+"?",sX+25,sY+65);
+        ctx.fillText(players[valueLock.id].name+"?",sX+25,sY+65);
         ctx.beginPath();
         ctx.globalAlpha = 1.0;
         ctx.font = "20px Courier";
@@ -3084,7 +3192,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+25,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("DEMOTE",sX+28,sY+hei-25);
-            confirmHover = 0;
+            mouseHover = 0;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -3100,7 +3208,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
-            confirmHover = 1;
+            mouseHover = 1;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -3114,7 +3222,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
         ctx.font = "18px Courier";
         ctx.fillText("Are you sure you ",sX+25,sY+25);
         ctx.fillText("want to remove ",sX+25,sY+45);
-        ctx.fillText(players[valueLock].name+"?",sX+25,sY+65);
+        ctx.fillText(players[valueLock.id].name+"?",sX+25,sY+65);
         ctx.beginPath();
         ctx.globalAlpha = 1.0;
         ctx.font = "20px Courier";
@@ -3126,7 +3234,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+25,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("REMOVE",sX+28,sY+hei-25);
-            confirmHover = 0;
+            mouseHover = 0;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -3142,7 +3250,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
             ctx.fillStyle = colors.hudBackColor;
             ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
-            confirmHover = 1;
+            mouseHover = 1;
         }
         else{
             ctx.strokeStyle = colors.hudColor;
@@ -3151,6 +3259,49 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
             ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
         }
     }
+    else if(confirmDialog==8){ //invite
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("Are you sure you ",sX+25,sY+25);
+        ctx.fillText("want to invite ",sX+25,sY+45);
+        ctx.fillText(players[valueLock].name+"?",sX+25,sY+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Join
+        if(mX < sX+105 && mX > sX+25 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("INVITE",sX+30,sY+hei-25);
+            mouseHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+25,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("INVITE",sX+30,sY+hei-25);
+        }
+
+        //Cancel
+        if(mX < sX+wid-25 && mX > sX+wid-105 &&
+           mY < sY+hei-15 && mY > sY+hei-45){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+            mouseHover = 1;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+wid-105,sY+hei-45,80,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("CANCEL",sX+wid-100,sY+hei-25);
+        }
+    }
+
 }
 
 
@@ -3228,6 +3379,7 @@ function handleKeydown(e){
         teamMenu = false;
         createTeamMenu = false;
         shopMode = false;
+        confirmDialog = -1;
     }
     else if(keyCode == 56){
         joinTeamMenu = !joinTeamMenu;
@@ -3235,6 +3387,7 @@ function handleKeydown(e){
         createTeamMenu = false;
         playerListMenu = false;
         shopMode = false;
+        confirmDialog = -1;
 
         if(joinTeamMenu){
             teamRec = [];
@@ -3246,6 +3399,7 @@ function handleKeydown(e){
         createTeamMenu = false;
         teamMenu = false;
         shopMode = false;
+        confirmDialog = -1;
     }
     else if(keyCode == 48){
         teamMenu = !teamMenu;
@@ -3253,6 +3407,7 @@ function handleKeydown(e){
         createTeamMenu = false;
         playerListMenu = false;
         shopMode = false;
+        confirmDialog = -1;
     }
     else if(keyCode == 73){  //i
         statInfo = !statInfo;
@@ -3379,7 +3534,7 @@ function handleMousedown(e){
     }
     else if(confirmDialog>-1){
         if(confirmDialog==0){
-            if(confirmHover==0){ //join
+            if(mouseHover==0){ //join
                 var type = "none";
 
                 if(me.info.teamID>-1){
@@ -3388,147 +3543,185 @@ function handleMousedown(e){
                     }
                     else{
                         joinTeam(valueLock,type);
-                        confirmHover = -1;
+                        mouseHover = -1;
                         confirmDialog = -1;
                         valueLock = -1;
                     }
                 }
                 else{
                     joinTeam(valueLock,type);
-                    confirmHover = -1;
+                    mouseHover = -1;
                     confirmDialog = -1;
                     valueLock = -1;
                 }
-            }else if(confirmHover==1){
-                confirmHover = -1;
+            }else if(mouseHover==1){
+                mouseHover = -1;
                 confirmDialog = -1;
                 valueLock = -1;
             }
         }
         else if(confirmDialog==1){
-            if(confirmHover==0){ //join
+            if(mouseHover==0){ //join
                 createTeam();
-                confirmHover = -1;
+                mouseHover = -1;
                 confirmDialog = -1;
                 valueLock = -1;
-            }else if(confirmHover==1){
-                confirmHover = -1;
+            }else if(mouseHover==1){
+                mouseHover = -1;
                 confirmDialog = -1;
                 valueLock = -1;
             }
         }
         else if(confirmDialog==2){
-            if(confirmHover==0){
+            if(mouseHover==0){
                 joinTeam(valueLock,"MERGE");
-                confirmHover = -1;
+                mouseHover = -1;
                 confirmDialog = -1;
                 valueLock = -1;
             }
-            else if(confirmHover==1){
+            else if(mouseHover==1){
                 joinTeam(valueLock,"SPLIT");
-                confirmHover = -1;
+                mouseHover = -1;
                 confirmDialog = -1;
                 valueLock = -1;
             }
         }
         else if(confirmDialog==3){
-            if(confirmHover==0){
+            if(mouseHover==0){
                 document.cookie = "token="+me.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
                 location.reload();
             }
         }
         else if(confirmDialog==4){
-            if(confirmHover==0){
+            if(mouseHover==0){
                 confirmDialog = 5;
             }
-            else if(confirmHover==1){
+            else if(mouseHover==1){
                 confirmDialog = 6;
             }
-            else if(confirmHover==2){
+            else if(mouseHover==2){
                 confirmDialog = 7;
             }
-            else if(confirmHover==3){
+            else if(mouseHover==3){
                 confirmDialog = -1;
                 valueLock = -1;
             }
         }
+        else if(confirmDialog==5){
+            if(mouseHover==0){
+                promote(valueLock.id);
+            }
+            else if(mouseHover==1){
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+        }
+        else if(confirmDialog==6){
+            if(mouseHover==0){
+                demote(valueLock.id);
+            }
+            else if(mouseHover==1){
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+        }
+        else if(confirmDialog==7){
+            if(mouseHover==0){
+                remove(valueLock.id);
+            }
+            else if(mouseHover==1){
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+        }
+        else if(confirmDialog==8){
+            if(mouseHover==0){
+                invite(valueLock.id);
+            }
+            else if(mouseHover==1){
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+        }
+
     }
     else if(joinTeamMenu){
-        if(joinTeamHover==="CREATE"){
+        if(mouseHover==="CREATE"){
             createTeamMenu = true;
             joinTeamMenu = false;
         }
-        else if(joinTeamHover>-1){
+        else if(mouseHover>-1){
             confirmDialog = 0;
-            valueLock = joinTeamHover;
+            valueLock = mouseHover;
         }
     }
     else if(createTeamMenu){
-        if(createTeamHover==="CREATE"){
+        if(mouseHover==="CREATE"){
             confirmDialog = 1;
-            valueLock = joinTeamHover;
+            valueLock = mouseHover;
         }
-        else if(createTeamHover==="CANCEL"){
+        else if(mouseHover==="CANCEL"){
             createTeamMenu = false;
         }
         else{
-            if(createTeamHover == 0){
+            if(mouseHover == 0){
                 bShape = "DIAMOND";
-            }else if(createTeamHover == 1){
+            }else if(mouseHover == 1){
                 bShape = "TRIANGLE";
-            }else if(createTeamHover == 2){
+            }else if(mouseHover == 2){
                 bShape = "CIRCLE";
             }
         }
     }
     else if(teamMenu){
-        if(teamMenuHover < 4 && teamMenuHover > -1){
-            curTeamTab = teamMenuHover;
+        if(mouseHover < 4 && mouseHover > -1){
+            curTeamTab = mouseHover;
 
             if(curTeamTab==3){ //Snapshot settings
                 curSettings = teamList[me.info.teamID].settings;
             }
         }
         else if(curTeamTab==1){
-            console.log(teamMenuHover);
-            if(teamMenuHover!=-1){
-                valueLock = teamMenuHover.id;
+            if(mouseHover!=-1){
+                valueLock = mouseHover;
                 confirmDialog = 4;
             }
         }
         else if(curTeamTab==3){
-            if(teamMenuHover[0]==="MEMBERSHIP"){
-                curSettings.membership = teamMenuHover[1];
+            if(mouseHover[0]==="MEMBERSHIP"){
+                curSettings.membership = mouseHover[1];
                 teamSetSaved = false;
             }
-            else if(teamMenuHover[0]==="PING"){
-                curSettings.ping = teamMenuHover[1];
+            else if(mouseHover[0]==="PING"){
+                curSettings.ping = mouseHover[1];
                 teamSetSaved = false;
             }
-            else if(teamMenuHover[0]==="BUILD"){
-                curSettings.building = teamMenuHover[1];
+            else if(mouseHover[0]==="BUILD"){
+                curSettings.building = mouseHover[1];
                 teamSetSaved = false;
             }
-            else if(teamMenuHover[0]==="UPGRADE"){
-                curSettings.upgrading = teamMenuHover[1];
+            else if(mouseHover[0]==="UPGRADE"){
+                curSettings.upgrading = mouseHover[1];
                 teamSetSaved = false;
             }
-            else if(teamMenuHover[0]==="PROFIT"){
-                curSettings.profitDivide = teamMenuHover[1];
+            else if(mouseHover[0]==="PROFIT"){
+                curSettings.profitDivide = mouseHover[1];
                 teamSetSaved = false;
             }
-            else if(teamMenuHover[0]==="TAX"){
-                curSettings.tax = teamMenuHover[1];
+            else if(mouseHover[0]==="TAX"){
+                curSettings.tax = mouseHover[1];
                 teamSetSaved = false;
             }
-            else if(teamMenuHover==="SAVE"){
+            else if(mouseHover==="SAVE"){
                 updateTeamSettings();
             }
         }
     }
     else if(playerListMenu){
-        if(playerListHover > -1){
-            console.log(playerListHover);
+        if(mouseHover > -1){
+            console.log(mouseHover);
+            valueLock = mouseHover;
+            confirmDialog = 8;
         }
     }
     else if(shopMode && shop.withinShop=="SSHOP"){
@@ -3713,7 +3906,8 @@ function toggleSaving(){
     var cookie = getCookie("token");
     if(cookie===""){
         document.cookie = "token="+me.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
-    }else{
+    }
+    else{
         document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
     }
 }
@@ -3820,27 +4014,22 @@ function teamValidation(base, area){
 function filterMemberList(members, admins, leader){
     var mems = [];
     for(var m in members){
-        // if(members[m].id != leader.id){
-        //     var adm = false;
-        //     for(var a in admins){
-        //         if(members[m].id != admins[a].id){
-        //             adm = true;
-        //             break;
-        //         }
-        //     }
-        //     if(!adm)
-        //         mems.push({
-        //             "id":members[m].id,
-        //             "name":members[m].name,
-        //             "powerLevel":members[m].powerLevel
-        //         });
-        // }
-        mems.push({
-            "id":members[m].id,
-            "name":members[m].name,
-            "powerLevel":members[m].powerLevel,
-            "online": members[m].online
-        });
+        if(members[m].id != leader.id){
+            var adm = false;
+            for(var a in admins){
+                if(members[m].id != admins[a].id){
+                    adm = true;
+                    break;
+                }
+            }
+            if(!adm)
+                mems.push({
+                    "id":members[m].id,
+                    "name":members[m].name,
+                    "powerLevel":members[m].powerLevel,
+                    "online": members[m].online
+                });
+        }
     }
 
     //Sort the list
@@ -3858,7 +4047,7 @@ function filterMemberList(members, admins, leader){
 function filterPlayerList(list){
     var newList = [];
     for(var i = 0; i < list.length; i++){
-        if(typeof list[i].id !=="undefined")
+        if(typeof list[i].powerLevel !=="undefined")
             newList.push(list[i]);
     }
 
