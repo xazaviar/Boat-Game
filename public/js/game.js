@@ -2803,6 +2803,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
 
         //Draw save button
         ctx.beginPath();
+        ctx.globalAlpha = 1.0;
         ctx.font = "bold 20pt Courier";
         ctx.fillStyle=colors.hudColor;
         setHei = sY+hei - 50;
@@ -2840,11 +2841,15 @@ function drawPlayerList(ctx, startX, startY, width, height){
 
     mouseHover = -1;
 
+    var canInvite = false;
+    var setting = teamList[me.info.teamID].settings.membership;
+    if((me.info.teamRole!=="MEMBER" || (me.info.teamRole==="MEMBER" && setting!=="AD INV")) && me.info.teamID>-1) canInvite = true;
+
     ctx.fillStyle = colors.hudColor;
     ctx.font = "bold 24pt Courier";
     ctx.fillText("PLAYERS",sX+8,sY+30);
     ctx.font = "12pt Courier";
-    ctx.fillText("(click to invite)",sX+wid-180,sY+14);
+    if(canInvite)ctx.fillText("(click to invite)",sX+wid-180,sY+14);
 
     //Draw Scrollbar
     var filteredList = filterPlayerList(players);
@@ -2880,7 +2885,7 @@ function drawPlayerList(ctx, startX, startY, width, height){
     for(var i = playerListScroll; yAdj < drawAmount && i < filteredList.length; i++){
         if(typeof filteredList[i].name !=="undefined"){
             if(mX < sX+wid-50 && mX > sX+6 &&
-               mY < sY+37+20*yAdj+17 && mY > sY+37+20*yAdj){
+               mY < sY+37+20*yAdj+17 && mY > sY+37+20*yAdj && canInvite){
                 ctx.fillStyle = colors.hudColor;
                 ctx.globalAlpha = 0.3;
                 ctx.fillRect(sX+6,sY+37+20*yAdj,wid-50,17);
@@ -3180,7 +3185,7 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
         var actOpts = ["PROMOTE","DEMOTE","REMOVE","CANCEL"];
         for(var i = 0; i < actOpts.length; i++){
             var yAdj = parseInt(i/2);
-            if(valueLock.type!=="MEM" || (actOpts[i]!=="DEMOTE" && valueLock.type==="MEM")){
+            if((actOpts[i]!=="DEMOTE" && actOpts[i]!=="PROMOTE") || me.info.teamRole==="LEADER"){
                 if(mX < sX+120+120*(i%2) && mX > sX+20+120*(i%2) &&
                    mY < sY+75+yAdj*50 && mY > sY+45+yAdj*50){
                     ctx.fillStyle = colors.hudColor;
@@ -3786,10 +3791,12 @@ function handleMousedown(e){
         }
     }
     else if(playerListMenu){
-        if(mouseHover > -1){
-            valueLock = mouseHover;
-            confirmDialog = 8;
-        }
+        var setting = teamList[me.info.teamID].settings.membership;
+        if((me.info.teamRole!=="MEMBER" || (me.info.teamRole==="MEMBER" && setting!=="AD INV")) && me.info.teamID>-1)
+            if(mouseHover > -1){
+                valueLock = mouseHover;
+                confirmDialog = 8;
+            }
     }
     else if(shopMode && shop.withinShop=="SSHOP"){
        //Change tabs
@@ -3881,8 +3888,26 @@ function handleMousedown2(e){
 
     if(me.invites.length > 0){
         if(mouseHover==0){
-            confirmDialog = 0;
             valueLock = me.invites[0].id;
+            var type = "none";
+
+            if(me.info.teamID>-1){
+                if(me.info.teamRole==="LEADER" && teamList[me.info.teamID].members.length>1){
+                    confirmDialog = 2;
+                }
+                else{
+                    joinTeam(valueLock,type);
+                    mouseHover = -1;
+                    confirmDialog = -1;
+                    valueLock = -1;
+                }
+            }
+            else{
+                joinTeam(valueLock,type);
+                mouseHover = -1;
+                confirmDialog = -1;
+                valueLock = -1;
+            }
         }
         else if(mouseHover==1){
             declineInvite(me.invites[0].id);

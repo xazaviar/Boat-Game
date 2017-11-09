@@ -1204,7 +1204,11 @@ function startServer(){
                 //Merge previous team
                 if(p.info.teamID > -1 && p.info.teamRole==="LEADER")
                     mergeTeams(p.info.teamID, tid, p);
-                else
+                else{
+                    //Remove from previous team
+                    if(p.info.teamID>-1)
+                        removeFromTeam(p.id, p.info.teamID, "LEAVE");
+
                     teamData[tid].members.push({
                         "token": p.token,
                         "id": p.id,
@@ -1212,6 +1216,8 @@ function startServer(){
                         "powerLevel": p.info.powerLevel,
                         "online": true
                     });
+                }
+
 
                 p.info.teamID = tid;
                 p.info.teamRole = "LEADER";
@@ -1252,7 +1258,7 @@ function startServer(){
                 }
             }
 
-            if(setting==="OPEN" || hasInvite){
+            if((setting==="OPEN" || hasInvite) && teamID!=p.info.teamID){
                 if(type==="MERGE"){ //Merge Teams together
                     mergeTeams(p.info.teamID,teamID,p);
                 }
@@ -1301,7 +1307,7 @@ function startServer(){
                 }
 
                 if(hasInvite){
-                    for(var inv = 0; inv < p.invites.lengths; inv++){
+                    for(var inv = 0; inv < p.invites.length; inv++){
                         if(p.invites[inv].id===teamID){
                             p.invites.splice(inv,1);
                             inv--;
@@ -1309,6 +1315,10 @@ function startServer(){
                     }
                 }
             }
+        }
+        else if(teamID!=p.info.teamID){
+            var msg = {"type":"action", "msg": "You are already apart of that team."};
+            p.battleLog.unshift(msg);
         }
         else{
             var msg = {"type":"action", "msg": "You can't join this team without an invite."};
@@ -1541,8 +1551,6 @@ function startServer(){
         var id = req.body.id;
         var tid = req.body.tid;
 
-        console.log("HIT"+tid);
-
         //Validate token
         var p;
         if(players[id].status!=="OFFLINE")
@@ -1550,8 +1558,12 @@ function startServer(){
                 p = players[id];
 
         if(p!=null){
-            for(var inv = 0; inv < p.invites.lengths; inv++){
+            for(var inv = 0; inv < p.invites.length; inv++){
                 if(p.invites[inv].id===tid){
+                    if(players[p.invites[inv].invID].status!=="OFFLINE"){
+                        players[p.invites[inv].invID].battleLog.unshift({"type":"action", "msg": p.info.name+" declined your invite."});
+                    }
+
                     p.invites.splice(inv,1);
                     inv--;
                 }
