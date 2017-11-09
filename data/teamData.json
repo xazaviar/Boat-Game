@@ -28,6 +28,34 @@
                 "id": 9,
                 "name": "lkjh\\",
                 "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "mrJIiBwnDuh7Mse1EY5Njfxp57SBIHXtyAxPj9rxpw9ybHr9dqgW0BCOWdx112kt7z328TBejd3KXxfX3GC6RcuCoitcBHsUzb5QaDwxt7sfOR712ep3GHkMFJtHRPoyluvMo4Yej3DHM1Mw2AlGgJFsIFIEiAI7FviLQrC0WDXYdkq0pEgcPsufTSjnA6tcQmqLsBvM",
+                "id": 16,
+                "name": "asdfasdf",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "ZVsfd4D3aSdK74aOeQCNL9aOkiFAfWpcwga2q99WKb8yXdMCuwumNBd8dORprorhT1IseDmtMpim8gBKFcE5VJxA5ZgMOEmLSgvq8gmrFSjEj1P49GShyXQASgIswVVdSlsSsQrp8mPzyXGqWBdbZo6XLj5jUSiNlrT8CmzvOKsYVJnFbojVB5hKkbtLQ221LvfJEbEZ",
+                "id": 17,
+                "name": "aklsjd;f",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "tVCm3Lxwto1qmNAdz0q1xXZ26jxCAA8wBqPb1zr77oqFTwxMejwd4BOBCYWzCYpgl8Wbw98KVpHTH3oOB7Q9JyE2x6Q5ThndHXxhNlTJLjEP3FiRNkN83XQsTGp7LWSN35bXpoYyRitz7i1GNcdqPen5P9aThC5KtbegbeM082rK4Sv3CYtAHKyrBTwCoO92BlT2Gnab",
+                "id": 18,
+                "name": "asdfasdf",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "goGqCqRs5z7zL0h1IOcmkQLdHsviJweUoF4apJ0LgZIJ8CHYaIQ7Yn5k9UR0O7X6BtCqjZBCqJRtKFWnv26Q6M5AAyMvAKIAsRhzxiQRmAc2P6tv8wQBjyVnxgyBb1tbpbB1uNExv87lXdR500Ef0bQ4918VTAbW3qvUEutzVMSqbwTT8lsSMTr08aBjakgM8x4vORMK",
+                "id": 19,
+                "name": "asdf",
+                "powerLevel": 0,
                 "online": true
             }
         ],
@@ -204,14 +232,14 @@
                 "id": 7,
                 "name": "as",
                 "powerLevel": 0,
-                "online": true
+                "online": false
             },
             {
                 "token": "bmpcYqACsQz5gsA3C2jOIYVCxSXbLkEpRd3EJKMo5CJdQ94rdfSc7hwaOizIzocBm9hMNTfWlVgcpUNh4pLdBx0O0Yb1GZHBQtv2GfIaJJaek9dtGIkeGi8u2gTgKivXNHWSgXbCVBRBHfkSMV8aXAiYowIAnrfzKcaC0a5EYSFJz34lMIPvzNxQyo5JdcP4r1IHTtwc",
                 "id": 8,
                 "name": "8890890890[]",
                 "powerLevel": 0,
-                "online": true
+                "online": false
             }
         ],
         "gold": 0,
@@ -280,6 +308,135 @@
             "membership": "OPEN",
             "profitDivide": "FAIR",
             "tax": 75
+        }
+    },
+    {
+        "id": 6,
+        "name": "test ta",
+        "colors": {
+            "baseColor": "#c0a03f",
+            "areaColor": "#ff0071",
+            "baseShape": "TRIANGLE"
+        },
+        "leader": {
+            "token": "J4hVFPOp8NErNYkg8cftdIvDSXgfUeqhrMy4H1G1y6FOroFrQqf2toQfQ5pXmK1vWccKIT0vVqCtU8mCaoL2KbRkDEC9WUrfjmq9pHxGOGbXMDl6lc2BPLP9R29GVfpyAsQJLfrdzY5sWYMEVaACIr5GjJpAaJwY0nNHgzHNh6Fj80z2eAM1YmUdgXRCUJhyVK3mYtYh",
+            "id": 10,
+            "name": "test",
+            "powerLevel": 0,
+            "online": false
+        },
+        "admins": [
+            {
+                "token": "F4kIaQ1LNqn6W1tp3AFLKUDVp1QcgrbwjdUirXSJZgxzmFKtxki6oD4XAz6IefFvi7Z3R5yd7UACIXNrNn3BVHzTchFdtgBOaq8fAqarGLRVPEi9DdqLMawrquVcB3LdCu3EIHzR2KCubrQpAfV8AnP8rwCPm2YVuuSj7gaNee464gVgq6uCaIG04aJG4hjFQH3FU4i6",
+                "id": 12,
+                "name": "test me",
+                "powerLevel": 0,
+                "online": false
+            }
+        ],
+        "members": [
+            {
+                "token": "J4hVFPOp8NErNYkg8cftdIvDSXgfUeqhrMy4H1G1y6FOroFrQqf2toQfQ5pXmK1vWccKIT0vVqCtU8mCaoL2KbRkDEC9WUrfjmq9pHxGOGbXMDl6lc2BPLP9R29GVfpyAsQJLfrdzY5sWYMEVaACIr5GjJpAaJwY0nNHgzHNh6Fj80z2eAM1YmUdgXRCUJhyVK3mYtYh",
+                "id": 10,
+                "name": "test",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "YiwItIwwKbfVXoLqrJvC8FNyOyuQl8UbePKM4FpWUmKk1Dip4NfmymJ1flnz1rbOUpzbRXdpUuXSTyzFF8ajLxGlJ1k41E6etSLKElXQQuIlgDGaECSUrSRTKi3a1ebHGgWDpnlnKlsRY3v2fnyLQc3CW5QjM7hnpyHCbjOjhMfJNpgDnqRtcYqex3y8QyfuufhLpXoQ",
+                "id": 11,
+                "name": "what now",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "F4kIaQ1LNqn6W1tp3AFLKUDVp1QcgrbwjdUirXSJZgxzmFKtxki6oD4XAz6IefFvi7Z3R5yd7UACIXNrNn3BVHzTchFdtgBOaq8fAqarGLRVPEi9DdqLMawrquVcB3LdCu3EIHzR2KCubrQpAfV8AnP8rwCPm2YVuuSj7gaNee464gVgq6uCaIG04aJG4hjFQH3FU4i6",
+                "id": 12,
+                "name": "test me",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "P8zaBomVNVDtY7w0FWFELmICOE1Fvs3nw9kvdIKjFKMWTPRFqtGY58qwgOEtSzN37RSx2NuMOC5ymGoDMheLUzkYwMVOozz5DWG4dLE25VXLTHDIvmvQFjn4mXQU3tzXsBsBGatJgXfyViv1QPDcuFI9lIa8txviiI0RmuOIaKATzBav4n9mOLjpHFDkfrpQQZk5A1Sr",
+                "id": 13,
+                "name": "asdf",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "BYBO9CQR18s4aLhwjs9ykfvV9XJGrhuC4xY5myrwFEHoyVJHEvQ4hmAyi1XyOhnuGzfvnQT8qmVraAw1HGS4JSFTpGvksoxjsiGRpBa4c4as7sjOGGzFEXI5Jgs4ZxfURHLIeDCzsyUzQvkzzn2e23AgzKc66637EqklmtmsymNjPztl8P6gegvdjl5CdVqRpVlV5tdS",
+                "id": 15,
+                "name": "hhhduus",
+                "powerLevel": 0,
+                "online": true
+            }
+        ],
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": [
+            0,
+            0
+        ],
+        "teamRank": 1000,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 7,
+        "name": "yuuu",
+        "colors": {
+            "baseColor": "#80c43b",
+            "areaColor": "#00ff8e",
+            "baseShape": "CIRCLE"
+        },
+        "leader": {
+            "token": "F4kIaQ1LNqn6W1tp3AFLKUDVp1QcgrbwjdUirXSJZgxzmFKtxki6oD4XAz6IefFvi7Z3R5yd7UACIXNrNn3BVHzTchFdtgBOaq8fAqarGLRVPEi9DdqLMawrquVcB3LdCu3EIHzR2KCubrQpAfV8AnP8rwCPm2YVuuSj7gaNee464gVgq6uCaIG04aJG4hjFQH3FU4i6",
+            "id": 12,
+            "name": "test me",
+            "powerLevel": 0,
+            "online": false
+        },
+        "admins": [],
+        "members": [
+            {
+                "token": "F4kIaQ1LNqn6W1tp3AFLKUDVp1QcgrbwjdUirXSJZgxzmFKtxki6oD4XAz6IefFvi7Z3R5yd7UACIXNrNn3BVHzTchFdtgBOaq8fAqarGLRVPEi9DdqLMawrquVcB3LdCu3EIHzR2KCubrQpAfV8AnP8rwCPm2YVuuSj7gaNee464gVgq6uCaIG04aJG4hjFQH3FU4i6",
+                "id": 12,
+                "name": "test me",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "3w5WT8hMToNi74yKnU59GJSlghcdvRh4JPwCSkO5Ztz9wAOqI17RbHcEaERjY69Hcm8yaQKB81Brcri92GpEFQONKGGxSvCryxYNDNSGsGsa2L9sbNK8zp1KP9DYIg5btSZERhOqvdfQvr73t09XkYbWnbKy4TmfxGRSgMv9e1ZaQKprRsU8lEwhQrqmgVSxbdLQq0Jj",
+                "id": 14,
+                "name": "asddd",
+                "powerLevel": 0,
+                "online": false
+            }
+        ],
+        "gold": 0,
+        "iron": 0,
+        "uranium": 0,
+        "credits": 0,
+        "income": [
+            0,
+            0
+        ],
+        "teamRank": 1000,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
         }
     }
 ]

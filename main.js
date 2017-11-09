@@ -1242,53 +1242,77 @@ function startServer(){
                 p = players[id];
 
         if(p!=null){
-            if(type==="MERGE"){ //Merge Teams together
-                mergeTeams(p.info.teamID,teamID,p);
-            }
-            else {
-                if(type==="SPLIT"){
-                    //Select new leader
-                    if(teamData[p.info.teamID].admins.length>0){
-                        var r = parseInt(Math.random()*100)%teamData[p.info.teamID].admins.length;
-                        changeRole(teamData[p.info.teamID].admins[r].id, p.info.teamID, "ADMIN", "LEADER");
-                        messageGroup(teamData[p.info.teamID].members,
-                                     teamData[p.info.teamID].admins[r].name+" is now the leader.",
-                                     "", "team", null);
-                    }
-                    else while(true && teamData[p.info.teamID].members.length>0){
-                        var r = parseInt(Math.random()*1000)%teamData[p.info.teamID].members.length;
+            var setting = teamData[teamID].settings.membership;
+            var hasInvite = false;
 
-                        if(teamData[p.info.teamID].members[r].id!==teamData[p.info.teamID].leader.id){
-                            changeRole(teamData[p.info.teamID].members[r].id, p.info.teamID, "MEMBER", "LEADER");
+            for(var inv in p.invites){
+                if(p.invites[inv].id===teamID){
+                    hasInvite = true;
+                    break;
+                }
+            }
+
+            if(setting==="OPEN" || hasInvite){
+                if(type==="MERGE"){ //Merge Teams together
+                    mergeTeams(p.info.teamID,teamID,p);
+                }
+                else {
+                    if(type==="SPLIT"){
+                        //Select new leader
+                        if(teamData[p.info.teamID].admins.length>0){
+                            var r = parseInt(Math.random()*100)%teamData[p.info.teamID].admins.length;
+                            changeRole(teamData[p.info.teamID].admins[r].id, p.info.teamID, "ADMIN", "LEADER");
                             messageGroup(teamData[p.info.teamID].members,
-                                         teamData[p.info.teamID].members[r].name+" is now the leader.",
+                                         teamData[p.info.teamID].admins[r].name+" is now the leader.",
                                          "", "team", null);
-                            break;
+                        }
+                        else while(true && teamData[p.info.teamID].members.length>0){
+                            var r = parseInt(Math.random()*1000)%teamData[p.info.teamID].members.length;
+
+                            if(teamData[p.info.teamID].members[r].id!==teamData[p.info.teamID].leader.id){
+                                changeRole(teamData[p.info.teamID].members[r].id, p.info.teamID, "MEMBER", "LEADER");
+                                messageGroup(teamData[p.info.teamID].members,
+                                             teamData[p.info.teamID].members[r].name+" is now the leader.",
+                                             "", "team", null);
+                                break;
+                            }
+                        }
+                    }
+
+                    //Remove from previous team
+                    if(p.info.teamID>-1)
+                        removeFromTeam(p.id, p.info.teamID, "LEAVE");
+
+                    //Move to new team
+                    p.info.teamID = teamID;
+                    p.info.teamRole = "MEMBER";
+                    teamData[teamID].members.push({
+                        "token": p.token,
+                        "id": p.id,
+                        "name": p.info.name,
+                        "powerLevel": p.info.powerLevel,
+                        "online": true
+                    });
+
+                    messageGroup(teamData[teamID].members,
+                                 p.info.name+" has joined the team!",
+                                 "You are now a member of "+teamData[teamID].name+".",
+                                 "team", p);
+                }
+
+                if(hasInvite){
+                    for(var inv = 0; inv < p.invites.lengths; inv++){
+                        if(p.invites[inv].id===teamID){
+                            p.invites.splice(inv,1);
+                            inv--;
                         }
                     }
                 }
-
-                //Remove from previous team
-                if(p.info.teamID>-1)
-                    removeFromTeam(p, p.info.teamID, false);
-
-                //Move to new team
-                p.info.teamID = teamID;
-                p.info.teamRole = "MEMBER";
-                teamData[teamID].members.push({
-                    "token": p.token,
-                    "id": p.id,
-                    "name": p.info.name,
-                    "powerLevel": p.info.powerLevel,
-                    "online": true
-                });
-
-                messageGroup(teamData[teamID].members,
-                             p.info.name+" has joined the team!",
-                             "You are now a member of "+teamData[teamID].name+".",
-                             "team", p);
-
             }
+        }
+        else{
+            var msg = {"type":"action", "msg": "You can't join this team without an invite."};
+            p.battleLog.unshift(msg);
         }
 
         res.send('');
@@ -1322,7 +1346,48 @@ function startServer(){
                 p = players[id];
 
         if(p!=null){
-            
+            if(p.info.teamRole==="LEADER"){
+                var tid = p.info.teamID;
+                var adm = false;
+                var mem;
+                for(var a in teamData[tid].admins){
+                    if(teamData[tid].admins[a].id===target){
+                        mem = teamData[tid].admins[a];
+                        adm = true;
+                        break;
+                    }
+                }
+
+                if(adm){
+                    changeRole(mem.id,tid,"ADMIN","LEADER");
+                    changeRole(p.id,tid,"LEADER","ADMIN");
+                    messageGroup(teamData[tid].members,mem.name+" has been promoted to leader.","","team",null);
+                }
+                else{
+                    var found = false;
+                    for(var m in teamData[tid].members){
+                        if(teamData[tid].members[m].id===target){
+                            mem = teamData[tid].members[m];
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if(found){
+                        //Promote to admin
+                        changeRole(mem.id,tid,"MEMBER","ADMIN");
+                        messageGroup(teamData[tid].members,mem.name+" has been promoted to admin.","","team",null);
+                    }
+                    else{
+                        var msg = {"type":"action", "msg": "Can't find member to promote."};
+                        p.battleLog.unshift(msg);
+                    }
+                }
+            }
+            else{
+                var msg = {"type":"action", "msg": "You can't cheat me bitch. You know you can't promote people."};
+                p.battleLog.unshift(msg);
+            }
         }
 
         res.send('');
@@ -1339,7 +1404,32 @@ function startServer(){
                 p = players[id];
 
         if(p!=null){
+            if(p.info.teamRole==="LEADER"){
+                var tid = p.info.teamID;
+                var adm = false;
+                var mem;
+                for(var a in teamData[tid].admins){
+                    if(teamData[tid].admins[a].id===target){
+                        mem = teamData[tid].admins[a];
+                        adm = true;
+                        break;
+                    }
+                }
 
+                if(adm){
+                    changeRole(mem.id,tid,"ADMIN","MEMBER");
+                    messageGroup(teamData[tid].members,mem.name+" has been demoted.","","team",null);
+                }
+                else{
+                    var msg = {"type":"action", "msg": "You can't demote people of no rank. Even if you want to."};
+                    p.battleLog.unshift(msg);
+                }
+
+            }
+            else{
+                var msg = {"type":"action", "msg": "You can't cheat me bitch. You know you can't demote people."};
+                p.battleLog.unshift(msg);
+            }
         }
 
         res.send('');
@@ -1356,7 +1446,54 @@ function startServer(){
                 p = players[id];
 
         if(p!=null){
+            if(p.info.teamRole!=="MEMBER"){
+                var tid = p.info.teamID;
+                var adm = false;
+                var mem;
+                for(var a in teamData[tid].admins){
+                    if(teamData[tid].admins[a].id===target){
+                        mem = {
+                            "id":teamData[tid].admins[a].id,
+                            "name":teamData[tid].admins[a].name};
+                        adm = true;
+                        break;
+                    }
+                }
 
+                if(adm && p.info.teamRole==="LEADER"){
+                    removeFromTeam(mem.id,tid,"KICK");
+                    messageGroup(teamData[tid].members,mem.name+" has been kicked.","","team",null);
+                }
+                else if(adm){
+                    var msg = {"type":"action", "msg": "You can't kick people of the same rank."};
+                    p.battleLog.unshift(msg);
+                }
+                else{
+                    var found = false;
+                    for(var m in teamData[tid].members){
+                        if(teamData[tid].members[m].id===target){
+                            mem = {
+                                "id":teamData[tid].members[m].id,
+                                "name":teamData[tid].members[m].name};
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if(found){
+                        removeFromTeam(mem.id,tid,"KICK");
+                        messageGroup(teamData[tid].members,mem.name+" has been kicked.","","team",null);
+                    }
+                    else{
+                        var msg = {"type":"action", "msg": "Can't find member to kick."};
+                        p.battleLog.unshift(msg);
+                    }
+                }
+            }
+            else{
+                var msg = {"type":"action", "msg": "You can't cheat me bitch. You know you can't kick people."};
+                p.battleLog.unshift(msg);
+            }
         }
 
         res.send('');
@@ -1373,7 +1510,52 @@ function startServer(){
                 p = players[id];
 
         if(p!=null){
+            var setting = teamData[p.info.teamID].settings.membership;
+            if((p.info.teamRole!=="MEMBER" || (p.info.teamRole==="MEMBER" && setting!=="AD INV")) && p.info.teamID>-1){
+                if(players[target].status!=="OFFLINE"){
+                    if(players[target].info.teamID != p.info.teamID){
+                        players[target].invites.push({
+                            "id": p.info.teamID,
+                            "invID": p.id
+                        });
 
+                        var msg = {"type":"action", "msg": "You invited "+players[target].info.name+" to join the team."};
+                        p.battleLog.unshift(msg);
+                    }
+                    else{
+                        var msg = {"type":"action", "msg": "That person is already on your team"};
+                        p.battleLog.unshift(msg);
+                    }
+                }
+            }
+            else{
+                var msg = {"type":"action", "msg": "You can't invite people to join the team."};
+                p.battleLog.unshift(msg);
+            }
+        }
+
+        res.send('');
+    });
+    app.post('/declineInvite', function(req, res){
+        var token = req.body.token;
+        var id = req.body.id;
+        var tid = req.body.tid;
+
+        console.log("HIT"+tid);
+
+        //Validate token
+        var p;
+        if(players[id].status!=="OFFLINE")
+            if(players[id].token===token)
+                p = players[id];
+
+        if(p!=null){
+            for(var inv = 0; inv < p.invites.lengths; inv++){
+                if(p.invites[inv].id===tid){
+                    p.invites.splice(inv,1);
+                    inv--;
+                }
+            }
         }
 
         res.send('');
@@ -2778,30 +2960,61 @@ function buildStore(p){
     };
 }
 
-function removeFromTeam(p, teamID, merge){
-    if(merge){
+function removeFromTeam(pid, teamID, type){
+    if(type==="MERGE"){
         teamData[teamID] = {"id":teamID,"status":"OFFLINE"};
     }
-    else{
-        if(p.info.teamRole === "ADMIN"){
-            for(var a in teamData[teamID].admins){
-                if(teamData[teamID].admins[a].token===p.token){
-                    teamData[teamID].admins.splice(a,1);
-                    break;
-                }
+    else if(type==="KICK"){
+        for(var a in teamData[teamID].admins){
+            if(teamData[teamID].admins[a].id===pid){
+                teamData[teamID].admins.splice(a,1);
+                break;
             }
         }
 
         for(var m in teamData[teamID].members){
-            if(teamData[teamID].members[m].token===p.token){
+            if(teamData[teamID].members[m].id===pid){
                 teamData[teamID].members.splice(m,1);
                 break;
             }
         }
 
-        messageGroup(teamData[teamID].members,
-                     p.info.name+" has left the team.","","team", null);
-        p.battleLog.unshift({"type":"team", "msg": "You left "+teamData[teamID].name+"."});
+        if(players[pid].status==="OFFLINE"){
+            players[pid].changes = {
+                "id":-1,
+                "role":"NONE"
+            }
+        }
+        else{
+            players[pid].info.teamID = -1;
+            players[pid].info.teamRole = "NONE";
+            players[pid].battleLog.unshift({"type":"team", "msg": "You have been kicked from "+teamData[teamID].name+"."});
+        }
+    }
+    else{
+        for(var a in teamData[teamID].admins){
+            if(teamData[teamID].admins[a].id===pid){
+                teamData[teamID].admins.splice(a,1);
+                break;
+            }
+        }
+
+        for(var m in teamData[teamID].members){
+            if(teamData[teamID].members[m].id===pid){
+                teamData[teamID].members.splice(m,1);
+                break;
+            }
+        }
+
+        if(players[pid].status==="OFFLINE"){
+            messageGroup(teamData[teamID].members,
+                         players[pid].name+" has left the team.","","team", null);
+        }
+        else{
+            messageGroup(teamData[teamID].members,
+                         players[pid].info.name+" has left the team.","","team", null);
+            players[pid].battleLog.unshift({"type":"team", "msg": "You left "+teamData[teamID].name+"."});
+        }
     }
 }
 
@@ -2867,7 +3080,7 @@ function mergeTeams(oldID, newID, p){
     }
 
     //Delete old team
-    removeFromTeam(p, oldID, true);
+    removeFromTeam(p, oldID, "MERGE");
 }
 
 function changeRole(pid, teamID, prevRole, newRole){

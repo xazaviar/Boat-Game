@@ -2,7 +2,7 @@ var offsetX;
 var offsetY;
 var offsetX2;
 var offsetY2;
-var mX, mY;
+var mX, mY, mX2, mY2;
 var hover = [-1,-1];
 var shopMode = false;
 var curShopTab = 0;
@@ -124,6 +124,8 @@ setTimeout(function() {
     $("#monitor").mousemove(function(e){handleMousemove(e);});
     $("#monitor").mouseout(function(e){handleMouseout(e);});
     $("#monitor").mousedown(function(e){handleMousedown(e);});
+    $("#sidebar").mousemove(function(e){handleMousemove2(e);});
+    $("#sidebar").mouseout(function(e){handleMouseout2(e);});
     $("#sidebar").mousedown(function(e){handleMousedown2(e);});
     window.addEventListener('keydown',function(e){handleKeydown(e)},false);
     window.addEventListener('keypress',function(e){handleKeypress(e)},false);
@@ -885,6 +887,29 @@ function invite(id){
     });
 }
 
+function declineInvite(id){
+    var dat = {
+        "token": me.token,
+        "id": me.id,
+        "tid": id
+    };
+
+    $.ajax({
+        url: "/declineInvite",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+        }
+    });
+}
+
 
 //******************************************************************************
 // Drawing Canvas Functions
@@ -1490,7 +1515,49 @@ function drawSideBar(){
     ctx.beginPath();
     ctx.strokeRect(0,sCardHei,c.width,c.height);
     ctx.stroke();
-    if(shopMode){
+    if(me.invites.length > 0){
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText(players[me.invites[0].invID].name,25,sCardHei+25);
+        ctx.fillText("has invited you to join",25,sCardHei+45);
+        ctx.fillText(teamList[me.invites[0].id].name+".",25,sCardHei+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Accept
+        if(mX2 < 125 && mX2 > 25 &&
+           mY2 < sCardHei+130 && mY2 > sCardHei+100){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(25,sCardHei+100,100,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("ACCEPT",30,sCardHei+120);
+            mouseHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(25,sCardHei+100,100,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("ACCEPT",30,sCardHei+120);
+        }
+
+        //Decline
+        if(mX2 < c.width-25 && mX2 > c.width-125 &&
+           mY2 < sCardHei+130 && mY2 > sCardHei+100){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(c.width-125,sCardHei+100,100,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("DECLINE",c.width-120,sCardHei+120);
+            mouseHover = 1;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(c.width-125,sCardHei+100,100,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("DECLINE",c.width-120,sCardHei+120);
+        }
+    }
+    else if(shopMode){
         //Named Stats
         ctx.beginPath();
         ctx.fillStyle = colors.hudColor;
@@ -3561,7 +3628,7 @@ function handleMousedown(e){
             }
         }
         else if(confirmDialog==1){
-            if(mouseHover==0){ //join
+            if(mouseHover==0){ //create
                 createTeam();
                 mouseHover = -1;
                 confirmDialog = -1;
@@ -3636,7 +3703,8 @@ function handleMousedown(e){
         }
         else if(confirmDialog==8){
             if(mouseHover==0){
-                invite(valueLock.id);
+                console.log(valueLock);
+                invite(valueLock);
             }
             else if(mouseHover==1){
                 confirmDialog = -1;
@@ -3719,7 +3787,6 @@ function handleMousedown(e){
     }
     else if(playerListMenu){
         if(mouseHover > -1){
-            console.log(mouseHover);
             valueLock = mouseHover;
             confirmDialog = 8;
         }
@@ -3786,6 +3853,20 @@ function handleMouseout(e){
     mY = -1;
 }
 
+function handleMousemove2(e){
+    e.preventDefault();
+    e.stopPropagation();
+    mX2 = parseInt(e.clientX - offsetX2);
+    mY2 = parseInt(e.clientY - offsetY2);
+
+    drawSideBar();
+}
+
+function handleMouseout2(e){
+    mX2 = -1;
+    mY2 = -1;
+}
+
 function handleMousedown2(e){
     var cX = parseInt(e.clientX - offsetX2);
     var cY = parseInt(e.clientY - offsetY2);
@@ -3795,11 +3876,19 @@ function handleMousedown2(e){
            cY>=i*45+70 && cY<=i*45+105){
                removeFromQueue(i);
                console.log(i);
-
            }
     }
 
-    if(statInfo){
+    if(me.invites.length > 0){
+        if(mouseHover==0){
+            confirmDialog = 0;
+            valueLock = me.invites[0].id;
+        }
+        else if(mouseHover==1){
+            declineInvite(me.invites[0].id);
+        }
+    }
+    else if(statInfo){
         //Save button
         if(cX > 15 && cX < 107 && cY > 475 && cY < 510){
             toggleSaving();
@@ -3808,7 +3897,8 @@ function handleMousedown2(e){
         if(cX > 195 && cX < 287 && cY > 475 && cY < 510){
             statInfo = false;
         }
-    }else{
+    }
+    else{
         //STAT button
         if(cX > 195 && cX < 287 && cY > 475 && cY < 510){
             statInfo = true;
@@ -4017,7 +4107,7 @@ function filterMemberList(members, admins, leader){
         if(members[m].id != leader.id){
             var adm = false;
             for(var a in admins){
-                if(members[m].id != admins[a].id){
+                if(members[m].id == admins[a].id){
                     adm = true;
                     break;
                 }

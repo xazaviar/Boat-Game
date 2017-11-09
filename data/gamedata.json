@@ -1,5 +1,5 @@
 {
-    "playerSize": 10,
+    "playerSize": 20,
     "nameList": [
         {
             "name": "test",
@@ -38,7 +38,50 @@
             "changes": null
         },
         {
-            "name": "lkjh\\",
+            "name": "what now",
+            "changes": null
+        },
+        {
+            "name": "test",
+            "changes": null
+        },
+        {
+            "name": "what now",
+            "changes": {
+                "id": 6,
+                "role": "MEMBER"
+            }
+        },
+        {
+            "name": "test me",
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "changes": null
+        },
+        {
+            "name": "asddd",
+            "changes": null
+        },
+        {
+            "name": "hhhduus",
+            "changes": null
+        },
+        {
+            "name": "asdfasdf",
+            "changes": null
+        },
+        {
+            "name": "aklsjd;f",
+            "changes": null
+        },
+        {
+            "name": "asdfasdf",
+            "changes": null
+        },
+        {
+            "name": "asdf",
             "changes": null
         }
     ]
