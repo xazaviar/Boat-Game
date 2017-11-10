@@ -11,18 +11,14 @@ var playerNameMaxLength = 16;
 var teamNameMaxLength = 25;
 
 //Map Building
-var mapSize = 104;
+var mapSize = 100;
 var rockSpread = .04;   //decimal as percent
 var shopSpread = .007;  //decimal as percent
-var specialShops = 2;   //even number is preferred
 var map = [];
-var spawns = [];
-var spawnWid = .25;
-var spawnHei = .33;
-var zone3Wid = .2;
-var zone3Hei = .4;
-var zone2Wid = .2;
-var zone2Hei = .5;
+var spawnList = [];
+var rockList = [];
+var rockHP = 10;
+var baseList = [];
 
 var attackFromShop = false;
 
@@ -2218,6 +2214,8 @@ function trap(p){
 //******************************************************************************
 // Utility Functions
 //******************************************************************************
+
+//Store Functions
 function withinShop(location){
     for(var x = 0; x < 3; x++){
         for(var y = 0; y < 3; y++){
@@ -2248,214 +2246,6 @@ function withinShop(location){
     }
 
     return null;
-}
-
-function withinTrap(location){
-    for(var tr in trapList){
-        var range = (trapList[tr].lvl>1?3:2);
-        if(range>2){
-            var t = parseInt(range/2);
-            var xAdj = t-trapList[tr].loc[0], yAdj = t-trapList[tr].loc[1];
-            var cX = (location[0] + xAdj)%mapSize, cY = (location[1] + yAdj)%mapSize;
-
-            if(cX<0)cX+=mapSize;
-            if(cY<0)cY+=mapSize;
-
-            if(cX<range && cY<range) return tr;
-        }else{
-            if(location[0]==trapList[tr].loc[0]   && location[1]==trapList[tr].loc[1]) return tr;
-            if(location[0]==(trapList[tr].loc[0]+1)%mapSize && location[1]==trapList[tr].loc[1]) return tr;
-            if(location[0]==trapList[tr].loc[0]   && location[1]==(trapList[tr].loc[1]+1)%mapSize) return tr;
-            if(location[0]==(trapList[tr].loc[0]+1)%mapSize && location[1]==(trapList[tr].loc[1]+1)%mapSize) return tr;
-        }
-    }
-
-    return -1;
-}
-
-function spotOccupied(location){
-    if(map[location[0]][location[1]].type==="ROCK" ||
-       map[location[0]][location[1]].type==="SHOP" ||
-       map[location[0]][location[1]].type==="SSHOP")
-        return true;
-    else for(var i = 0; i < players.length; i++){
-        if(players[i].status!=="OFFLINE")
-            if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0) return true;
-    }
-
-    return false;
-}
-
-function playerInSpot(location, ignore){
-    for(var i = 0; i < players.length; i++){
-        if(players[i].status!=="OFFLINE")
-            if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0 && players[i]!=ignore) return players[i];
-    }
-    return null;
-}
-
-function isKnown(list, x, y){
-    for(var i = 0; i < list.length; i++){
-        if(list[i][0]==x && list[i][1]==y)
-            return true;
-    }
-    return false;
-}
-
-function spawn(){
-    while(true){
-        var r = parseInt((Math.random()*100)%spawns.length);
-
-        if(!spotOccupied(spawns[r])){
-            return spawns[r];
-        }
-    }
-}
-
-function generateToken(){
-    //Create random 16 character token
-    var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    var token = '';
-    for (var i = 0; i < tokenSize; i++) {
-      token += chars[Math.round(Math.random() * (chars.length - 1))];
-    }
-
-    return token;
-}
-
-function attackDistance(player, attack){
-    var t = parseInt(statData.attackRange/2);
-    var xAdj = t-player[0], yAdj = t-player[1];
-    var cX = (attack[0] + xAdj)%mapSize, cY = (attack[1] + yAdj)%mapSize;
-
-    if(cX<0)cX+=mapSize;
-    if(cY<0)cY+=mapSize;
-
-    return cX < statData.attackRange && cY < statData.attackRange;
-}
-
-function visionDistance(player, spot){
-    var t = parseInt(statData.vision/2);
-    var xAdj = t-player[0], yAdj = t-player[1];
-    var cX = (spot[0] + xAdj)%mapSize, cY = (spot[1] + yAdj)%mapSize;
-
-    if(cX<0)cX+=mapSize;
-    if(cY<0)cY+=mapSize;
-
-    return cX < statData.vision && cY < statData.vision;
-}
-
-function blinkDistance(player, spot){
-    var t = parseInt(player.stats.radar/2);
-    var xAdj = t-player.loc[0], yAdj = t-player.loc[1];
-    var cX = (spot[0] + xAdj)%mapSize, cY = (spot[1] + yAdj)%mapSize;
-
-    if(cX<0)cX+=mapSize;
-    if(cY<0)cY+=mapSize;
-
-    return cX < player.stats.radar && cY < player.stats.radar;
-}
-
-function inScanned(player, token){
-    for(var i = 0; i < player.scanned.length; i++){
-        if(player.scanned[i].token===token)
-            return true;
-    }
-
-    return false;
-}
-
-function buildMap(){
-    //Correct mapSize
-    if(mapSize < 20) mapSize = 20;
-
-    //init map
-    var superShop = false;
-    for(var x = 0; x < mapSize; x++){
-        map[x] = [];
-        for(var y = 0; y < mapSize; y++){
-            var r = Math.random();
-
-            if(x == mapSize/2 && superShop) superShop = false;
-
-            if(r < .03 && !superShop && (x < (mapSize-parseInt(zone3Wid*mapSize))/2-3 && x > (mapSize-parseInt(zone3Wid*mapSize))/2-parseInt(zone2Wid*mapSize))){
-                map[x][y] = {"type":"SSHOP"};
-                shopList.push({"type":"SSHOP","loc":[x,y]});
-                superShop = true;
-            }else if(r < .01 && !superShop && (x > (mapSize+3-parseInt(zone3Wid*mapSize))/2+parseInt(zone3Wid*mapSize) && x < (mapSize-parseInt(zone3Wid*mapSize))/2+parseInt(zone3Wid*mapSize)+parseInt(zone2Wid*mapSize))){
-                map[x][y] = {"type":"SSHOP"};
-                shopList.push({"type":"SSHOP","loc":[x,y]});
-                superShop = true;
-            }else if(r < shopSpread && (x < (mapSize-parseInt(zone3Wid*mapSize))/2-3 || x > mapSize+3-((mapSize-parseInt(zone3Wid*mapSize))/2))){
-                map[x][y] = {"type":"SHOP"};
-                shopList.push({"type":"SHOP","loc":[x,y]});
-            }else if(r < rockSpread){
-                map[x][y] = {"type":"ROCK"};
-            }else{
-                map[x][y] = {"type":"OPEN"};
-                if((x < parseInt(spawnWid/2*mapSize) || (x > mapSize-parseInt(spawnWid/2*mapSize))) &&
-                    y < mapSize-((mapSize-parseInt(spawnHei*mapSize))/2) && y > (mapSize-parseInt(spawnHei*mapSize))/2){
-                    spawns.push([x,y]);
-                    if(r > .5)
-                        lootSpawns.push([x,y]);
-                }else{
-                    lootSpawns.push([x,y]);
-                }
-            }
-        }
-    }
-
-    //Spawn Treasures
-    spawnLoot();
-}
-
-function spawnLoot(){
-    if(lootCount < mapSize*mapSize*lootSpreadMAX){
-        var spawn = parseInt(mapSize*mapSize*lootSpreadMIN);
-        for(var i = lootCount; i < spawn; i++){
-            var r = parseInt((Math.random()*100000)%lootSpawns.length);
-            var loot = chooseTreasureValue(lootSpawns[r][0],lootSpawns[r][1]);
-            map[lootSpawns[r][0]][lootSpawns[r][1]] = loot;
-            lootCount++;
-            lootSpawns.splice(r,1);
-        }
-        for(var i = 0; i < lootSpawnRate; i++){
-            var r = parseInt((Math.random()*100000)%lootSpawns.length);
-            var loot = chooseTreasureValue(lootSpawns[r][0],lootSpawns[r][1]);
-            map[lootSpawns[r][0]][lootSpawns[r][1]] = loot;
-            lootCount++;
-            lootSpawns.splice(r,1);
-        }
-    }
-}
-
-function chooseTreasureValue(x,y){
-    var val = 0, sum = 0;
-    var r = Math.random();
-    var zone = lootSpawnValues.zone1; //Zone 1
-
-    //Select zone
-    if(x > (mapSize-parseInt(mapSize*zone3Wid))/2 && x < mapSize - (mapSize-parseInt(mapSize*zone3Wid))/2)
-        zone = lootSpawnValues.zone3; //Zone 3
-    else if(x > (mapSize-parseInt(mapSize*zone3Wid))/2-parseInt(mapSize*zone2Wid) && x < mapSize - (mapSize-parseInt(mapSize*zone3Wid))/2+parseInt(mapSize*zone2Wid))
-        zone = lootSpawnValues.zone2; //Zone 2
-
-    for(var i = 0; i < zone.length; i++){
-        if(r < zone[i].chance+sum){
-            return {"type":zone[i].type,"count":zone[i].count};
-        }
-        else
-            sum += zone[i].chance;
-    }
-
-    return val;
-}
-
-function isLoot(loc){
-    if(loc.type==="GOLD") return true
-    else if(loc.type==="IRON") return true
-    else if(loc.type==="URANIUM") return true
-    return false;
 }
 
 function calculatePrices(purchase, lvl){
@@ -2517,6 +2307,199 @@ function makePurchase(costs, p){
     p.info.uranium -= costs.uranium;
 }
 
+function buildStore(p){
+    return {
+        "withinShop": withinShop(p.loc),
+
+        //Regular Shop
+        "hpF":{
+            "price":calculatePrices(shopData.shipRepair,p.stats.hpMAX-p.stats.hp),
+            "canBuy":p.stats.hp!=p.stats.hpMAX
+        },
+        "hp5":{
+            "price":calculatePrices(shopData.shipRepair5,0),
+            "canBuy":p.stats.hp!=p.stats.hpMAX
+        },
+        "insurance":{
+            "price":calculatePrices(shopData.insurance,p.info.shipMass),
+            "canBuy":!p.info.hasInsurance
+        },
+        "hpU":{
+            "price":calculatePrices(shopData.healthUpgrades,p.stats.hpUpgrades+1),
+            "canBuy":p.stats.hpUpgrades!=p.stats.hpUpgradesMAX
+        },
+        "enU":{
+            "price":calculatePrices(shopData.energyUpgrades,p.stats.energyUpgrades+1),
+            "canBuy":p.stats.energyUpgrades!=p.stats.energyUpgradesMAX
+        },
+        "radU":{
+            "price":calculatePrices(shopData.radarUpgrades,p.stats.radarUpgrades+1),
+            "canBuy":p.stats.radarUpgrades!=p.stats.radarUpgradesMAX
+        },
+        "atkU":{
+            "price":calculatePrices(shopData.attackUpgrades,p.stats.attackUpgrades+1),
+            "canBuy":p.stats.attackUpgrades!=p.stats.attackUpgradesMAX
+        },
+
+        //Super Shop
+        "loadout":{
+            "price":calculatePrices(shopData.loadoutUpgrades,0),
+            "canBuy":p.stats.loadoutSize!=statData.loadoutMAX
+        },
+        "canU":{
+            "price":calculatePrices(shopData.cannonUpgrades,p.stats.cannonUpgrades+1),
+            "canBuy":p.stats.cannonUpgrades!=p.stats.cannonUpgradesMAX
+        },
+        "bliU":{
+            "price":calculatePrices(shopData.blinkUpgrades,p.stats.blinkUpgrades+1),
+            "canBuy":p.stats.blinkUpgrades!=p.stats.blinkUpgradesMAX
+        },
+        "steU":{
+            "price":calculatePrices(shopData.stealthUpgrades,p.stats.stealthUpgrades+1),
+            "canBuy":p.stats.stealthUpgrades!=p.stats.stealthUpgradesMAX
+        },
+        "trapU":{
+            "price":calculatePrices(shopData.trapUpgrades,p.stats.trapUpgrades+1),
+            "canBuy":p.stats.trapUpgrades!=p.stats.trapUpgradesMAX
+        },
+        "engModU":{
+            "price":calculatePrices(shopData.engModUpgrades,p.stats.engModUpgrades+1),
+            "canBuy":p.stats.engModUpgrades!=p.stats.engModUpgradesMAX
+        },
+        "scanU":{
+            "price":calculatePrices(shopData.scannerUpgrades,p.stats.scannerUpgrades+1),
+            "canBuy":p.stats.scannerUpgrades!=p.stats.scannerUpgradesMAX
+        },
+        "railU":{
+            "price":calculatePrices(shopData.railgunUpgrades,p.stats.railgunUpgrades+1),
+            "canBuy":p.stats.railgunUpgrades!=p.stats.railgunUpgradesMAX
+        },
+        "insuranceU":{
+            "price":calculatePrices(shopData.insuranceUpgrades,p.stats.insuranceUpgrades+1),
+            "canBuy":p.stats.insuranceUpgrades!=p.stats.insuranceUpgradesMAX
+        },
+        "carryU":{
+            "price":calculatePrices(shopData.urCarryUpgrades,p.stats.urCarryUpgrades+1),
+            "canBuy":p.stats.urCarryUpgrades!=p.stats.urCarryUpgradesMAX
+        },
+        "statHP":{
+            "price":calculatePrices(shopData.staticHp,1),
+            "canBuy":!p.stats.staticHp
+        },
+        "statEng":{
+            "price":calculatePrices(shopData.staticEng,1),
+            "canBuy":!p.stats.staticEng
+        },
+        "statAtk":{
+            "price":calculatePrices(shopData.staticAtk,1),
+            "canBuy":!p.stats.staticAtk
+        },
+        "statRdr":{
+            "price":calculatePrices(shopData.staticRdr,1),
+            "canBuy":!p.stats.staticRdr
+        },
+        "statDR":{
+            "price":calculatePrices(shopData.staticDR,1),
+            "canBuy":!p.stats.staticDR
+        },
+        "uranium":{
+            "price":calculatePrices(shopData.uranium,1),
+            "canBuy":p.info.uranium<p.stats.urCarry
+        },
+        "quickHeal":{
+            "price":calculatePrices(shopData.quickHeal,p.stats.hpMAX),
+            "canBuy":!p.stats.quickHeal
+        }
+    };
+}
+
+
+
+//Legal Action Checkers
+function spotOccupied(location){
+    if(map[location[0]][location[1]].type==="ROCK" ||
+       map[location[0]][location[1]].type==="SHOP" ||
+       map[location[0]][location[1]].type==="SSHOP")
+        return true;
+    else for(var i = 0; i < players.length; i++){
+        if(players[i].status!=="OFFLINE")
+            if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0) return true;
+    }
+
+    return false;
+}
+
+function attackDistance(player, attack){
+    var t = parseInt(statData.attackRange/2);
+    var xAdj = t-player[0], yAdj = t-player[1];
+    var cX = (attack[0] + xAdj)%mapSize, cY = (attack[1] + yAdj)%mapSize;
+
+    if(cX<0)cX+=mapSize;
+    if(cY<0)cY+=mapSize;
+
+    return cX < statData.attackRange && cY < statData.attackRange;
+}
+
+function visionDistance(player, spot){
+    var t = parseInt(statData.vision/2);
+    var xAdj = t-player[0], yAdj = t-player[1];
+    var cX = (spot[0] + xAdj)%mapSize, cY = (spot[1] + yAdj)%mapSize;
+
+    if(cX<0)cX+=mapSize;
+    if(cY<0)cY+=mapSize;
+
+    return cX < statData.vision && cY < statData.vision;
+}
+
+function blinkDistance(player, spot){
+    var t = parseInt(player.stats.radar/2);
+    var xAdj = t-player.loc[0], yAdj = t-player.loc[1];
+    var cX = (spot[0] + xAdj)%mapSize, cY = (spot[1] + yAdj)%mapSize;
+
+    if(cX<0)cX+=mapSize;
+    if(cY<0)cY+=mapSize;
+
+    return cX < player.stats.radar && cY < player.stats.radar;
+}
+
+
+
+//List Checkers
+function isKnown(list, x, y){
+    for(var i = 0; i < list.length; i++){
+        if(list[i][0]==x && list[i][1]==y)
+            return true;
+    }
+    return false;
+}
+
+function inScanned(player, token){
+    for(var i = 0; i < player.scanned.length; i++){
+        if(player.scanned[i].token===token)
+            return true;
+    }
+
+    return false;
+}
+
+function playerInSpot(location, ignore){
+    for(var i = 0; i < players.length; i++){
+        if(players[i].status!=="OFFLINE")
+            if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0 && players[i]!=ignore) return players[i];
+    }
+    return null;
+}
+
+function queuedDestealth(p){
+    for(var a in p.queue){
+        if(p.queue[a].type==="DESTEALTH") return true;
+    }
+    return false;
+}
+
+
+
+//Equipment Functions
 function updateStorageItem(p, mod, val){
     for(var i in p.storage){
         if(p.storage[i].name===mod){
@@ -2530,6 +2513,664 @@ function isEquipped(p,mod){
     if(p.abilitySlots[0].type===mod) return true;
     if(p.abilitySlots[1].type===mod) return true;
     return false
+}
+
+function removeFromStorage(p,mod){
+    for(var i in p.storage){
+        if(p.storage[i].name===mod){
+            p.storage.splice(i,1);
+            break;
+        }
+    }
+}
+
+function canUseMod(p, mod){
+    if(mod==="NONE")
+        return false;
+    else if(mod=="CAN")
+        return 3-p.queue.length >= cannonActionUsage && p.stats.energy>=cannonEnergyUsage && p.info.uranium>=cannonUraniumUsage;
+    else if(mod=="RAIL")
+        return 3-p.queue.length >= railgunActionUsage && p.stats.energy>=railgunEnergyUsage && p.info.uranium>=railgunUraniumUsage;
+    else if(mod=="TRAP")
+        return 3-p.queue.length >= trapActionUsage && p.stats.energy>=trapEnergyUsage && (p.info.uranium>=trapUraniumUsage || p.stats.trap>2);
+    else if(mod=="HEAL")
+        return p.stats.energy>=quickHealEnergyUsage;
+    else if(mod=="BLNK")
+        return p.stats.energy>=blinkEnergyUsage-2*p.stats.blink && p.info.uranium>=blinkUraniumUsage;
+    else if(mod=="ENG")
+        return p.info.uranium>=energyModUraniumUsage;
+    else if(mod=="HIDE" && !p.info.stealthTime>0)
+        return 3-p.queue.length >= stealthActionUsage && p.stats.energy>=stealthEnergyUsage && p.info.uranium>=stealthUraniumUsage;
+    else if(mod=="HIDE" && p.info.stealthTime>0)
+        return !queuedDestealth(p);
+    else if(mod=="ATK+" || mod=="PWR+" || mod=="RDR+" || mod=="HP+" || mod=="DR")
+        return true;
+    return false;
+}
+
+
+
+//Team Functions
+function teamValidation(base, area){
+    if(base === area)
+        return "Base and area need to be different colors";
+
+    var hex = area.replace('#','');
+    var ar = parseInt(hex.substring(0,2), 16);
+    var ag = parseInt(hex.substring(2,4), 16);
+    var ab = parseInt(hex.substring(4,6), 16);
+    if(ar+ag+ab < 140)
+        return "Area color is too dark";
+
+    hex = base.replace('#','');
+    var br = parseInt(hex.substring(0,2), 16);
+    var bg = parseInt(hex.substring(2,4), 16);
+    var bb = parseInt(hex.substring(4,6), 16);
+
+    if(Math.abs(ar-br)<50 && Math.abs(ag-bg)<50 && Math.abs(ab-bb)<50)
+        return "Base color is too similar to Area color";
+
+    for(var b in teamData){
+        if(teamData[b].status!=="OFFLINE"){
+            hex = teamData[b].colors.baseColor.replace('#','');
+            var br2 = parseInt(hex.substring(0,2), 16);
+            var bg2 = parseInt(hex.substring(2,4), 16);
+            var bb2 = parseInt(hex.substring(4,6), 16);
+            hex = teamData[b].colors.areaColor.replace('#','');
+            var ar2 = parseInt(hex.substring(0,2), 16);
+            var ag2 = parseInt(hex.substring(2,4), 16);
+            var ab2 = parseInt(hex.substring(4,6), 16);
+
+            if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
+               Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
+                return "Color combo has been taken";
+            }
+        }
+    }
+
+    return true;
+}
+
+function removeFromTeam(pid, teamID, type){
+    if(type==="MERGE"){
+        teamData[teamID] = {"id":teamID,"status":"OFFLINE"};
+    }
+    else if(type==="KICK"){
+        for(var a in teamData[teamID].admins){
+            if(teamData[teamID].admins[a].id===pid){
+                teamData[teamID].admins.splice(a,1);
+                break;
+            }
+        }
+
+        for(var m in teamData[teamID].members){
+            if(teamData[teamID].members[m].id===pid){
+                teamData[teamID].members.splice(m,1);
+                break;
+            }
+        }
+
+        if(players[pid].status==="OFFLINE"){
+            players[pid].changes = {
+                "id":-1,
+                "role":"NONE"
+            }
+        }
+        else{
+            players[pid].info.teamID = -1;
+            players[pid].info.teamRole = "NONE";
+            players[pid].battleLog.unshift({"type":"team", "msg": "You have been kicked from "+teamData[teamID].name+"."});
+        }
+    }
+    else{
+        for(var a in teamData[teamID].admins){
+            if(teamData[teamID].admins[a].id===pid){
+                teamData[teamID].admins.splice(a,1);
+                break;
+            }
+        }
+
+        for(var m in teamData[teamID].members){
+            if(teamData[teamID].members[m].id===pid){
+                teamData[teamID].members.splice(m,1);
+                break;
+            }
+        }
+
+        if(players[pid].status==="OFFLINE"){
+            messageGroup(teamData[teamID].members,
+                         players[pid].name+" has left the team.","","team", null);
+        }
+        else{
+            messageGroup(teamData[teamID].members,
+                         players[pid].info.name+" has left the team.","","team", null);
+            players[pid].battleLog.unshift({"type":"team", "msg": "You left "+teamData[teamID].name+"."});
+        }
+    }
+}
+
+function mergeTeams(oldID, newID, p){
+    //Take all bases
+    //TODO: THIS SECTION
+
+    //Take all members
+    messageGroup(teamData[oldID].members,
+                 "Your team has been merged with "+teamData[newID].name+".",
+                 "You have merged your old team into "+teamData[newID].name+".","team", p);
+    messageGroup(teamData[newID].members,
+                "Your team has been merged with "+teamData[oldID].name+". Welcome your new members!",
+                "", "team", null);
+
+
+    for(var m in teamData[oldID].members){
+        var id = teamData[oldID].members[m].id;
+        if(players[id].status!=="OFFLINE"){
+            players[id].info.teamID = newID;
+            players[id].info.teamRole = "MEMBER";
+        }
+        else{
+            players[id].changes = {"id":newID,"role":"MEMBER"};
+        }
+        teamData[newID].members.push({
+            "token": teamData[oldID].members[m].token,
+            "id": teamData[oldID].members[m].id,
+            "name": teamData[oldID].members[m].name,
+            "powerLevel": teamData[oldID].members[m].powerLevel,
+            "online": teamData[oldID].members[m].online
+        });
+
+    }
+
+    //Delete old team
+    removeFromTeam(p, oldID, "MERGE");
+}
+
+function changeRole(pid, teamID, prevRole, newRole){
+    var mem;
+    for(var m in teamData[teamID].members){
+        if(teamData[teamID].members[m].id===pid){
+            mem = teamData[teamID].members[m];
+            break;
+        }
+    }
+
+    if(prevRole==="ADMIN"){
+        for(var a in teamData[teamID].admins){
+            if(teamData[teamID].admins[a].id===pid){
+                teamData[teamID].admins.splice(a,1);
+                break;
+            }
+        }
+    }
+
+    if(newRole==="LEADER"){
+        teamData[teamID].leader = {
+            "token": mem.token,
+            "id": mem.id,
+            "name": mem.name,
+            "powerLevel": mem.powerLevel,
+            "online": mem.online
+        };
+    }
+    else if(newRole==="ADMIN"){
+        teamData[teamID].admins.push({
+            "token": mem.token,
+            "id": mem.id,
+            "name": mem.name,
+            "powerLevel": mem.powerLevel,
+            "online": mem.online
+        });
+    }
+
+    if(players[pid].status==="OFFLINE")
+        players[pid].changes = {"id":teamID,"role":newRole};
+    else
+        players[pid].info.teamRole = newRole;
+}
+
+function calculateTeamPower(teamID){
+    var b1Val = 5, b2Val = 10, b3Val = 20;
+    var memVal = 5, areaVal = 1000;
+
+    return teamData[teamID].members.length*memVal;
+}
+
+function rankTeams(){
+    return 0;
+}
+
+function initTeamClean(){
+    for(var t in teamData){
+        if(teamData[t].status!=="OFFLINE"){
+            teamData[t].leader.online = false;
+            for(var a in teamData[t].admins){
+                teamData[t].admins[a].online = false;
+            }
+            for(var m in teamData[t].members){
+                teamData[t].members[m].online = false;
+            }
+        }
+
+    }
+
+    saveGameData();
+}
+
+function changeOnlineStatus(p, status){
+    var teamID = p.info.teamID;
+    var token = p.token;
+
+    if(teamID > -1 && teamID < teamData.length){
+        if(teamData[teamID].status !== "OFFLINE"){
+            if(p.info.teamRole==="LEADER"){
+                teamData[teamID].leader.online = status;
+            }
+            else if(p.info.teamRole==="ADMIN"){
+                for(var a in teamData[teamID].admins){
+                    if(teamData[teamID].admins[a].token===token){
+                        teamData[teamID].admins[a].online = status;
+                        break;
+                    }
+                }
+            }
+
+            for(var m in teamData[teamID].members){
+                if(teamData[teamID].members[m].token===token){
+                    teamData[teamID].members[m].online = status;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+function calculateMapControl(teamID){
+    return 0;
+}
+
+function updatePower(p){
+    var teamID = p.info.teamID;
+    var token = p.token;
+
+    if(teamID > -1 && teamID < teamData.length){
+        if(teamData[teamID].status !== "OFFLINE"){
+            if(p.info.teamRole==="LEADER"){
+                teamData[teamID].leader.powerLevel = p.info.powerLevel;
+            }
+            else if(p.info.teamRole==="ADMIN"){
+                for(var a in teamData[teamID].admins){
+                    if(teamData[teamID].admins[a].token===token){
+                        teamData[teamID].admins[a].powerLevel = p.info.powerLevel;
+                        break;
+                    }
+                }
+            }
+
+            for(var m in teamData[teamID].members){
+                if(teamData[teamID].members[m].token===token){
+                    teamData[teamID].members[m].powerLevel = p.info.powerLevel;
+                    break;
+                }
+            }
+        }
+    }
+
+}
+
+
+
+//Traps
+function withinTrap(location){
+    for(var tr in trapList){
+        var range = (trapList[tr].lvl>1?3:2);
+        if(range>2){
+            var t = parseInt(range/2);
+            var xAdj = t-trapList[tr].loc[0], yAdj = t-trapList[tr].loc[1];
+            var cX = (location[0] + xAdj)%mapSize, cY = (location[1] + yAdj)%mapSize;
+
+            if(cX<0)cX+=mapSize;
+            if(cY<0)cY+=mapSize;
+
+            if(cX<range && cY<range) return tr;
+        }else{
+            if(location[0]==trapList[tr].loc[0]   && location[1]==trapList[tr].loc[1]) return tr;
+            if(location[0]==(trapList[tr].loc[0]+1)%mapSize && location[1]==trapList[tr].loc[1]) return tr;
+            if(location[0]==trapList[tr].loc[0]   && location[1]==(trapList[tr].loc[1]+1)%mapSize) return tr;
+            if(location[0]==(trapList[tr].loc[0]+1)%mapSize && location[1]==(trapList[tr].loc[1]+1)%mapSize) return tr;
+        }
+    }
+
+    return -1;
+}
+
+function triggeredTrap(p){
+    var tr = withinTrap(p.loc);
+    if(tr>-1){
+        if(trapList[tr].owner!==p.token){
+            p.info.trapped = trapDuration+1;
+            p.battleLog.unshift({"type":"combat", "msg": "You've been trapped!"});
+            for(var pp in players){
+                for(var t in players[pp].knownTraps){
+                    if(players[pp].knownTraps[t].id==trapList[tr].id){
+                        players[pp].knownTraps.splice(t,1);
+                        if(trapList[tr].owner===players[pp].token)
+                            players[pp].battleLog.unshift({"type":"combat", "msg": "Your trap "+trapList[tr].num+" has triggered."});
+                        break;
+                    }
+                }
+            }
+            trapList.splice(tr,1);
+        }
+    }
+}
+
+function isKnownTrap(p,trap){
+    for(var t in p.knownTraps){
+        if(p.knownTraps[t].id==trap.id) return true;
+    }
+    return false;
+}
+
+
+
+//Saving
+function savePlayer(p, del){
+    var writePlayer = p;
+    jsonfile.writeFile('data/playerData/'+writePlayer.token+".json", writePlayer, {spaces: 4},function(err){
+        if(err){
+            console.log(err);
+        }
+        else if(del){
+            while(!canDelete){
+                var k = 0;
+            }
+            changeOnlineStatus(p,false);
+
+            players[p.id] = {"id":p.id,"name":p.info.name,"status":"OFFLINE","changes":null};
+        }
+    });
+}
+
+function saveGameData(){
+    jsonfile.writeFile('data/teamdata.json', teamData, {spaces: 4},function(err){
+        if(err){
+            console.log(err);
+        }
+    });
+
+    var nameList = [];
+    for(var p in players){
+        if(players[p].status==="OFFLINE"){
+            nameList[p] = {
+                "name":players[p].name,
+                "changes": players[p].changes
+            };
+        }else{
+            nameList[p] = {
+                "name": players[p].info.name,
+                "changes": null
+            };
+        }
+    }
+
+    var data = {
+        "playerSize":playerSize,
+        "nameList": nameList
+    };
+
+    jsonfile.writeFile('data/gamedata.json', data, {spaces: 4},function(err){
+        if(err){
+            console.log(err);
+        }
+    });
+}
+
+
+
+//Map Related
+function spawn(){
+    while(true){
+        var r = parseInt((Math.random()*100)%spawnList.length);
+
+        if(!spotOccupied(spawnList[r])){
+            return spawnList[r];
+        }
+    }
+}
+
+function buildMap(){
+    //Correct mapSize
+    if(mapSize < 20) mapSize = 20;
+
+    //Sweep 1
+    //Define zones, initialize all spaces, and spawn rocks
+    //z0 - spawn    (4%)
+    //z1 - low      (12%)
+    //z2 - med      (~57%)
+    //z3 - high     (~18%)
+    //z4 - super    (9%)
+    var id = 0;
+    for(var x = 0; x < mapSize; x++){
+        map[x] = [];
+        for(var y = 0; y < mapSize; y++){
+            var zone = 2; //if nothing else
+
+            //z4 (small corners)
+            if((x < mapSize*.15 && y < mapSize*.15) || (x < mapSize*.15 && y > mapSize-mapSize*.15) ||
+               (x > mapSize-mapSize*.15 && y < mapSize*.15) || (x > mapSize-mapSize*.15 && y > mapSize-mapSize*.15)){
+                zone = 4;
+            }
+
+            //z3 (large corners)
+            else if((x < mapSize*.25 && y < mapSize*.25) || (x < mapSize*.25 && y > mapSize-mapSize*.25) ||
+                    (x > mapSize-mapSize*.25 && y < mapSize*.25) || (x > mapSize-mapSize*.25 && y > mapSize-mapSize*.25)){
+                zone = 3;
+            }
+
+            //z3 (tiny mids)
+            else if(
+                    (x <= mapSize*.07 && y > mapSize*.465 && y < mapSize*.535)
+                    ||(x >= mapSize*.93 && y > mapSize*.465 && y < mapSize*.535)
+                    ||(y <= mapSize*.07 && x > mapSize*.465 && x < mapSize*.535)
+                    ||(y >= mapSize*.93 && x > mapSize*.465 && x < mapSize*.535)
+                ){
+                zone = 3;
+            }
+
+            //z0 (tiny center)
+            else if(x > mapSize*.4 && x < mapSize*.6 && y > mapSize*.4 && y < mapSize*.6){
+                zone = 0;
+                spawnList.push([x,y]);
+            }
+
+            //z1 (large center)
+            else if(x > mapSize*.3 && x < mapSize*.7 && y > mapSize*.3 && y < mapSize*.7){
+                zone = 1;
+            }
+
+            //Spawn rock
+            if(Math.random() < rockSpread){
+                rockList[rockList.length] = {
+                    "id": rockList.length,
+                    "hp": rockHP,
+                    "loc": [x,y]
+                };
+                map[x][y] = {
+                    "type": "ROCK",
+                    "zone": zone,
+                    "id": rockList.length-1
+                }
+            }
+            else{
+                map[x][y] = {
+                    "type": "OPEN",
+                    "zone": zone,
+                    "id": -1
+                }
+            }
+
+        }
+    }
+
+    //Sweep 2 - Create Bases
+    var maxBases = parseInt(mapSize*mapSize/80);
+    var minBases = parseInt(mapSize*mapSize/100);
+    var tries = 0;
+    while(baseList.length < maxBases && tries < 1000){
+        var x = parseInt(Math.random()*mapSize);
+        var y = parseInt(Math.random()*mapSize);
+
+        if(map[x][y].type==="OPEN" && map[x][y].zone!=0 && map[x][y].zone!=4
+           && canBuildBase([x,y])){
+               var id = newBase(map[x][y].zone, [x,y]);
+               map[x][y].type = "BASE";
+               map[x][y].id = id;
+               tries = 0;
+        }
+        else if(baseList.length > minBases){
+            tries++;
+        }
+    }
+
+
+    //Sweep 3 - Fill in holes
+
+
+    //Sweep 4 - Special Placements
+
+
+    //Sweep 5 - Spawn Loot
+    // spawnLoot();
+
+    for(var y = 0; y < mapSize; y++){
+        var line = ""
+        for(var x = 0; x < mapSize; x++){
+            if(map[x][y].type==="ROCK") line+="* ";
+            else if(map[x][y].type==="BASE") line+="B ";
+            else if(map[x][y].zone==0 || map[x][y].zone==4) line+=map[x][y].zone+" ";
+            else line+="  "; //line+=map[x][y].zone+" ";
+        }
+        console.log(line);
+    }
+
+    console.log("BASE COUNT: "+baseList.length+" ["+minBases+", "+maxBases+"]");
+}
+
+function newBase(zone, loc){
+    var id = baseList.length;
+    var tiles = [];
+
+    //Grab all tiles within 3 blocks from all sides
+    
+
+
+    baseList[id] = {
+        "id": id,
+        "lvl":1,
+        "hp":10,
+        "hpMAX": 10,
+        "upgrade": 0,
+        "upgradeMAX": 100,
+        "output": {
+            "gold":1,
+            "credits":1
+        },
+        "special": "N",
+        "owner": -1,
+        "loc": loc,
+        "tiles": tiles
+    }
+
+    return id;
+}
+
+function canBuildBase(spot){
+    for(var b in baseList){
+        var bRange = 13;
+        var t = parseInt(bRange/2);
+        var xAdj = t-spot[0], yAdj = t-spot[1];
+        var cX = (baseList[b].loc[0] + xAdj)%mapSize, cY = (baseList[b].loc[1] + yAdj)%mapSize;
+
+        if(cX<0)cX+=mapSize;
+        if(cY<0)cY+=mapSize;
+
+        if(cX < bRange && cY < bRange) return false;
+    }
+
+    //z4 (small corners)
+    if((spot[0] < mapSize*.15+3 && spot[1] < mapSize*.15+3) || (spot[0] < mapSize*.15+3 && spot[1] > mapSize-mapSize*.15-3) ||
+       (spot[0] > mapSize-mapSize*.15-3 && spot[1] < mapSize*.15+3) || (spot[0] > mapSize-mapSize*.15-3 && spot[1] > mapSize-mapSize*.15-3)){
+        return false;
+    }
+    //z0 (tiny center)
+    else if(spot[0] > mapSize*.4-3 && spot[0] < mapSize*.6+3 && spot[1] > mapSize*.4-3 && spot[1] < mapSize*.6+3){
+        return false;
+    }
+
+    return true;
+}
+
+function spawnLoot(){
+    if(lootCount < mapSize*mapSize*lootSpreadMAX){
+        var spawn = parseInt(mapSize*mapSize*lootSpreadMIN);
+        for(var i = lootCount; i < spawn; i++){
+            var r = parseInt((Math.random()*100000)%lootSpawns.length);
+            var loot = chooseTreasureValue(lootSpawns[r][0],lootSpawns[r][1]);
+            map[lootSpawns[r][0]][lootSpawns[r][1]] = loot;
+            lootCount++;
+            lootSpawns.splice(r,1);
+        }
+        for(var i = 0; i < lootSpawnRate; i++){
+            var r = parseInt((Math.random()*100000)%lootSpawns.length);
+            var loot = chooseTreasureValue(lootSpawns[r][0],lootSpawns[r][1]);
+            map[lootSpawns[r][0]][lootSpawns[r][1]] = loot;
+            lootCount++;
+            lootSpawns.splice(r,1);
+        }
+    }
+}
+
+function chooseTreasureValue(x,y){
+    var val = 0, sum = 0;
+    var r = Math.random();
+    var zone = lootSpawnValues.zone1; //Zone 1
+
+    //Select zone
+    if(x > (mapSize-parseInt(mapSize*zone3Wid))/2 && x < mapSize - (mapSize-parseInt(mapSize*zone3Wid))/2)
+        zone = lootSpawnValues.zone3; //Zone 3
+    else if(x > (mapSize-parseInt(mapSize*zone3Wid))/2-parseInt(mapSize*zone2Wid) && x < mapSize - (mapSize-parseInt(mapSize*zone3Wid))/2+parseInt(mapSize*zone2Wid))
+        zone = lootSpawnValues.zone2; //Zone 2
+
+    for(var i = 0; i < zone.length; i++){
+        if(r < zone[i].chance+sum){
+            return {"type":zone[i].type,"count":zone[i].count};
+        }
+        else
+            sum += zone[i].chance;
+    }
+
+    return val;
+}
+
+function isLoot(loc){
+    if(loc.type==="GOLD") return true
+    else if(loc.type==="IRON") return true
+    else if(loc.type==="URANIUM") return true
+    return false;
+}
+
+
+
+//Other
+function generateToken(){
+    //Create random 16 character token
+    var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var token = '';
+    for (var i = 0; i < tokenSize; i++) {
+      token += chars[Math.round(Math.random() * (chars.length - 1))];
+    }
+
+    return token;
 }
 
 function death(p, killer){
@@ -2707,329 +3348,6 @@ function death(p, killer){
     }
 }
 
-function removeFromStorage(p,mod){
-    for(var i in p.storage){
-        if(p.storage[i].name===mod){
-            p.storage.splice(i,1);
-            break;
-        }
-    }
-}
-
-function queuedDestealth(p){
-    for(var a in p.queue){
-        if(p.queue[a].type==="DESTEALTH") return true;
-    }
-    return false;
-}
-
-function triggeredTrap(p){
-    var tr = withinTrap(p.loc);
-    if(tr>-1){
-        if(trapList[tr].owner!==p.token){
-            p.info.trapped = trapDuration+1;
-            p.battleLog.unshift({"type":"combat", "msg": "You've been trapped!"});
-            for(var pp in players){
-                for(var t in players[pp].knownTraps){
-                    if(players[pp].knownTraps[t].id==trapList[tr].id){
-                        players[pp].knownTraps.splice(t,1);
-                        if(trapList[tr].owner===players[pp].token)
-                            players[pp].battleLog.unshift({"type":"combat", "msg": "Your trap "+trapList[tr].num+" has triggered."});
-                        break;
-                    }
-                }
-            }
-            trapList.splice(tr,1);
-        }
-    }
-}
-
-function isKnownTrap(p,trap){
-    for(var t in p.knownTraps){
-        if(p.knownTraps[t].id==trap.id) return true;
-    }
-    return false;
-}
-
-function canUseMod(p, mod){
-    if(mod==="NONE")
-        return false;
-    else if(mod=="CAN")
-        return 3-p.queue.length >= cannonActionUsage && p.stats.energy>=cannonEnergyUsage && p.info.uranium>=cannonUraniumUsage;
-    else if(mod=="RAIL")
-        return 3-p.queue.length >= railgunActionUsage && p.stats.energy>=railgunEnergyUsage && p.info.uranium>=railgunUraniumUsage;
-    else if(mod=="TRAP")
-        return 3-p.queue.length >= trapActionUsage && p.stats.energy>=trapEnergyUsage && (p.info.uranium>=trapUraniumUsage || p.stats.trap>2);
-    else if(mod=="HEAL")
-        return p.stats.energy>=quickHealEnergyUsage;
-    else if(mod=="BLNK")
-        return p.stats.energy>=blinkEnergyUsage-2*p.stats.blink && p.info.uranium>=blinkUraniumUsage;
-    else if(mod=="ENG")
-        return p.info.uranium>=energyModUraniumUsage;
-    else if(mod=="HIDE" && !p.info.stealthTime>0)
-        return 3-p.queue.length >= stealthActionUsage && p.stats.energy>=stealthEnergyUsage && p.info.uranium>=stealthUraniumUsage;
-    else if(mod=="HIDE" && p.info.stealthTime>0)
-        return !queuedDestealth(p);
-    else if(mod=="ATK+" || mod=="PWR+" || mod=="RDR+" || mod=="HP+" || mod=="DR")
-        return true;
-    return false;
-}
-
-function savePlayer(p, del){
-    var writePlayer = p;
-    jsonfile.writeFile('data/playerData/'+writePlayer.token+".json", writePlayer, {spaces: 4},function(err){
-        if(err){
-            console.log(err);
-        }
-        else if(del){
-            while(!canDelete){
-                var k = 0;
-            }
-            changeOnlineStatus(p,false);
-
-            players[p.id] = {"id":p.id,"name":p.info.name,"status":"OFFLINE","changes":null};
-        }
-    });
-}
-
-function saveGameData(){
-    jsonfile.writeFile('data/teamdata.json', teamData, {spaces: 4},function(err){
-        if(err){
-            console.log(err);
-        }
-    });
-
-    var nameList = [];
-    for(var p in players){
-        if(players[p].status==="OFFLINE"){
-            nameList[p] = {
-                "name":players[p].name,
-                "changes": players[p].changes
-            };
-        }else{
-            nameList[p] = {
-                "name": players[p].info.name,
-                "changes": null
-            };
-        }
-    }
-
-    var data = {
-        "playerSize":playerSize,
-        "nameList": nameList
-    };
-
-    jsonfile.writeFile('data/gamedata.json', data, {spaces: 4},function(err){
-        if(err){
-            console.log(err);
-        }
-    });
-}
-
-function teamValidation(base, area){
-    if(base === area)
-        return "Base and area need to be different colors";
-
-    var hex = area.replace('#','');
-    var ar = parseInt(hex.substring(0,2), 16);
-    var ag = parseInt(hex.substring(2,4), 16);
-    var ab = parseInt(hex.substring(4,6), 16);
-    if(ar+ag+ab < 140)
-        return "Area color is too dark";
-
-    hex = base.replace('#','');
-    var br = parseInt(hex.substring(0,2), 16);
-    var bg = parseInt(hex.substring(2,4), 16);
-    var bb = parseInt(hex.substring(4,6), 16);
-
-    if(Math.abs(ar-br)<50 && Math.abs(ag-bg)<50 && Math.abs(ab-bb)<50)
-        return "Base color is too similar to Area color";
-
-    for(var b in teamData){
-        if(teamData[b].status!=="OFFLINE"){
-            hex = teamData[b].colors.baseColor.replace('#','');
-            var br2 = parseInt(hex.substring(0,2), 16);
-            var bg2 = parseInt(hex.substring(2,4), 16);
-            var bb2 = parseInt(hex.substring(4,6), 16);
-            hex = teamData[b].colors.areaColor.replace('#','');
-            var ar2 = parseInt(hex.substring(0,2), 16);
-            var ag2 = parseInt(hex.substring(2,4), 16);
-            var ab2 = parseInt(hex.substring(4,6), 16);
-
-            if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
-               Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
-                return "Color combo has been taken";
-            }
-        }
-    }
-
-    return true;
-}
-
-function buildStore(p){
-    return {
-        "withinShop": withinShop(p.loc),
-
-        //Regular Shop
-        "hpF":{
-            "price":calculatePrices(shopData.shipRepair,p.stats.hpMAX-p.stats.hp),
-            "canBuy":p.stats.hp!=p.stats.hpMAX
-        },
-        "hp5":{
-            "price":calculatePrices(shopData.shipRepair5,0),
-            "canBuy":p.stats.hp!=p.stats.hpMAX
-        },
-        "insurance":{
-            "price":calculatePrices(shopData.insurance,p.info.shipMass),
-            "canBuy":!p.info.hasInsurance
-        },
-        "hpU":{
-            "price":calculatePrices(shopData.healthUpgrades,p.stats.hpUpgrades+1),
-            "canBuy":p.stats.hpUpgrades!=p.stats.hpUpgradesMAX
-        },
-        "enU":{
-            "price":calculatePrices(shopData.energyUpgrades,p.stats.energyUpgrades+1),
-            "canBuy":p.stats.energyUpgrades!=p.stats.energyUpgradesMAX
-        },
-        "radU":{
-            "price":calculatePrices(shopData.radarUpgrades,p.stats.radarUpgrades+1),
-            "canBuy":p.stats.radarUpgrades!=p.stats.radarUpgradesMAX
-        },
-        "atkU":{
-            "price":calculatePrices(shopData.attackUpgrades,p.stats.attackUpgrades+1),
-            "canBuy":p.stats.attackUpgrades!=p.stats.attackUpgradesMAX
-        },
-
-        //Super Shop
-        "loadout":{
-            "price":calculatePrices(shopData.loadoutUpgrades,0),
-            "canBuy":p.stats.loadoutSize!=statData.loadoutMAX
-        },
-        "canU":{
-            "price":calculatePrices(shopData.cannonUpgrades,p.stats.cannonUpgrades+1),
-            "canBuy":p.stats.cannonUpgrades!=p.stats.cannonUpgradesMAX
-        },
-        "bliU":{
-            "price":calculatePrices(shopData.blinkUpgrades,p.stats.blinkUpgrades+1),
-            "canBuy":p.stats.blinkUpgrades!=p.stats.blinkUpgradesMAX
-        },
-        "steU":{
-            "price":calculatePrices(shopData.stealthUpgrades,p.stats.stealthUpgrades+1),
-            "canBuy":p.stats.stealthUpgrades!=p.stats.stealthUpgradesMAX
-        },
-        "trapU":{
-            "price":calculatePrices(shopData.trapUpgrades,p.stats.trapUpgrades+1),
-            "canBuy":p.stats.trapUpgrades!=p.stats.trapUpgradesMAX
-        },
-        "engModU":{
-            "price":calculatePrices(shopData.engModUpgrades,p.stats.engModUpgrades+1),
-            "canBuy":p.stats.engModUpgrades!=p.stats.engModUpgradesMAX
-        },
-        "scanU":{
-            "price":calculatePrices(shopData.scannerUpgrades,p.stats.scannerUpgrades+1),
-            "canBuy":p.stats.scannerUpgrades!=p.stats.scannerUpgradesMAX
-        },
-        "railU":{
-            "price":calculatePrices(shopData.railgunUpgrades,p.stats.railgunUpgrades+1),
-            "canBuy":p.stats.railgunUpgrades!=p.stats.railgunUpgradesMAX
-        },
-        "insuranceU":{
-            "price":calculatePrices(shopData.insuranceUpgrades,p.stats.insuranceUpgrades+1),
-            "canBuy":p.stats.insuranceUpgrades!=p.stats.insuranceUpgradesMAX
-        },
-        "carryU":{
-            "price":calculatePrices(shopData.urCarryUpgrades,p.stats.urCarryUpgrades+1),
-            "canBuy":p.stats.urCarryUpgrades!=p.stats.urCarryUpgradesMAX
-        },
-        "statHP":{
-            "price":calculatePrices(shopData.staticHp,1),
-            "canBuy":!p.stats.staticHp
-        },
-        "statEng":{
-            "price":calculatePrices(shopData.staticEng,1),
-            "canBuy":!p.stats.staticEng
-        },
-        "statAtk":{
-            "price":calculatePrices(shopData.staticAtk,1),
-            "canBuy":!p.stats.staticAtk
-        },
-        "statRdr":{
-            "price":calculatePrices(shopData.staticRdr,1),
-            "canBuy":!p.stats.staticRdr
-        },
-        "statDR":{
-            "price":calculatePrices(shopData.staticDR,1),
-            "canBuy":!p.stats.staticDR
-        },
-        "uranium":{
-            "price":calculatePrices(shopData.uranium,1),
-            "canBuy":p.info.uranium<p.stats.urCarry
-        },
-        "quickHeal":{
-            "price":calculatePrices(shopData.quickHeal,p.stats.hpMAX),
-            "canBuy":!p.stats.quickHeal
-        }
-    };
-}
-
-function removeFromTeam(pid, teamID, type){
-    if(type==="MERGE"){
-        teamData[teamID] = {"id":teamID,"status":"OFFLINE"};
-    }
-    else if(type==="KICK"){
-        for(var a in teamData[teamID].admins){
-            if(teamData[teamID].admins[a].id===pid){
-                teamData[teamID].admins.splice(a,1);
-                break;
-            }
-        }
-
-        for(var m in teamData[teamID].members){
-            if(teamData[teamID].members[m].id===pid){
-                teamData[teamID].members.splice(m,1);
-                break;
-            }
-        }
-
-        if(players[pid].status==="OFFLINE"){
-            players[pid].changes = {
-                "id":-1,
-                "role":"NONE"
-            }
-        }
-        else{
-            players[pid].info.teamID = -1;
-            players[pid].info.teamRole = "NONE";
-            players[pid].battleLog.unshift({"type":"team", "msg": "You have been kicked from "+teamData[teamID].name+"."});
-        }
-    }
-    else{
-        for(var a in teamData[teamID].admins){
-            if(teamData[teamID].admins[a].id===pid){
-                teamData[teamID].admins.splice(a,1);
-                break;
-            }
-        }
-
-        for(var m in teamData[teamID].members){
-            if(teamData[teamID].members[m].id===pid){
-                teamData[teamID].members.splice(m,1);
-                break;
-            }
-        }
-
-        if(players[pid].status==="OFFLINE"){
-            messageGroup(teamData[teamID].members,
-                         players[pid].name+" has left the team.","","team", null);
-        }
-        else{
-            messageGroup(teamData[teamID].members,
-                         players[pid].info.name+" has left the team.","","team", null);
-            players[pid].battleLog.unshift({"type":"team", "msg": "You left "+teamData[teamID].name+"."});
-        }
-    }
-}
-
 function messageGroup(group, msg, msgS, type, source){
     if(type==="team"){
         for(var i = 0; i < group.length; i++){
@@ -3059,174 +3377,6 @@ function messageGroup(group, msg, msgS, type, source){
     }
 }
 
-function mergeTeams(oldID, newID, p){
-    //Take all bases
-    //TODO: THIS SECTION
-
-    //Take all members
-    messageGroup(teamData[oldID].members,
-                 "Your team has been merged with "+teamData[newID].name+".",
-                 "You have merged your old team into "+teamData[newID].name+".","team", p);
-    messageGroup(teamData[newID].members,
-                "Your team has been merged with "+teamData[oldID].name+". Welcome your new members!",
-                "", "team", null);
-
-
-    for(var m in teamData[oldID].members){
-        var id = teamData[oldID].members[m].id;
-        if(players[id].status!=="OFFLINE"){
-            players[id].info.teamID = newID;
-            players[id].info.teamRole = "MEMBER";
-        }
-        else{
-            players[id].changes = {"id":newID,"role":"MEMBER"};
-        }
-        teamData[newID].members.push({
-            "token": teamData[oldID].members[m].token,
-            "id": teamData[oldID].members[m].id,
-            "name": teamData[oldID].members[m].name,
-            "powerLevel": teamData[oldID].members[m].powerLevel,
-            "online": teamData[oldID].members[m].online
-        });
-
-    }
-
-    //Delete old team
-    removeFromTeam(p, oldID, "MERGE");
-}
-
-function changeRole(pid, teamID, prevRole, newRole){
-    var mem;
-    for(var m in teamData[teamID].members){
-        if(teamData[teamID].members[m].id===pid){
-            mem = teamData[teamID].members[m];
-            break;
-        }
-    }
-
-    if(prevRole==="ADMIN"){
-        for(var a in teamData[teamID].admins){
-            if(teamData[teamID].admins[a].id===pid){
-                teamData[teamID].admins.splice(a,1);
-                break;
-            }
-        }
-    }
-
-    if(newRole==="LEADER"){
-        teamData[teamID].leader = {
-            "token": mem.token,
-            "id": mem.id,
-            "name": mem.name,
-            "powerLevel": mem.powerLevel,
-            "online": mem.online
-        };
-    }
-    else if(newRole==="ADMIN"){
-        teamData[teamID].admins.push({
-            "token": mem.token,
-            "id": mem.id,
-            "name": mem.name,
-            "powerLevel": mem.powerLevel,
-            "online": mem.online
-        });
-    }
-
-    if(players[pid].status==="OFFLINE")
-        players[pid].changes = {"id":teamID,"role":newRole};
-    else
-        players[pid].info.teamRole = newRole;
-}
-
-function calculateTeamPower(teamID){
-    var b1Val = 5, b2Val = 10, b3Val = 20;
-    var memVal = 5, areaVal = 1000;
-
-    return teamData[teamID].members.length*memVal;
-}
-
 function calculateIndividualPower(p){
     return p.info.shipMass*25;
-}
-
-function calculateMapControl(teamID){
-    return 0;
-}
-
-function rankTeams(){
-    return 0;
-}
-
-function updatePower(p){
-    var teamID = p.info.teamID;
-    var token = p.token;
-
-    if(teamID > -1 && teamID < teamData.length){
-        if(teamData[teamID].status !== "OFFLINE"){
-            if(p.info.teamRole==="LEADER"){
-                teamData[teamID].leader.powerLevel = p.info.powerLevel;
-            }
-            else if(p.info.teamRole==="ADMIN"){
-                for(var a in teamData[teamID].admins){
-                    if(teamData[teamID].admins[a].token===token){
-                        teamData[teamID].admins[a].powerLevel = p.info.powerLevel;
-                        break;
-                    }
-                }
-            }
-
-            for(var m in teamData[teamID].members){
-                if(teamData[teamID].members[m].token===token){
-                    teamData[teamID].members[m].powerLevel = p.info.powerLevel;
-                    break;
-                }
-            }
-        }
-    }
-
-}
-
-function initTeamClean(){
-    for(var t in teamData){
-        if(teamData[t].status!=="OFFLINE"){
-            teamData[t].leader.online = false;
-            for(var a in teamData[t].admins){
-                teamData[t].admins[a].online = false;
-            }
-            for(var m in teamData[t].members){
-                teamData[t].members[m].online = false;
-            }
-        }
-
-    }
-
-    saveGameData();
-}
-
-function changeOnlineStatus(p, status){
-    var teamID = p.info.teamID;
-    var token = p.token;
-
-    if(teamID > -1 && teamID < teamData.length){
-        if(teamData[teamID].status !== "OFFLINE"){
-            if(p.info.teamRole==="LEADER"){
-                teamData[teamID].leader.online = status;
-            }
-            else if(p.info.teamRole==="ADMIN"){
-                for(var a in teamData[teamID].admins){
-                    if(teamData[teamID].admins[a].token===token){
-                        teamData[teamID].admins[a].online = status;
-                        break;
-                    }
-                }
-            }
-
-            for(var m in teamData[teamID].members){
-                if(teamData[teamID].members[m].token===token){
-                    teamData[teamID].members[m].online = status;
-                    break;
-                }
-            }
-        }
-    }
 }
