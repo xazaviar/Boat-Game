@@ -12,6 +12,7 @@ var teamNameMaxLength = 25;
 
 //Map Building
 var mapSize = 100;
+var minMapSize = 30;
 var rockSpread = .04;   //decimal as percent
 var shopSpread = .007;  //decimal as percent
 var map = [];
@@ -2940,7 +2941,7 @@ function spawn(){
 
 function buildMap(){
     //Correct mapSize
-    if(mapSize < 20) mapSize = 20;
+    if(mapSize < minMapSize) mapSize = minMapSize;
 
     //Sweep 1
     //Define zones, initialize all spaces, and spawn rocks
@@ -2968,8 +2969,7 @@ function buildMap(){
             }
 
             //z3 (tiny mids)
-            else if(
-                    (x <= mapSize*.07 && y > mapSize*.465 && y < mapSize*.535)
+            else if((x <= mapSize*.07 && y > mapSize*.465 && y < mapSize*.535)
                     ||(x >= mapSize*.93 && y > mapSize*.465 && y < mapSize*.535)
                     ||(y <= mapSize*.07 && x > mapSize*.465 && x < mapSize*.535)
                     ||(y >= mapSize*.93 && x > mapSize*.465 && x < mapSize*.535)
@@ -2998,14 +2998,20 @@ function buildMap(){
                 map[x][y] = {
                     "type": "ROCK",
                     "zone": zone,
-                    "id": rockList.length-1
+                    "id": rockList.length-1,
+                    "baseID": -1,
+                    "loot": {"gold":0,"iron":0,"uranium":0}
                 }
+                if(zone==0)
+                    spawnList.splice(spawnList.length-1,1);
             }
             else{
                 map[x][y] = {
                     "type": "OPEN",
                     "zone": zone,
-                    "id": -1
+                    "id": -1,
+                    "baseID": -1,
+                    "loot": {"gold":0,"iron":0,"uranium":0}
                 }
             }
 
@@ -3014,46 +3020,108 @@ function buildMap(){
 
     //Sweep 2 - Create Bases
     var maxBases = parseInt(mapSize*mapSize/80);
-    var minBases = parseInt(mapSize*mapSize/100);
+    var minBases = parseInt(mapSize*mapSize/110);
     var tries = 0;
-    while(baseList.length < maxBases && tries < 1000){
-        var x = parseInt(Math.random()*mapSize);
-        var y = parseInt(Math.random()*mapSize);
+    while(baseList.length < minBases){
+        baseList = [];
+        while(baseList.length < maxBases && tries < mapSize*10){
+            var x = parseInt(Math.random()*mapSize);
+            var y = parseInt(Math.random()*mapSize);
 
-        if(map[x][y].type==="OPEN" && map[x][y].zone!=0 && map[x][y].zone!=4
-           && canBuildBase([x,y])){
-               var id = newBase(map[x][y].zone, [x,y]);
-               map[x][y].type = "BASE";
-               map[x][y].id = id;
-               tries = 0;
-        }
-        else if(baseList.length > minBases){
-            tries++;
+            if(map[x][y].type==="OPEN" && map[x][y].zone!=0 && map[x][y].zone!=4
+               && canBuildBase([x,y])){
+                   var id = newBase(map[x][y].zone, [x,y]);
+                   map[x][y].type = "BASE";
+                   map[x][y].id = id;
+                   tries = 0;
+            }
+            else{
+                tries++;
+            }
         }
     }
 
 
-    //Sweep 3 - Fill in holes
+    //Sweep 3 - Fill in holes and choose loot spawns
+    var holeList = [];
+    for(var x = 0; x < mapSize; x++){
+        for(var y = 0; y < mapSize; y++){
+            if(map[x][y].zone!=0 && map[x][y].zone!=4 && map[x][y].baseID==-1)
+                holeList.push([x,y]);
 
+            if(map[x][y].type==="OPEN" && map[x][y].zone!=0)
+                lootSpawns.push({"loc":[x,y],"zone":map[x][y].zone});
+        }
+    }
+
+    var maxBaseSize = 60;
+    while(holeList.length>0){
+        for(var i = 0; i < holeList.length; i++){
+            var x = holeList[i][0], y = holeList[i][1];
+            var dx = x-1, ux = x+1, dy = y-1, uy = y+1;
+            if(dx < 0) dx+=mapSize;
+            if(ux >= mapSize) ux-=mapSize;
+            if(dy < 0) dy+=mapSize;
+            if(uy >= mapSize) uy-=mapSize;
+
+            if(map[x][dy].baseID!=-1){
+                if(baseList[map[x][dy].baseID].tiles.length < maxBaseSize){
+                    baseList[map[x][dy].baseID].tiles.push([x,y]);
+                    map[x][y].baseID = map[x][dy].baseID;
+                    holeList.splice(i,1);
+                    i--;
+                }
+            }
+            else if(map[dx][y].baseID!=-1){
+                if(baseList[map[dx][y].baseID].tiles.length < maxBaseSize){
+                    baseList[map[dx][y].baseID].tiles.push([x,y]);
+                    map[x][y].baseID = map[dx][y].baseID;
+                    holeList.splice(i,1);
+                    i--;
+                }
+            }
+            else if(map[x][uy].baseID!=-1){
+                if(baseList[map[x][uy].baseID].tiles.length < maxBaseSize){
+                    baseList[map[x][uy].baseID].tiles.push([x,y]);
+                    map[x][y].baseID = map[x][uy].baseID;
+                    holeList.splice(i,1);
+                    i--;
+                }
+            }
+            else if(map[ux][y].baseID!=-1){
+                if(baseList[map[ux][y].baseID].tiles.length < maxBaseSize){
+                    baseList[map[ux][y].baseID].tiles.push([x,y]);
+                    map[x][y].baseID = map[ux][y].baseID;
+                    holeList.splice(i,1);
+                    i--;
+                }
+            }
+        }
+        maxBaseSize++;
+    }
 
     //Sweep 4 - Special Placements
-
+    //SUPER BASE STORE
+    var idSup = newBase(0, [parseInt(mapSize/2),parseInt(mapSize/2)]);
+    map[parseInt(mapSize/2)][parseInt(mapSize/2)].type = "BASE";
+    map[parseInt(mapSize/2)][parseInt(mapSize/2)].id = idSup;
 
     //Sweep 5 - Spawn Loot
-    // spawnLoot();
+    spawnLoot();
 
-    for(var y = 0; y < mapSize; y++){
-        var line = ""
-        for(var x = 0; x < mapSize; x++){
-            if(map[x][y].type==="ROCK") line+="* ";
-            else if(map[x][y].type==="BASE") line+="B ";
-            else if(map[x][y].zone==0 || map[x][y].zone==4) line+=map[x][y].zone+" ";
-            else line+="  "; //line+=map[x][y].zone+" ";
-        }
-        console.log(line);
-    }
-
-    console.log("BASE COUNT: "+baseList.length+" ["+minBases+", "+maxBases+"]");
+    //Output Map
+    // for(var y = 0; y < mapSize; y++){
+    //     var line = ""
+    //     for(var x = 0; x < mapSize; x++){
+    //         if(map[x][y].type==="ROCK") line+="* ";
+    //         else if(map[x][y].type==="BASE") line+="_ ";
+    //         else if(map[x][y].baseID!=-1) line+="+ ";
+    //         // else if(map[x][y].zone==0 || map[x][y].zone==4) line+=map[x][y].zone+" ";
+    //         else line+="  "; //line+=map[x][y].zone+" ";
+    //     }
+    //     console.log(line);
+    // }
+    //console.log("BASE COUNT: "+baseList.length+" ["+minBases+", "+maxBases+"]");
 }
 
 function newBase(zone, loc){
@@ -3061,19 +3129,32 @@ function newBase(zone, loc){
     var tiles = [];
 
     //Grab all tiles within 3 blocks from all sides
-    
+    for(var x = 0; x < 7; x++){
+        for(var y = 0; y < 7; y++){
+            var cx = loc[0] + (x - 3);
+            var cy = loc[1] + (y - 3);
+
+            if(cx < 0) cx+=mapSize;
+            else if(cx >= mapSize) cx-=mapSize;
+            if(cy < 0) cy+=mapSize;
+            else if(cy >= mapSize) cy-=mapSize;
+
+            tiles.push([cx,cy]);
+            map[cx][cy].baseID = id;
+        }
+    }
 
 
     baseList[id] = {
         "id": id,
         "lvl":1,
-        "hp":10,
-        "hpMAX": 10,
+        "hp":(zone==0?1000:10),
+        "hpMAX": (zone==0?1000:10),
         "upgrade": 0,
         "upgradeMAX": 100,
         "output": {
-            "gold":1,
-            "credits":1
+            "gold":0,
+            "credits":0
         },
         "special": "N",
         "owner": -1,
@@ -3115,35 +3196,48 @@ function spawnLoot(){
         var spawn = parseInt(mapSize*mapSize*lootSpreadMIN);
         for(var i = lootCount; i < spawn; i++){
             var r = parseInt((Math.random()*100000)%lootSpawns.length);
-            var loot = chooseTreasureValue(lootSpawns[r][0],lootSpawns[r][1]);
-            map[lootSpawns[r][0]][lootSpawns[r][1]] = loot;
+            var loot = chooseTreasureValue(lootSpawns[r].zone);
+            map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.gold += loot.gold;
+            map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.iron += loot.iron;
+            map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.uranium += loot.uranium;
             lootCount++;
             lootSpawns.splice(r,1);
         }
         for(var i = 0; i < lootSpawnRate; i++){
             var r = parseInt((Math.random()*100000)%lootSpawns.length);
-            var loot = chooseTreasureValue(lootSpawns[r][0],lootSpawns[r][1]);
-            map[lootSpawns[r][0]][lootSpawns[r][1]] = loot;
+            var loot = chooseTreasureValue(lootSpawns[r].zone);
+            map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.gold += loot.gold;
+            map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.iron += loot.iron;
+            map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.uranium += loot.uranium;
             lootCount++;
             lootSpawns.splice(r,1);
         }
     }
 }
 
-function chooseTreasureValue(x,y){
+function chooseTreasureValue(zone){
     var val = 0, sum = 0;
     var r = Math.random();
-    var zone = lootSpawnValues.zone1; //Zone 1
-
-    //Select zone
-    if(x > (mapSize-parseInt(mapSize*zone3Wid))/2 && x < mapSize - (mapSize-parseInt(mapSize*zone3Wid))/2)
-        zone = lootSpawnValues.zone3; //Zone 3
-    else if(x > (mapSize-parseInt(mapSize*zone3Wid))/2-parseInt(mapSize*zone2Wid) && x < mapSize - (mapSize-parseInt(mapSize*zone3Wid))/2+parseInt(mapSize*zone2Wid))
-        zone = lootSpawnValues.zone2; //Zone 2
+    var zone;
+    if(zone==1) zone = lootSpawnValues.zone1;
+    if(zone==2) zone = lootSpawnValues.zone2;
+    if(zone==3) zone = lootSpawnValues.zone3;
+    if(zone==4) zone = lootSpawnValues.zone4;
 
     for(var i = 0; i < zone.length; i++){
         if(r < zone[i].chance+sum){
-            return {"type":zone[i].type,"count":zone[i].count};
+            var loot = {"gold":0,"iron":0,"uranium":0}
+            if(zone[i].type==="GOLD"){
+                loot.gold = zone[i].count;
+            }
+            else if(zone[i].type==="IRON"){
+                loot.iron = zone[i].count;
+            }
+            else if(zone[i].type==="URANIUM"){
+                loot.uranium = zone[i].count;
+            }
+
+            return loot;
         }
         else
             sum += zone[i].chance;
