@@ -11,7 +11,7 @@ var playerNameMaxLength = 16;
 var teamNameMaxLength = 25;
 
 //Map Building
-var mapSize = 100;
+var mapSize = 70;
 var minMapSize = 30;
 var rockSpread = .04;   //decimal as percent
 var shopSpread = .007;  //decimal as percent
@@ -461,15 +461,13 @@ function startServer(){
                         },
                         "admins": admins,
                         "members": members,
-                        "gold": teamData[t].gold,
-                        "iron": teamData[t].iron,
-                        "uranium": teamData[t].uranium,
-                        "credits": teamData[t].credits,
+                        "vault": teamData[t].vault,
                         "income": teamData[t].income,
                         "settings": teamData[t].settings,
                         "power": teamData[t].power,
                         "mapControl": calculateMapControl(t),
-                        "rank": teamData[t].rank
+                        "rank": teamData[t].rank,
+                        "objective": teamData[t].objective
                     };
                 }
                 else if(teamData[t].status==="OFFLINE"){
@@ -490,6 +488,11 @@ function startServer(){
                 }
             }
 
+            var sendBase = [];
+            for(var b in baseList){
+                sendBase[b] = baseList[b];
+            }
+
             //Update canUse
             p.info.powerLevel = calculateIndividualPower(p);
             updatePower(p);
@@ -500,9 +503,9 @@ function startServer(){
                 "user": p,
                 "players": sendPlayers,
                 "map": sendMap,
-                "game":{"countdown":countdown,"phase":phase,"version":version},
-                "baseList": baseList,
+                "baseList": sendBase,
                 "teamList": sendTeam,
+                "game":{"countdown":countdown,"phase":phase,"version":version},
                 "shop": buildStore(p)
             }
 
@@ -1139,9 +1142,7 @@ function startServer(){
                     p = players[id];
 
             if(p!=null){
-                for(var i in players){
-                    players[i].battleLog.unshift({"type":"chat","msg":msg,"user":p.info.name});
-                }
+                messageGroup(players,msg,"","chat",p);
             }
         }
         res.send('');
@@ -1182,10 +1183,12 @@ function startServer(){
                     },
                     "admins": [],
                     "members": [],
-                    "gold":0,
-                    "iron":0,
-                    "uranium":0,
-                    "credits":0,
+                    "vault":{
+                        "gold":100000,
+                        "credits":100000,
+                        "iron":100000,
+                        "uranium":100000
+                    },
                     "income": {
                         "gold": 0,
                         "credits": 0,
@@ -1194,6 +1197,7 @@ function startServer(){
                     },
                     "rank": 9999,
                     "power": 0,
+                    "Objective": -1,
                     "settings":{
                         "building": "TEAM",
                         "ping": "ADMIN",
@@ -1575,6 +1579,77 @@ function startServer(){
 
         res.send('');
     });
+    app.post('/setObjective', function(req, res){
+        var token = req.body.token;
+        var id = req.body.id;
+        var baseID = req.body.baseID;
+
+        //Validate token
+        var p;
+        if(players[id].status!=="OFFLINE")
+            if(players[id].token===token)
+                p = players[id];
+
+        if(p!=null){
+            if(p.info.teamRole==="LEADER" ||
+               p.info.teamRole==="ADMIN" && teamData[p.info.teamID].ping!=="LEADER" ||
+               p.info.teamRole==="MEMBER" && teamData[p.info.teamID].ping==="TEAM"){
+                teamData[p.info.teamID].objective = baseID;
+                var msg;
+                if(baseID>-1){
+                    var type = (baseList[teamData[p.info.teamID].objective].owner==p.info.teamID?"DEFEND":"CAPTURE");
+                    msg = "The objective hase been set to "+type+" BASE "+baseID+". Check your map for more details.";
+                }
+                else{
+                    msg = "The team's objective has been removed."
+                }
+
+                messageGroup(teamData[p.info.teamID].members,
+                             msg, "You changed the team's objective.", "team", p);
+            }
+            else{
+                p.battleLog.unshift({"type":"action", "msg": "You can't set an objective."});
+            }
+        }
+
+        res.send('');
+    });
+    app.post('/upgradeBase', function(req,res){
+        var token = req.body.token;
+        var id = req.body.id;
+        var baseID = req.body.baseID;
+
+        //Validate token
+        var p;
+        if(players[id].status!=="OFFLINE")
+            if(players[id].token===token)
+                p = players[id];
+
+        if(p!=null){
+            if(p.info.teamRole==="LEADER" || p.info.teamRole==="ADMIN" && teamData[p.info.teamID].upgrading!=="LEADER"){
+                if(baseList[baseID].owner===p.info.teamID){
+                    if(canPurchaseBaseUpgrade(baseID,p.info.teamID)){
+                        makePurchaseBaseUpgrade(baseID,p.info.teamID);
+                        messageGroup(teamData[p.info.teamID].members,
+                                     "Base "+baseID+" is now being upgraded. Be prepared to defend it!",
+                                     "You started the upgrade for Base "+baseID+". Be prepared to defend it!", "team", p);
+                    }
+                    else{
+                        p.battleLog.unshift({"type":"action", "msg": "Your team needs more resources to upgrade Base "+baseID+"."});
+                    }
+                }
+                else{
+                    p.battleLog.unshift({"type":"action", "msg": "I'm not sure why you need to know this, but you can't upgrade enemy bases."});
+                }
+            }
+            else{
+                p.battleLog.unshift({"type":"action", "msg": "You can't cheat me bitch. You can't upgrade bases."});
+            }
+        }
+
+        res.send('');
+    });
+
 
     app.get('/changelog', function (req, res) {
         jsonfile.readFile("data/changelog.json", function(err, obj) {
@@ -1628,7 +1703,7 @@ function startServer(){
 //******************************************************************************
 function setupPhase(){
     countdown -= 1;
-    if(countdown==-1){
+    if(countdown<=-1){
         phase = 1;
         countdown = countdownMax;
         var actAttacks = [];
@@ -1698,7 +1773,8 @@ function setupPhase(){
         }
 
         setTimeout(function(){actionPhase()},aTick);
-    }else{
+    }
+    else{
         setTimeout(function(){setupPhase();},cTick);
     }
 }
@@ -1879,6 +1955,20 @@ function roundCleanup(){
                 if(saveCountdown==saveRound){
                     savePlayer(players[i], false);
                 }
+            }
+        }
+    }
+
+    //Update bases
+    for(var b in baseList){
+        if(baseList[b].upgrading){
+            baseList[b].upgrade++;
+
+            if(baseList[b].upgrade==baseList[b].upgradeMAX){
+                baseList[b].upgrade = 0;
+                baseList[b].lvl++;
+                baseList[b].upgradeCost = calculateBaseUpgradeCost(baseList[b].lvl);
+                baseList[b].upgrading = false;
             }
         }
     }
@@ -2440,6 +2530,22 @@ function buildStore(p){
     };
 }
 
+function canPurchaseBaseUpgrade(baseID, teamID){
+    var vault = teamData[teamID].vault;
+    var cost = baseList[baseID].upgradeCost;
+
+    return vault.credits >= cost.credits && vault.iron >= cost.iron && vault.uranium >= cost.uranium;
+}
+
+function makePurchaseBaseUpgrade(baseID, teamID){
+    var cost = baseList[baseID].upgradeCost;
+
+    teamData[teamID].vault.credits-=cost.credits;
+    teamData[teamID].vault.iron-=cost.iron;
+    teamData[teamID].vault.uranium-=cost.uranium;
+
+    baseList[baseID].upgrading = true;
+}
 
 
 //Legal Action Checkers
@@ -2669,7 +2775,11 @@ function removeFromTeam(pid, teamID, type){
 
 function mergeTeams(oldID, newID, p){
     //Take all bases
-    //TODO: THIS SECTION
+    for(var b in baseList){
+        if(baseList[b].owner==oldID){
+            baseList[b].owner = newID;
+        }
+    }
 
     //Take all members
     messageGroup(teamData[oldID].members,
@@ -2698,6 +2808,12 @@ function mergeTeams(oldID, newID, p){
         });
 
     }
+
+    //Take all Loot
+    teamData[newID].vault.gold += teamData[oldID].vault.gold;
+    teamData[newID].vault.credits += teamData[oldID].vault.credits;
+    teamData[newID].vault.iron += teamData[oldID].vault.iron;
+    teamData[newID].vault.uranium += teamData[oldID].vault.uranium;
 
     //Delete old team
     removeFromTeam(p, oldID, "MERGE");
@@ -2747,7 +2863,7 @@ function changeRole(pid, teamID, prevRole, newRole){
 }
 
 function calculateTeamPower(teamID){
-    var b1Val = 10, b2Val = 20, b3Val = 40;
+    var b1Val = 10, b2Val = 40, b3Val = 100;
     var memVal = 5, areaVal = 1000;
     var maxMap = mapSize*mapSize;
     var memPow;
@@ -3341,7 +3457,7 @@ function newBase(zone, loc){
     }
 
     //TEMP
-    var owner = parseInt(Math.random()*100)%3;
+    var owner = parseInt(Math.random()*100)%5;
 
     baseList[id] = {
         "id": id,
@@ -3349,7 +3465,9 @@ function newBase(zone, loc){
         "hp":hpMAX,
         "hpMAX": hpMAX,
         "upgrade": 0,
-        "upgradeMAX": 80,
+        "upgradeMAX": 5,
+        "upgradeCost": calculateBaseUpgradeCost(lvl),
+        "upgrading": false,
         "output": {
             "gold":gold,
             "gTier": gTier,
@@ -3357,7 +3475,7 @@ function newBase(zone, loc){
             "cTier": cTier
         },
         "special": special,
-        "owner": owner-1,
+        "owner": owner,
         "loc": loc,
         "tiles": tiles
     };
@@ -3389,6 +3507,15 @@ function canBuildBase(spot){
     }
 
     return true;
+}
+
+function calculateBaseUpgradeCost(lvl){
+    if(lvl==1)
+        return {"credits":10000,"iron":50,"uranium":10};
+    else if(lvl==2)
+        return {"credits":20000,"iron":150,"uranium":30};
+    else
+        return {"credits":999999,"iron":9999,"uranium":999};
 }
 
 function spawnLoot(){
@@ -3659,17 +3786,35 @@ function messageGroup(group, msg, msgS, type, source){
             }
         }
     }
-    else{
+    else if(type==="chat"){
         for(var i = 0; i < players.length; i++){
             if(players[i].status!=="OFFLINE")
-                if(players[i].token === source.token)
-                    killer.battleLog.unshift({"type":type, "msg": msgS});
-                else
-                    players[i].battleLog.unshift({"type":type, "msg": msg});
+                players[i].battleLog.unshift({"type":type, "msg":msg, "user":source.info.name});
         }
+    }
+    else{
+        for(var i = 0; i < players.length; i++){
+            if(players[i].status!=="OFFLINE"){
+                var sendOut = false;
+                if(source!=null){
+                    if(players[i].token === source.token){
+                        sendOut = true;
+                        players[i].battleLog.unshift({"type":type, "msg": msgS});
+                    }
+
+                }
+
+                if(!sendOut){
+                    players[i].battleLog.unshift({"type":type, "msg": msg});
+                }
+            }
+        }
+
     }
 }
 
 function calculateIndividualPower(p){
-    return p.info.shipMass*25;
+    var upgradeVal = 10, haulVal = 2, killVal = 5;
+
+    return p.info.shipMass*upgradeVal + p.info.hauls*haulVal + p.info.kills*killVal;
 }

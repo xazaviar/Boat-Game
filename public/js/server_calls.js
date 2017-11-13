@@ -257,6 +257,51 @@ function declineInvite(token, id, tid){
     });
 }
 
+function setObjective(token, id, baseID){
+    var dat = {
+        "token": token,
+        "id": id,
+        "baseID": baseID
+    };
+
+    $.ajax({
+        url: "/setObjective",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+        }
+    });
+}
+
+function upgradeBase(token, id, baseID){
+    var dat = {
+        "token": token,
+        "id": id,
+        "baseID": baseID
+    };
+
+    $.ajax({
+        url: "/upgradeBase",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+        }
+    });
+}
 
 //*****************************************************************************
 //Team Management functions

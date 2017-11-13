@@ -123,10 +123,15 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
                     else ctx.globalAlpha = 0.3;
                 }else ctx.globalAlpha = 0.3;
 
+                if(teamList[me.info.teamID].objective > -1 && blink)
+                    if(map[x][y].baseID == teamList[me.info.teamID].objective) ctx.globalAlpha = 0.7;
+
+
                 ctx.beginPath();
                 if(owner > -1){
                     ctx.fillStyle = teamList[owner].colors.areaColor;
-                }else{
+                }
+                else{
                     ctx.fillStyle = "#333";
                 }
                 ctx.fillRect(sX+x*tileSize,sY+y*tileSize,tileSize,tileSize);
@@ -922,7 +927,12 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         ctx.font = "bold 25pt Courier";
         ctx.fillText("OBJECTIVE:",sX+5, sY+150);
         ctx.font = "16pt Courier";
-        ctx.fillText("CAPTURE [BASE_NAME]",sX+210, sY+147);
+        if(teamList[id].objective>-1){
+            var type = (baseList[teamList[id].objective].owner==id?"DEFEND":"CAPTURE");
+            ctx.fillText(type+" BASE "+teamList[id].objective,sX+210, sY+147);
+        }
+        else
+            ctx.fillText("NONE",sX+210, sY+147);
 
 
         //Draw Map
@@ -930,7 +940,9 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         if(mX > sX && mX < sX+5*wid/8 &&
            mY > sY+hei-5*wid/8 && mY < sY+hei){
             var tileSize = (5*wid/8)/map.length;
-            mouseHover = {"baseID":map[parseInt((mX-sX)/tileSize)][parseInt((mY-(sY+hei-5*wid/8))/tileSize)].baseID};
+            var baseID = map[parseInt((mX-sX)/tileSize)][parseInt((mY-(sY+hei-5*wid/8))/tileSize)].baseID;
+            if(baseID > -1)
+                mouseHover = {"baseID": baseID};
         }
 
         ctx.strokeRect(sX, sY+hei-5*wid/8, 5*wid/8, 5*wid/8);
@@ -943,81 +955,115 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         ctx.font = "20pt Courier";
         ctx.fillText("BASE INFO",sX+5*wid/8+10, sY+175);
         ctx.font = "16pt Courier";
-        if(typeof mouseHover.baseID !== "undefined"){
-            if(mouseHover.baseID > -1){
-                var base = baseList[mouseHover.baseID];
-                var yAdj = 0;
+        if(typeof mouseHover.baseID !== "undefined" || teamList[me.info.teamID].objective > -1){
+            var base = baseList[(mouseHover.baseID > -1?mouseHover.baseID:teamList[me.info.teamID].objective)];
+            var yAdj = 0;
 
-                if(base.owner==me.info.teamID){
-                    ctx.fillText("HP : ",sX+5*wid/8+10, sY+200);
-                    ctx.fillText("UPG: ",sX+5*wid/8+10, sY+220);
-                    ctx.fillStyle="#333333";
-                    ctx.fillRect(sX+5*wid/8+75,sY+185,140,15);
-                    ctx.fillRect(sX+5*wid/8+75,sY+205,140,15);
-                    ctx.fillStyle=colors.hpColor;
-                    ctx.fillRect(sX+5*wid/8+75,sY+185,140*(base.hp/base.hpMAX),15);
-                    ctx.fillStyle=colors.energyColor;
-                    ctx.fillRect(sX+5*wid/8+75,sY+205,140*(base.upgrade/base.upgradeMAX),15);
-                    yAdj = 40;
-                }
+            if(base.owner==me.info.teamID){
+                ctx.fillText("HP : ",sX+5*wid/8+10, sY+200);
+                ctx.fillText("UPG: ",sX+5*wid/8+10, sY+220);
+                ctx.fillStyle="#333333";
+                ctx.fillRect(sX+5*wid/8+75,sY+185,140,15);
+                ctx.fillRect(sX+5*wid/8+75,sY+205,140,15);
+                ctx.fillStyle=colors.hpColor;
+                ctx.fillRect(sX+5*wid/8+75,sY+185,140*(base.hp/base.hpMAX),15);
+                ctx.fillStyle=colors.energyColor;
+                ctx.fillRect(sX+5*wid/8+75,sY+205,140*(base.upgrade/base.upgradeMAX),15);
+                yAdj = 40;
+            }
 
-                ctx.fillStyle=colors.hudColor;
-                ctx.fillText("LVL: "+base.lvl,sX+5*wid/8+10, sY+200+yAdj);
-                if(base.owner>-1)
-                    ctx.fillText(""+teamList[base.owner].name,sX+5*wid/8+10, sY+220+yAdj);
-                else
-                    ctx.fillText("NEUTRAL",sX+5*wid/8+10, sY+220+yAdj);
+            ctx.fillStyle=colors.hudColor;
+            ctx.fillText("LVL: "+base.lvl,sX+5*wid/8+10, sY+200+yAdj);
+            if(base.owner>-1)
+                ctx.fillText(""+teamList[base.owner].name,sX+5*wid/8+10, sY+220+yAdj);
+            else
+                ctx.fillText("NEUTRAL",sX+5*wid/8+10, sY+220+yAdj);
 
-                ctx.fillText("OUTPUT:",sX+5*wid/8+10, sY+240+yAdj);
-                var spec = "NONE";
-                if(base.special==="I") spec = "IRON";
-                if(base.special==="U") spec = "URANIUM";
-                if(base.special==="S") spec = "SPAWN";
-                ctx.fillText("SPECIAL: "+spec,sX+5*wid/8+10, sY+300+yAdj);
+            ctx.fillText("OUTPUT:",sX+5*wid/8+10, sY+240+yAdj);
+            var spec = "NONE";
+            if(base.special==="I") spec = "IRON";
+            if(base.special==="U") spec = "URANIUM";
+            if(base.special==="S") spec = "SPAWN";
+            ctx.fillText("SPECIAL: "+spec,sX+5*wid/8+10, sY+300+yAdj);
 
 
-                if(base.owner!=me.info.teamID){
-                    ctx.fillText("GOLD :",sX+5*wid/8+30, sY+260);
-                    ctx.fillText("CREDS:",sX+5*wid/8+30, sY+280);
-                    //Gold Output bar
-                    ctx.fillStyle = "#B87333";
-                    ctx.fillRect(sX+5*wid/8+120,sY+248,30,15);
-                    ctx.fillStyle = "#C0C0C0";
-                    ctx.fillRect(sX+5*wid/8+150,sY+248,30,15);
-                    ctx.fillStyle = "#D4AF37";
-                    ctx.fillRect(sX+5*wid/8+180,sY+248,30,15);
+            if(base.owner!=me.info.teamID){
+                ctx.fillText("GOLD :",sX+5*wid/8+30, sY+260);
+                ctx.fillText("CREDS:",sX+5*wid/8+30, sY+280);
+                //Gold Output bar
+                ctx.fillStyle = "#B87333";
+                ctx.fillRect(sX+5*wid/8+120,sY+248,30,15);
+                ctx.fillStyle = "#C0C0C0";
+                ctx.fillRect(sX+5*wid/8+150,sY+248,30,15);
+                ctx.fillStyle = "#D4AF37";
+                ctx.fillRect(sX+5*wid/8+180,sY+248,30,15);
 
-                    if(base.output.gTier==0){
-                        ctx.fillStyle = "#FF0000";
-                        ctx.fillRect(sX+5*wid/8+120,sY+245,3,20);
-                    }
-                    else{
-                        ctx.fillStyle = "#FF0000";
-                        ctx.fillRect(sX+5*wid/8+105+base.output.gTier*30,sY+245,3,20);
-                    }
-
-                    //Credits Output bar
-                    ctx.fillStyle = "#B87333";
-                    ctx.fillRect(sX+5*wid/8+120,sY+268,30,15);
-                    ctx.fillStyle = "#C0C0C0";
-                    ctx.fillRect(sX+5*wid/8+150,sY+268,30,15);
-                    ctx.fillStyle = "#D4AF37";
-                    ctx.fillRect(sX+5*wid/8+180,sY+268,30,15);
-
-                    if(base.output.cTier==0){
-                        ctx.fillStyle = "#FF0000";
-                        ctx.fillRect(sX+5*wid/8+120,sY+265,3,20);
-                    }
-                    else{
-                        ctx.fillStyle = "#FF0000";
-                        ctx.fillRect(sX+5*wid/8+105+base.output.cTier*30,sY+265,3,20);
-                    }
+                if(base.output.gTier==0){
+                    ctx.fillStyle = "#FF0000";
+                    ctx.fillRect(sX+5*wid/8+120,sY+245,3,20);
                 }
                 else{
-                    ctx.fillText("GOLD : "+(base.output.gold * base.lvl)+"g",sX+5*wid/8+30, sY+260+yAdj);
-                    ctx.fillText("CREDS: "+(base.output.credits * base.lvl)+"c",sX+5*wid/8+30, sY+280+yAdj);
+                    ctx.fillStyle = "#FF0000";
+                    ctx.fillRect(sX+5*wid/8+105+base.output.gTier*30,sY+245,3,20);
+                }
+
+                //Credits Output bar
+                ctx.fillStyle = "#B87333";
+                ctx.fillRect(sX+5*wid/8+120,sY+268,30,15);
+                ctx.fillStyle = "#C0C0C0";
+                ctx.fillRect(sX+5*wid/8+150,sY+268,30,15);
+                ctx.fillStyle = "#D4AF37";
+                ctx.fillRect(sX+5*wid/8+180,sY+268,30,15);
+
+                if(base.output.cTier==0){
+                    ctx.fillStyle = "#FF0000";
+                    ctx.fillRect(sX+5*wid/8+120,sY+265,3,20);
+                }
+                else{
+                    ctx.fillStyle = "#FF0000";
+                    ctx.fillRect(sX+5*wid/8+105+base.output.cTier*30,sY+265,3,20);
                 }
             }
+            else{
+                ctx.fillText("GOLD : "+(base.output.gold * base.lvl)+"g",sX+5*wid/8+30, sY+260+yAdj);
+                ctx.fillText("CREDS: "+(base.output.credits * base.lvl)+"c",sX+5*wid/8+30, sY+280+yAdj);
+
+                //Base upgrading
+                ctx.fillText("UPGRADE COST: ",sX+5*wid/8+10, sY+340+yAdj);
+                if(base.upgradeCost.credits > teamList[me.info.teamID].vault.credits) ctx.fillStyle = colors.needMoreColor;
+                else ctx.fillStyle=colors.hudColor;
+                ctx.fillText("CREDS: "+base.upgradeCost.credits+"c",sX+5*wid/8+30, sY+360+yAdj);
+                if(base.upgradeCost.iron > teamList[me.info.teamID].vault.iron) ctx.fillStyle = colors.needMoreColor;
+                else ctx.fillStyle=colors.hudColor;
+                ctx.fillText("IRON : "+base.upgradeCost.iron+"i",sX+5*wid/8+30, sY+380+yAdj);
+                if(base.upgradeCost.uranium > teamList[me.info.teamID].vault.uranium) ctx.fillStyle = colors.needMoreColor;
+                else ctx.fillStyle=colors.hudColor;
+                ctx.fillText("URAN : "+base.upgradeCost.uranium+"u",sX+5*wid/8+30, sY+400+yAdj);
+
+                //Upgrade?
+                if((me.info.teamRole==="LEADER" || me.info.teamRole==="ADMIN" && teamList[me.info.teamID].settings.upgrading!=="LEADER") && !base.upgrading){
+                    ctx.font = "bold 16pt Courier";
+                    if(mX < sX+6*wid/8+90 && mX > sX+6*wid/8-20 &&
+                       mY < sY+450+yAdj && mY > sY+420+yAdj){
+                        ctx.fillStyle = colors.hudColor;
+                        ctx.fillRect(sX+6*wid/8-20,sY+420+yAdj,110,30);
+                        ctx.fillStyle = colors.hudBackColor;
+                        ctx.fillText("UPGRADE",sX+6*wid/8-10,sY+440+yAdj);
+                        mouseHover = "UPGRADE";
+                    }
+                    else{
+                        ctx.strokeStyle = colors.hudColor;
+                        ctx.strokeRect(sX+6*wid/8-20,sY+420+yAdj,110,30);
+                        ctx.fillStyle = colors.hudColor;
+                        ctx.fillText("UPGRADE",sX+6*wid/8-10,sY+440+yAdj);
+                    }
+                }
+            }
+        }
+        else{
+            ctx.fillStyle=colors.hudColor;
+            ctx.fillText("Hover over the",sX+5*wid/8+10, sY+200);
+            ctx.fillText("map to see more. ",sX+5*wid/8+10, sY+220);
         }
 
 
@@ -1113,13 +1159,13 @@ function drawTeamMenu(ctx, startX, startY, width, height){
 
         ctx.font = "bold 40pt Courier";
         ctx.fillStyle=colors.goldColor;
-        ctx.fillText("GOLD   : "+teamList[id].credits+"g",sX+wid/2-200, sY+hei/5);
+        ctx.fillText("GOLD   : "+teamList[id].vault.gold+"g",sX+wid/2-250, sY+hei/5);
         ctx.fillStyle=colors.ironColor;
-        ctx.fillText("IRON   : "+teamList[id].credits+"i",sX+wid/2-200, sY+2*hei/5);
+        ctx.fillText("IRON   : "+teamList[id].vault.iron+"i",sX+wid/2-250, sY+2*hei/5);
         ctx.fillStyle=colors.uraniumColor;
-        ctx.fillText("URANIUM: "+teamList[id].credits+"u",sX+wid/2-200, sY+3*hei/5);
+        ctx.fillText("URANIUM: "+teamList[id].vault.uranium+"u",sX+wid/2-250, sY+3*hei/5);
         ctx.fillStyle=colors.hudColor;
-        ctx.fillText("CREDITS: "+teamList[id].credits+"c",sX+wid/2-200, sY+4*hei/5);
+        ctx.fillText("CREDITS: "+teamList[id].vault.credits+"c",sX+wid/2-250, sY+4*hei/5);
 
     }
     else if(curTeamTab==3){ //Settings

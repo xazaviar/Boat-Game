@@ -523,7 +523,7 @@ function drawMonitor(ctx, width, height){
                 if(map[cX][cY].baseID > -1){
                     var owner = baseList[map[cX][cY].baseID].owner;
                     ctx.globalAlpha = 0.3;
-                    
+
                     ctx.beginPath();
                     if(owner > -1){
                         ctx.fillStyle = teamList[owner].colors.areaColor;
@@ -1666,6 +1666,14 @@ function handleMousedown(e){
 
             if(curTeamTab==3){ //Snapshot settings
                 curSettings = teamList[me.info.teamID].settings;
+            }
+        }
+        else if(curTeamTab==0){
+            if(mouseHover!=-1 && typeof mouseHover.baseID !== "undefined"){
+                setObjective(me.token, me.id, mouseHover.baseID);
+            }
+            else if(mouseHover==="UPGRADE"){
+                upgradeBase(me.token,me.id,teamList[me.info.teamID].objective);
             }
         }
         else if(curTeamTab==1){
