@@ -949,10 +949,19 @@ function drawTeamMenu(ctx, startX, startY, width, height){
                 var yAdj = 0;
 
                 if(base.owner==me.info.teamID){
-                    yAdj = 50;
+                    ctx.fillText("HP : ",sX+5*wid/8+10, sY+200);
+                    ctx.fillText("UPG: ",sX+5*wid/8+10, sY+220);
+                    ctx.fillStyle="#333333";
+                    ctx.fillRect(sX+5*wid/8+75,sY+185,140,15);
+                    ctx.fillRect(sX+5*wid/8+75,sY+205,140,15);
+                    ctx.fillStyle=colors.hpColor;
+                    ctx.fillRect(sX+5*wid/8+75,sY+185,140*(base.hp/base.hpMAX),15);
+                    ctx.fillStyle=colors.energyColor;
+                    ctx.fillRect(sX+5*wid/8+75,sY+205,140*(base.upgrade/base.upgradeMAX),15);
+                    yAdj = 40;
                 }
 
-
+                ctx.fillStyle=colors.hudColor;
                 ctx.fillText("LVL: "+base.lvl,sX+5*wid/8+10, sY+200+yAdj);
                 if(base.owner>-1)
                     ctx.fillText(""+teamList[base.owner].name,sX+5*wid/8+10, sY+220+yAdj);
@@ -1005,8 +1014,8 @@ function drawTeamMenu(ctx, startX, startY, width, height){
                     }
                 }
                 else{
-                    ctx.fillText("GOLD : "+base.output.gold+"g",sX+5*wid/8+30, sY+260+yAdj);
-                    ctx.fillText("CREDS: "+base.output.credits+"c",sX+5*wid/8+30, sY+280+yAdj);
+                    ctx.fillText("GOLD : "+(base.output.gold * base.lvl)+"g",sX+5*wid/8+30, sY+260+yAdj);
+                    ctx.fillText("CREDS: "+(base.output.credits * base.lvl)+"c",sX+5*wid/8+30, sY+280+yAdj);
                 }
             }
         }

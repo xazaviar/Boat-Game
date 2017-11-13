@@ -3232,7 +3232,7 @@ function baseSpreadMethod2(holeList){
 
         if(!claim){
             range++;
-            if(range > 40) break;
+            if(range > 30) break;
         }
     }
 }
