@@ -35,7 +35,7 @@ var lootSpawns = [];
 var phase = 0; //0 -> setup , 1,2,3 -> action x
 var countdownMax = 100; //always 100
 var countdown = countdownMax;
-var cTick = 30; //countdownMax * tick = 3 secs
+var cTick = 20; //countdownMax * tick = 3 secs
 var aTick = 800; //action tick
 var combatCooldown = 4; //Number of rounds
 var dcCountdown = 2; //d/c cooldown
@@ -194,6 +194,8 @@ function startServer(){
                 var name = ""
                 players[id].battleLog = [];
                 players[id].loc = spawn();
+                map[players[id].loc[0]][players[id].loc[1]].type = "PLAYER";
+                map[players[id].loc[0]][players[id].loc[1]].id = id;
                 name = players[id].info.name;
 
                 var msg;
@@ -215,7 +217,6 @@ function startServer(){
                 data = {
                     "token": obj.token,
                     "id": id,
-                    "map": map,
                     "error":""
                 }
             }
@@ -234,6 +235,10 @@ function startServer(){
         var sp = spawn();
         var id = playerSize;
         playerSize++;
+
+
+        map[sp[0]][sp[1]].type = "PLAYER";
+        map[sp[0]][sp[1]].id = id;
 
         var newP = {
             "id": id,
@@ -344,9 +349,7 @@ function startServer(){
 
         var data = {
             "token": token,
-            "id": id,
-            "loc": sp,
-            "map": map
+            "id": id
         }
 
         players[id] = newP;
@@ -373,7 +376,6 @@ function startServer(){
                 }
                 else{
                     sendPlayers[i] = {
-                        "token":players[i].token,
                         "id":players[i].id,
                         "name":players[i].info.name,
                         "loc":players[i].loc,
@@ -395,32 +397,34 @@ function startServer(){
             for(var x = 0; x < mapSize; x++){
                 sendMap[x] = [];
                 for(var y = 0; y < mapSize; y++){
-                    if(isLoot(map[x][y]) && !isKnown(p.knownLocs,x,y)) sendMap[x][y] = "OPEN";
-                    else if(isLoot(map[x][y])){
-                        if((map[x][y].type==="URANIUM" && p.stats.scanner<3) ||
-                           (map[x][y].type==="IRON" && p.stats.scanner<2))
-                            sendMap[x][y] = "GOLD";
-                        else
-                            sendMap[x][y] = map[x][y].type;
-                    }
-                    else
-                        sendMap[x][y] = map[x][y].type;
-                }
-            }
+                    sendMap[x][y] = {
+                        "type": map[x][y].type,
+                        "baseID": map[x][y].baseID,
+                        "loot":{
+                            "gold": map[x][y].loot.gold>0,
+                            "iron": map[x][y].loot.iron>0,
+                            "uranium": map[x][y].loot.uranium>0
 
-            for(var i = 0; i < sendPlayers.length; i++){
-                if(typeof sendPlayers[i].loc !== "undefined"){
-                    var isScanned = inScanned(p, sendPlayers[i].token);
-                    var inVision = visionDistance(p.loc, sendPlayers[i].loc);
-                    var sameTeam = sendPlayers[i].team == p.info.teamID;
-                    if((!isScanned && (!inVision || (inVision && sendPlayers[i].stealthed)) && !sameTeam) || sendPlayers[i].hp <= 0){
-                        delete sendPlayers[i].loc;
-                        delete sendPlayers[i].stealthed;
+                        },
+                        "id": map[x][y].id
+                    };
+                    if(!isKnown(p.knownLocs,x,y)) delete sendMap[x][y].loot;
+
+                    if(sendMap[x][y].type==="PLAYER" && sendMap[x][y].id!=p.id){
+                        var pid = sendMap[x][y].id;
+                        var isScanned = inScanned(p, sendPlayers[pid].id);
+                        var inVision = visionDistance(p.loc, sendPlayers[pid].loc);
+                        var sameTeam = sendPlayers[pid].team == p.info.teamID;
+                        if((!isScanned && (!inVision || (inVision && sendPlayers[pid].stealthed)) && !sameTeam) || sendPlayers[pid].hp <= 0){
+                            delete sendPlayers[pid].loc;
+                            delete sendPlayers[pid].stealthed;
+
+                            sendMap[x][y].id = -1;
+                            sendMap[x][y].type = "OPEN";
+                        }
+                        delete sendPlayers[pid].hp;
                     }
 
-                    //drop token
-                    delete sendPlayers[i].token;
-                    delete sendPlayers[i].hp;
                 }
             }
 
@@ -463,9 +467,9 @@ function startServer(){
                         "credits": teamData[t].credits,
                         "income": teamData[t].income,
                         "settings": teamData[t].settings,
-                        "power": calculateTeamPower(t),
+                        "power": teamData[t].power,
                         "mapControl": calculateMapControl(t),
-                        "rank": teamData[t].teamRank
+                        "rank": teamData[t].rank
                     };
                 }
                 else if(teamData[t].status==="OFFLINE"){
@@ -480,7 +484,7 @@ function startServer(){
                         "joinStatus": teamData[t].settings.membership,
                         "profitDivide": teamData[t].settings.profitDivide,
                         "tax": teamData[t].settings.tax,
-                        "power": calculateTeamPower(t),
+                        "power": teamData[t].power,
                         "mapControl": calculateMapControl(t)
                     };
                 }
@@ -497,7 +501,7 @@ function startServer(){
                 "players": sendPlayers,
                 "map": sendMap,
                 "game":{"countdown":countdown,"phase":phase,"version":version},
-                "shopList": shopList,
+                "baseList": baseList,
                 "teamList": sendTeam,
                 "shop": buildStore(p)
             }
@@ -581,31 +585,25 @@ function startServer(){
                         for(var a = 0; a < lootActionUsage; a++)
                             p.queue.push(req.body.action);
                     }
-                    else if(3-p.queue.length >= cannonActionUsage && req.body.action.type==="CANNON" && isEquipped(p,"CAN") && (withinShop(p.loc)==null || attackFromShop) && attackDistance(p.loc,req.body.action.location) && p.stats.energy>=cannonEnergyUsage+inUse && p.info.uranium>=cannonUraniumUsage+inUseUR){
+                    else if(3-p.queue.length >= cannonActionUsage && req.body.action.type==="CANNON" && isEquipped(p,"CAN") && attackDistance(p.loc,req.body.action.location) && p.stats.energy>=cannonEnergyUsage+inUse && p.info.uranium>=cannonUraniumUsage+inUseUR){
                         for(var a = 0; a < cannonActionUsage; a++)
                             p.queue.push(req.body.action);
                     }
                     else if(req.body.action.type==="CANNON" && !attackDistance(p.loc,req.body.action.location)){
                         p.battleLog.unshift({"type":"action", "msg": "Out of range."});
                     }
-                    else if(req.body.action.type==="CANNON" && !(withinShop(p.loc)==null || attackFromShop))
-                        p.battleLog.unshift({"type":"action", "msg": "You can't attack from the shop."});
-                    else if(3-p.queue.length >= railgunActionUsage && req.body.action.type==="RAILGUN" && isEquipped(p,"RAIL") && (withinShop(p.loc)==null || attackFromShop) && p.stats.energy>=railgunEnergyUsage+inUse && p.info.uranium>=railgunUraniumUsage+inUseUR){
+                    else if(3-p.queue.length >= railgunActionUsage && req.body.action.type==="RAILGUN" && isEquipped(p,"RAIL") && p.stats.energy>=railgunEnergyUsage+inUse && p.info.uranium>=railgunUraniumUsage+inUseUR){
                         for(var a = 0; a < railgunActionUsage; a++)
                             p.queue.push(req.body.action);
                     }
-                    else if(req.body.action.type==="RAILGUN" && !(withinShop(p.loc)==null || attackFromShop))
-                        p.battleLog.unshift({"type":"action", "msg": "You can't attack from the shop."});
                     else if(3-p.queue.length >= trapActionUsage && req.body.action.type==="TRAP" && isEquipped(p,"TRAP") && p.stats.energy>=trapEnergyUsage+inUse && (p.info.uranium>=trapUraniumUsage+inUseUR || p.stats.trap>2)){
                         for(var a = 0; a < trapActionUsage; a++)
                             p.queue.push(req.body.action);
                     }
-                    else if(req.body.action.type==="ATTACK" && p.stats.energy>=attackEnergyUsage+inUse && (withinShop(p.loc)==null || attackFromShop) && attackDistance(p.loc,req.body.action.location))
+                    else if(req.body.action.type==="ATTACK" && p.stats.energy>=attackEnergyUsage+inUse && attackDistance(p.loc,req.body.action.location))
                         p.queue.push(req.body.action);
                     else if(req.body.action.type==="ATTACK" && !attackDistance(p.loc,req.body.action.location))
                         p.battleLog.unshift({"type":"action", "msg": "Out of range."});
-                    else if(req.body.action.type==="ATTACK" && !(withinShop(p.loc)==null || attackFromShop))
-                        p.battleLog.unshift({"type":"action", "msg": "You can't attack from the shop."});
                     else if(req.body.action.type==="QUICKHEAL" && isEquipped(p,"HEAL") && p.stats.energy>=quickHealEnergyUsage+inUse)
                         p.queue.push(req.body.action);
                     else if(req.body.action.type==="BLINK" && isEquipped(p,"BLNK") && p.info.trapped<1 && blinkDistance(p,req.body.action.location) && p.stats.energy>=(blinkEnergyUsage-2*p.stats.blink)+inUse && p.info.uranium>=blinkUraniumUsage+inUseUR)
@@ -672,6 +670,8 @@ function startServer(){
 
         if(p!=null && p.stats.hp <= 0){
             p.loc = spawn();
+            map[p.loc[0]][p.loc[1]].type = "PLAYER";
+            map[p.loc[0]][p.loc[1]].id = id;
             p.stats.hp = p.stats.hpMAX;
             p.stats.energy = p.stats.energyMAX;
             p.knownLocs = [];
@@ -696,7 +696,7 @@ function startServer(){
 
 
             //Regular shop
-            if(shop.withinShop==="SHOP"){
+            if(shop.withinShop==1){
                 if(req.body.item==="hpF" && canPurchase(shop.hpF.price,inventory) && shop.hpF.canBuy){
                     makePurchase(shop.hpF.price,p);
                     p.stats.hp = p.stats.hpMAX;
@@ -785,7 +785,7 @@ function startServer(){
             }
 
             //Super Shop
-            else if(shop.withinShop==="SSHOP"){
+            else if(shop.withinShop>1){
                 if(req.body.item==="loadout" && canPurchase(shop.loadout.price,inventory) && shop.loadout.canBuy){
                     makePurchase(shop.loadout.price,p);
                     p.stats.loadoutSize = p.stats.loadoutSize+statData.loadoutINC;
@@ -1186,8 +1186,14 @@ function startServer(){
                     "iron":0,
                     "uranium":0,
                     "credits":0,
-                    "income": [0,0], //[Gold, Credits]
-                    "teamRank": 1000,
+                    "income": {
+                        "gold": 0,
+                        "credits": 0,
+                        "iron": 0,
+                        "uranium": 0
+                    },
+                    "rank": 9999,
+                    "power": 0,
                     "settings":{
                         "building": "TEAM",
                         "ping": "ADMIN",
@@ -1631,7 +1637,7 @@ function setupPhase(){
                 for(var a = players[i].queue.length; a < 3; a++){
                     players[i].queue.push({"type":"HOLD"});
                 }
-                if(players[i].queue.length>0 && (withinShop(players[i].loc)==null || attackFromShop)){ //Next round attacks
+                if(players[i].queue.length>0){ //Next round attacks
                     if(players[i].queue[0].type==="ATTACK" )
                         actAttacks.push(players[i].queue[0].location);
                     else if(players[i].queue[0].type==="CANNON" && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
@@ -1642,10 +1648,10 @@ function setupPhase(){
                                 var cX = location[0] - (mid-x);
                                 var cY = location[1] - (mid-y);
 
-                                if(cX < 0) cX += map.length;
-                                if(cY < 0) cY += map.length;
-                                if(cX >= map.length) cX -= map.length;
-                                if(cY >= map.length) cY -= map.length;
+                                if(cX < 0) cX += mapSize;
+                                if(cY < 0) cY += mapSize;
+                                if(cX >= mapSize) cX -= mapSize;
+                                if(cY >= mapSize) cY -= mapSize;
 
                                 actAttacks.push([cX,cY]);
                             }
@@ -1710,11 +1716,11 @@ function actionPhase(){
                     moves.push({"player":players[i],"direction":players[i].queue[0].direction});
                 }else if(players[i].queue[0].type==="BLINK" && players[i].info.trapped<1){
                     blinks.push({"player":players[i],"location":players[i].queue[0].location});
-                }else if(players[i].queue[0].type==="ATTACK" && (withinShop(players[i].loc)==null || attackFromShop)){
+                }else if(players[i].queue[0].type==="ATTACK" ){
                     attacks.push({"player":players[i], "location":players[i].queue[0].location});
-                }else if(players[i].queue[0].type==="CANNON" && (withinShop(players[i].loc)==null || attackFromShop) && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
+                }else if(players[i].queue[0].type==="CANNON"  && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
                     cannons.push({"player":players[i], "location":players[i].queue[0].location});
-                }else if(players[i].queue[0].type==="RAILGUN" && (withinShop(players[i].loc)==null || attackFromShop) && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
+                }else if(players[i].queue[0].type==="RAILGUN" && (players[i].queue.length == 1 || players[i].queue[1].type!=="RAILGUN")){
                     railguns.push({"player":players[i], "direction":players[i].queue[0].direction});
                 }else if(players[i].queue[0].type==="LOOT" && (players[i].queue.length == 1 || players[i].queue[1].type!=="LOOT")){
                     loots.push(players[i]);
@@ -1736,13 +1742,13 @@ function actionPhase(){
                         players[i].stats.energy = players[i].stats.energyMAX;
                 }else if(players[i].info.trapped>1 && (players[i].queue[0].type==="MOVE" || players[i].queue[0].type==="BLINK")){
                     players[i].battleLog.unshift({"type":"action", "msg": "You can't move while trapped."});
-                }else if((players[i].queue[0].type==="ATTACK" || players[i].queue[0].type==="CANNON" || players[i].queue[0].type==="RAILGUN") && withinShop(players[i].loc)!=null){ //Must be fighting near a shop or cheating
+                }else if((players[i].queue[0].type==="ATTACK" || players[i].queue[0].type==="CANNON" || players[i].queue[0].type==="RAILGUN")){ //Must be fighting near a shop or cheating
                     players[i].battleLog.unshift({"type":"action", "msg": "You can't fight near a shop."});
                 }
 
                 players[i].queue.splice(0,1); //pop from queue
 
-                if(players[i].queue.length>0 && (withinShop(players[i].loc)==null || attackFromShop)){ //Next round attacks
+                if(players[i].queue.length>0){ //Next round attacks
                     if(players[i].queue[0].type==="ATTACK" )
                         actAttacks.push(players[i].queue[0].location);
                     else if(players[i].queue[0].type==="CANNON" && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
@@ -1872,14 +1878,23 @@ function roundCleanup(){
                 triggeredTrap(players[i]);
                 if(saveCountdown==saveRound){
                     savePlayer(players[i], false);
-                    saveGameData();
                 }
             }
         }
     }
 
+    //Update team data
+    for(var t in teamData){
+        if(teamData[t].status!=="DELETED"){
+            teamData[t].power = calculateTeamPower(t);
+            teamData[t].income = calulateProfit(t);
+        }
+    }
+    rankTeams();
+
     if(saveCountdown==saveRound){
         saveCountdown = 0;
+        saveGameData();
     }
 
     //Spawn Treasures
@@ -1893,7 +1908,7 @@ function roundCleanup(){
 // Player Actions
 //******************************************************************************
 function move(p, direction){
-    var before = withinShop(p.loc)!=null;
+    var before = withinShop(p.loc,p.info.teamID)!=-1;
     var beforeLoc = [p.loc[0],p.loc[1]];
 
     if(direction==="N"){
@@ -1917,15 +1932,22 @@ function move(p, direction){
         if(!spotOccupied([newX,p.loc[1]])) p.loc[0] = newX;
     }
 
-    var after = withinShop(p.loc)!=null;
-    if(before && !after){
-        p.battleLog.unshift({"type":"action", "msg": "You have left a safe zone."});
-    }
-    else if(!before && after){
-        p.battleLog.unshift({"type":"action", "msg": "You have entered a safe zone."});
-    }
-    else if(beforeLoc[0]==p.loc[0] && beforeLoc[1]==p.loc[1]){
+    var after = withinShop(p.loc,p.info.teamID)!=-1;
+    if(beforeLoc[0]==p.loc[0] && beforeLoc[1]==p.loc[1]){
         p.battleLog.unshift({"type":"action", "msg": "You can't move there."});
+    }
+    else{
+        map[beforeLoc[0]][beforeLoc[1]].type = "OPEN";
+        map[beforeLoc[0]][beforeLoc[1]].id = -1;
+        map[p.loc[0]][p.loc[1]].type = "PLAYER";
+        map[p.loc[0]][p.loc[1]].id = p.id;
+
+        if(before && !after){
+            p.battleLog.unshift({"type":"action", "msg": "You have left a shoping area."});
+        }
+        else if(!before && after){
+            p.battleLog.unshift({"type":"action", "msg": "You have entered a shopping area."});
+        }
     }
 
     triggeredTrap(p);
@@ -1937,17 +1959,16 @@ function attack(p, location){
 
     var hit = playerInSpot(location,null);
     if(hit!=null){
-        if(attackFromShop || withinShop(hit.loc)==null){
-            //HIT
-            var dmg = p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0 - (isEquipped(hit,"DR")?1:0));
-            hit.stats.hp = hit.stats.hp - dmg;
-            hit.info.inCombat = combatCooldown;
-            hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has hit you for "+dmg+" damage."});
+        //HIT
+        var dmg = p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0 - (isEquipped(hit,"DR")?1:0));
+        hit.stats.hp = hit.stats.hp - dmg;
+        hit.info.inCombat = combatCooldown;
+        hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has hit you for "+dmg+" damage."});
 
-            if(hit.stats.hp <= 0){
-                death(hit, p);
-            }
+        if(hit.stats.hp <= 0){
+            death(hit, p);
         }
+
     }
 
 }
@@ -1977,16 +1998,15 @@ function cannon(p, location){
     for(var i in locs){
         var hit = playerInSpot(locs[i],null);
         if(hit!=null){
-            if(attackFromShop || withinShop(hit.loc)==null){
-                var dmg = parseInt((p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0))*(p.stats.cannon>2?1.5:1)) - (isEquipped(hit,"DR")?1:0);
-                hit.stats.hp = hit.stats.hp - dmg;
-                hit.info.inCombat = combatCooldown;
-                hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has blasted you for "+dmg+" damage."});
+            var dmg = parseInt((p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0))*(p.stats.cannon>2?1.5:1)) - (isEquipped(hit,"DR")?1:0);
+            hit.stats.hp = hit.stats.hp - dmg;
+            hit.info.inCombat = combatCooldown;
+            hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has blasted you for "+dmg+" damage."});
 
-                if(hit.stats.hp <= 0){
-                    death(hit, p);
-                }
+            if(hit.stats.hp <= 0){
+                death(hit, p);
             }
+
         }
     }
 }
@@ -2022,16 +2042,15 @@ function railgun(p, direction){
     for(var i in locs){
         var hit = playerInSpot(locs[i],p);
         if(hit!=null){
-            if(attackFromShop || withinShop(hit.loc)==null){
-                var dmg = ((p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0))*(p.stats.railgun+1) - (isEquipped(hit,"DR")?1:0));
-                hit.stats.hp = hit.stats.hp - dmg;
-                hit.info.inCombat = combatCooldown;
-                hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has railed you for "+dmg+" damage."});
+            var dmg = ((p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0))*(p.stats.railgun+1) - (isEquipped(hit,"DR")?1:0));
+            hit.stats.hp = hit.stats.hp - dmg;
+            hit.info.inCombat = combatCooldown;
+            hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has railed you for "+dmg+" damage."});
 
-                if(hit.stats.hp <= 0){
-                    death(hit, p);
-                }
+            if(hit.stats.hp <= 0){
+                death(hit, p);
             }
+
         }
     }
 }
@@ -2040,54 +2059,67 @@ function loot(p){
     p.stats.energy = p.stats.energy - lootEnergyUsage;
 
     var treasure = map[p.loc[0]][p.loc[1]];
-    if(isLoot(treasure)){
+    if(hasLoot(treasure)){
         var startGold = p.info.gold;
         var startTotalGold = p.info.totalGold;
         var looted = false;
 
-        if(treasure.type==="GOLD"){
-            p.info.gold = p.info.gold + treasure.count;
-            p.info.totalGold = p.info.totalGold + treasure.count;
-            p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.count+"g!"});
+        if(treasure.loot.gold > 0){
+            p.info.gold += treasure.loot.gold;
+            p.info.totalGold += treasure.loot.gold;
+            p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.loot.gold+"g!"});
             looted = true;
-        }else if(treasure.type==="IRON"){
-            p.info.iron = p.info.iron + treasure.count;
-            p.info.totalIron = p.info.totalIron + treasure.count;
-            p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.count+" iron!"});
+        }
+        if(treasure.loot.iron > 0){
+            p.info.iron += treasure.loot.iron;
+            p.info.totalIron += treasure.loot.iron;
+            p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.loot.iron+" iron!"});
             looted = true;
-        }else if(treasure.type==="URANIUM" && p.info.uranium<p.stats.urCarry){
-            p.info.uranium = p.info.uranium + treasure.count;
-            p.info.totalUranium = p.info.totalUranium + treasure.count;
-            p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.count+" uranium!"});
+        }
+        var uranDrop = 0;
+        if(treasure.loot.uranium > 0 && p.info.uranium<p.stats.urCarry){
+            if(p.info.uranium + treasure.loot.uranium > p.stats.urCarry){
+                uranDrop = p.info.uranium + treasure.loot.uranium - p.stats.urCarry;
+                p.info.uranium = p.stats.urCarry;
+                p.info.totalUranium += treasure.loot.uranium-uranDrop;
+                p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.loot.uranium-uranDrop+" uranium!"});
+                p.battleLog.unshift({"type":"loot", "msg": "You had to leave a little uranium behind."});
+            }
+            else{
+                p.info.uranium += treasure.loot.uranium;
+                p.info.totalUranium += treasure.loot.uranium;
+                p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.loot.uranium+" uranium!"});
+            }
             looted = true;
-        }else if(treasure.type==="URANIUM" && p.info.uranium>=p.stats.urCarry){
+        }
+        else if(treasure.loot.uranium > 0 && p.info.uranium>=p.stats.urCarry){
             p.battleLog.unshift({"type":"action", "msg": "You can't carry any more uranium."});
         }
 
         if(looted){
             p.info.hauls++;
 
-            map[p.loc[0]][p.loc[1]] = {"type":"OPEN"};
+            map[p.loc[0]][p.loc[1]].loot = {"gold":0,"iron":0,"uranium":uranDrop};
             lootSpawns.push([p.loc[0],p.loc[1]]);
             lootCount--;
 
-            //Alert local people of looting
-            var mid = parseInt(statData.vision/2);
-            for(var x = 0; x < statData.vision; x++){
-                for(var y = 0; y < statData.vision; y++){
-                    var cX = p.loc[0] - (mid-x);
-                    var cY = p.loc[1] - (mid-y);
-
-                    if(cX < 0) cX += map.length;
-                    if(cY < 0) cY += map.length;
-                    if(cX >= map.length) cX -= map.length;
-                    if(cY >= map.length) cY -= map.length;
-
-                    var enemyP = playerInSpot([cX,cY], p);
-                    if(enemyP!=null)
-                        enemyP.battleLog.unshift({"type":"combat", "msg": p.info.name+" has looted near you."});
-                }
-            }
+            // //Alert local people of looting
+            // var mid = parseInt(statData.vision/2);
+            // for(var x = 0; x < statData.vision; x++){
+            //     for(var y = 0; y < statData.vision; y++){
+            //         var cX = p.loc[0] - (mid-x);
+            //         var cY = p.loc[1] - (mid-y);
+            //
+            //         if(cX < 0) cX += map.length;
+            //         if(cY < 0) cY += map.length;
+            //         if(cX >= map.length) cX -= map.length;
+            //         if(cY >= map.length) cY -= map.length;
+            //
+            //         // var enemyP = playerInSpot([cX,cY], p);
+            //         if(map[cX][cY].type==="player" && !(cX==p.loc[0] && cY==p.loc[1]))
+            //             enemyP.battleLog.unshift({"type":"combat", "msg": p.info.name+" has looted near you."});
+            //     }
+            // }
 
             //Alert world of great wealth
             var msg;
@@ -2109,7 +2141,8 @@ function loot(p){
                 }
             }
         }
-    }else{
+    }
+    else{
         p.battleLog.unshift({"type":"action", "msg": "You didn't find anything."});
     }
 }
@@ -2130,7 +2163,7 @@ function scan(p){
             if(cX >= map.length) cX -= map.length;
             if(cY >= map.length) cY -= map.length;
 
-            if(isLoot(map[cX][cY])){
+            if(hasLoot(map[cX][cY])){
                 p.knownLocs.push([cX,cY]);
             }
 
@@ -2143,7 +2176,7 @@ function scan(p){
             var enemyP = playerInSpot([cX,cY], p);
             if(enemyP!=null){
                 enemyP.battleLog.unshift({"type":"combat", "msg": "Someone has scanned you."});
-                p.scanned.push({"token":enemyP.token,"rounds":3+p.stats.scanner});
+                p.scanned.push({"id":enemyP.id,"rounds":3+p.stats.scanner});
             }
         }
     }
@@ -2191,9 +2224,13 @@ function blink(p, location){
     p.info.uranium -= blinkUraniumUsage;
     p.stats.energy -= (blinkEnergyUsage-2*p.stats.blink);
 
-    if(!spotOccupied([location[0],location[1]]))
+    if(!spotOccupied([location[0],location[1]])){
+        map[p.loc[0]][p.loc[1]].type = "OPEN";
+        map[p.loc[0]][p.loc[1]].id = -1;
+        map[location[0]][location[1]].type = "PLAYER";
+        map[location[0]][location[1]].id = p.id;
         p.loc = location;
-
+    }
 
     triggeredTrap(p);
 }
@@ -2217,36 +2254,25 @@ function trap(p){
 //******************************************************************************
 
 //Store Functions
-function withinShop(location){
+function withinShop(location, teamID){
     for(var x = 0; x < 3; x++){
         for(var y = 0; y < 3; y++){
             var cX = location[0] - (1-x);
             var cY = location[1] - (1-y);
 
-            if(cX < 0) cX += map.length;
-            if(cY < 0) cY += map.length;
-            if(cX >= map.length) cX -= map.length;
-            if(cY >= map.length) cY -= map.length;
+            if(cX < 0) cX += mapSize;
+            if(cY < 0) cY += mapSize;
+            if(cX >= mapSize) cX -= mapSize;
+            if(cY >= mapSize) cY -= mapSize;
 
-            if(map[cX][cY].type==="SHOP") return "SHOP";
+            if(map[cX][cY].type==="BASE"){
+                var own = baseList[map[cX][cY].id].owner;
+                if(own==teamID || own==-1) return baseList[map[cX][cY].id].lvl;
+            }
         }
     }
 
-    for(var x = 0; x < 5; x++){
-        for(var y = 0; y < 5; y++){
-            var cX = location[0] - (2-x);
-            var cY = location[1] - (2-y);
-
-            if(cX < 0) cX += map.length;
-            if(cY < 0) cY += map.length;
-            if(cX >= map.length) cX -= map.length;
-            if(cY >= map.length) cY -= map.length;
-
-            if(map[cX][cY].type==="SSHOP") return "SSHOP";
-        }
-    }
-
-    return null;
+    return -1;
 }
 
 function calculatePrices(purchase, lvl){
@@ -2310,7 +2336,7 @@ function makePurchase(costs, p){
 
 function buildStore(p){
     return {
-        "withinShop": withinShop(p.loc),
+        "withinShop": withinShop(p.loc,p.info.teamID),
 
         //Regular Shop
         "hpF":{
@@ -2418,16 +2444,7 @@ function buildStore(p){
 
 //Legal Action Checkers
 function spotOccupied(location){
-    if(map[location[0]][location[1]].type==="ROCK" ||
-       map[location[0]][location[1]].type==="SHOP" ||
-       map[location[0]][location[1]].type==="SSHOP")
-        return true;
-    else for(var i = 0; i < players.length; i++){
-        if(players[i].status!=="OFFLINE")
-            if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0) return true;
-    }
-
-    return false;
+    return map[location[0]][location[1]].type!=="OPEN";
 }
 
 function attackDistance(player, attack){
@@ -2474,9 +2491,9 @@ function isKnown(list, x, y){
     return false;
 }
 
-function inScanned(player, token){
+function inScanned(player, id){
     for(var i = 0; i < player.scanned.length; i++){
-        if(player.scanned[i].token===token)
+        if(player.scanned[i].id===id)
             return true;
     }
 
@@ -2730,14 +2747,45 @@ function changeRole(pid, teamID, prevRole, newRole){
 }
 
 function calculateTeamPower(teamID){
-    var b1Val = 5, b2Val = 10, b3Val = 20;
+    var b1Val = 10, b2Val = 20, b3Val = 40;
     var memVal = 5, areaVal = 1000;
+    var maxMap = mapSize*mapSize;
+    var memPow;
 
-    return teamData[teamID].members.length*memVal;
+    var bases = 0;
+    var control = 0;
+    for(var b in baseList){
+        if(baseList[b].owner==teamID){
+            if(baseList[b].lvl==1) bases+=b1Val;
+            if(baseList[b].lvl==2) bases+=b2Val;
+            if(baseList[b].lvl==3) bases+=b3Val;
+            control+=baseList[b].tiles.length;
+        }
+    }
+
+    if(typeof teamData[teamID].members !== "undefined")
+        memPow = teamData[teamID].members.length*memVal;
+    else memPow = 0;
+
+    return bases+memPow+parseInt(control/maxMap*areaVal);
 }
 
 function rankTeams(){
-    return 0;
+    var idToPower = [];
+
+    for(var t in teamData){
+        idToPower.push({"id":teamData[t].id,"power":teamData[t].power});
+    }
+
+    idToPower.sort(function(a,b){
+        if(a.power > b.power) return -1;
+        if(a.power < b.power) return 1;
+        return 0;
+    });
+
+    for(var i = 0; i < idToPower.length; i++){
+        teamData[idToPower[i].id].rank = (i+1);
+    }
 }
 
 function initTeamClean(){
@@ -2786,7 +2834,33 @@ function changeOnlineStatus(p, status){
 }
 
 function calculateMapControl(teamID){
-    return 0;
+    var control = 0;
+    for(var b in baseList){
+        if(baseList[b].owner==teamID){
+            control+=baseList[b].tiles.length;
+        }
+    }
+    return control/(mapSize*mapSize);
+}
+
+function calulateProfit(teamID){
+    var profit = {
+        "gold":0,
+        "credits":0,
+        "iron":0,
+        "uranium":0
+    };
+
+    for(var b in baseList){
+        if(baseList[b].owner==teamID){
+            profit.gold+=baseList[b].output.gold * baseList[b].lvl;
+            profit.credits+=baseList[b].output.credits * baseList[b].lvl;
+            if(baseList[b].special==="I") profit.iron += 2 * baseList[b].lvl;
+            else if(baseList[b].special==="U") profit.uranium += 1 * baseList[b].lvl;
+        }
+    }
+
+    return profit;
 }
 
 function updatePower(p){
@@ -2887,7 +2961,11 @@ function savePlayer(p, del){
             }
             changeOnlineStatus(p,false);
 
+            map[p.loc[0]][p.loc[1]].type = "OPEN";
+            map[p.loc[0]][p.loc[1]].id = -1;
+
             players[p.id] = {"id":p.id,"name":p.info.name,"status":"OFFLINE","changes":null};
+
         }
     });
 }
@@ -3053,52 +3131,8 @@ function buildMap(){
                 lootSpawns.push({"loc":[x,y],"zone":map[x][y].zone});
         }
     }
-
-    var maxBaseSize = 60;
-    while(holeList.length>0){
-        for(var i = 0; i < holeList.length; i++){
-            var x = holeList[i][0], y = holeList[i][1];
-            var dx = x-1, ux = x+1, dy = y-1, uy = y+1;
-            if(dx < 0) dx+=mapSize;
-            if(ux >= mapSize) ux-=mapSize;
-            if(dy < 0) dy+=mapSize;
-            if(uy >= mapSize) uy-=mapSize;
-
-            if(map[x][dy].baseID!=-1){
-                if(baseList[map[x][dy].baseID].tiles.length < maxBaseSize){
-                    baseList[map[x][dy].baseID].tiles.push([x,y]);
-                    map[x][y].baseID = map[x][dy].baseID;
-                    holeList.splice(i,1);
-                    i--;
-                }
-            }
-            else if(map[dx][y].baseID!=-1){
-                if(baseList[map[dx][y].baseID].tiles.length < maxBaseSize){
-                    baseList[map[dx][y].baseID].tiles.push([x,y]);
-                    map[x][y].baseID = map[dx][y].baseID;
-                    holeList.splice(i,1);
-                    i--;
-                }
-            }
-            else if(map[x][uy].baseID!=-1){
-                if(baseList[map[x][uy].baseID].tiles.length < maxBaseSize){
-                    baseList[map[x][uy].baseID].tiles.push([x,y]);
-                    map[x][y].baseID = map[x][uy].baseID;
-                    holeList.splice(i,1);
-                    i--;
-                }
-            }
-            else if(map[ux][y].baseID!=-1){
-                if(baseList[map[ux][y].baseID].tiles.length < maxBaseSize){
-                    baseList[map[ux][y].baseID].tiles.push([x,y]);
-                    map[x][y].baseID = map[ux][y].baseID;
-                    holeList.splice(i,1);
-                    i--;
-                }
-            }
-        }
-        maxBaseSize++;
-    }
+    //baseSpreadMethod1(holeList);
+    baseSpreadMethod2(holeList);
 
     //Sweep 4 - Special Placements
     //SUPER BASE STORE
@@ -3121,12 +3155,174 @@ function buildMap(){
     //     }
     //     console.log(line);
     // }
-    //console.log("BASE COUNT: "+baseList.length+" ["+minBases+", "+maxBases+"]");
+    console.log("BASE COUNT: "+baseList.length+" ["+minBases+", "+maxBases+"]");
+}
+
+function baseSpreadMethod1(holeList){
+
+
+    var maxBaseSize = 50;
+    var add = false;
+    while(holeList.length>0){
+        for(var i = 0; i < holeList.length; i++){
+            var x = holeList[i][0], y = holeList[i][1];
+
+            var dx = x-1, ux = x+1, dy = y-1, uy = y+1;
+            if(dx < 0) dx+=mapSize;
+            if(ux >= mapSize) ux-=mapSize;
+            if(dy < 0) dy+=mapSize;
+            if(uy >= mapSize) uy-=mapSize;
+
+            if(map[dx][y].baseID!=-1){
+                if(baseList[map[dx][y].baseID].tiles.length < maxBaseSize){
+                    baseList[map[dx][y].baseID].tiles.push([x,y]);
+                    map[x][y].baseID = map[dx][y].baseID;
+                    holeList.splice(i,1);
+                    i--;
+                }
+            }
+            else if(map[ux][y].baseID!=-1){
+                if(baseList[map[ux][y].baseID].tiles.length < maxBaseSize){
+                    baseList[map[ux][y].baseID].tiles.push([x,y]);
+                    map[x][y].baseID = map[ux][y].baseID;
+                    holeList.splice(i,1);
+                    i--;
+                }
+            }
+            else if(map[x][dy].baseID!=-1){
+                if(baseList[map[x][dy].baseID].tiles.length < maxBaseSize){
+                    baseList[map[x][dy].baseID].tiles.push([x,y]);
+                    map[x][y].baseID = map[x][dy].baseID;
+                    holeList.splice(i,1);
+                    i--;
+                }
+            }
+            else if(map[x][uy].baseID!=-1){
+                if(baseList[map[x][uy].baseID].tiles.length < maxBaseSize){
+                    baseList[map[x][uy].baseID].tiles.push([x,y]);
+                    map[x][y].baseID = map[x][uy].baseID;
+                    holeList.splice(i,1);
+                    i--;
+                }
+            }
+        }
+        if(add){
+            maxBaseSize++;
+        }
+        add = !add;
+    }
+}
+
+function baseSpreadMethod2(holeList){
+    var claim = false;
+    var range = 8;
+    while(holeList.length>0){
+        claim = false;
+        for(var b in baseList){
+            for(var h = 0; h < holeList.length; h++){
+                if(claimRange(baseList[b].loc,holeList[h],range)){
+                    baseList[b].tiles.push([holeList[h][0],holeList[h][1]]);
+                    map[holeList[h][0]][holeList[h][1]].baseID = baseList[b].id;
+                    holeList.splice(h,1);
+                    claim = true;
+                    break;
+                }
+            }
+        }
+
+        if(!claim){
+            range++;
+            if(range > 40) break;
+        }
+    }
+}
+
+function claimRange(base, hole, range){
+    var t = parseInt(range/2);
+    var xAdj = t-base[0], yAdj = t-base[1];
+    var cX = (hole[0] + xAdj)%mapSize, cY = (hole[1] + yAdj)%mapSize;
+
+    if(cX<0)cX+=mapSize;
+    if(cY<0)cY+=mapSize;
+
+    return cX < range && cY < range;
 }
 
 function newBase(zone, loc){
     var id = baseList.length;
     var tiles = [];
+
+    var special = "N", lvl = 1, hpMAX = 0;
+    var gold = 0, credits = 0, gTier = 0, cTier = 0;
+    var tPoints;
+
+    if(zone==0){
+        lvl = 3;
+        hpMAX = 10000;
+    }
+    else if(zone==1){
+        tPoints = 2;
+        while(tPoints > 0){
+            if(Math.random()<.5) gTier++;
+            else cTier++;
+
+            tPoints--;
+        }
+    }
+    else if(zone==2){
+        if(Math.random() < .25){
+            lvl = 2;
+        }
+
+        tPoints = 4;
+        while(tPoints > 0){
+            var r = Math.random();
+            if(r < .3 && special==="N"){
+                r = Math.random();
+                if(r < .2) special = "S";
+                else if(r < .8) special="I";
+                else special = "U";
+            }
+            else if (((r < .65 && special==="N") || (r < .5 && special!=="N")) && gTier<3 || cTier==3) gTier++;
+            else cTier++;
+
+            tPoints--;
+        }
+    }
+    else if(zone==3){
+        if(Math.random() < .75){
+            lvl = 2;
+        }
+
+        tPoints = 6;
+        while(tPoints > 0){
+            var r = Math.random();
+            if(r < .8 && special==="N"){
+                r = Math.random();
+                if(r < .2) special = "S";
+                else if(r < .3) special="I";
+                else special = "U";
+            }
+            else if (((r < .9 && special==="N") || (r < .5 && special!=="N")) && gTier<3 || cTier==3) gTier++;
+            else cTier++;
+
+            tPoints--;
+        }
+    }
+
+    //Decide hp
+    if(lvl==1) hpMAX = 20;
+    else if(lvl==2) hpMAX = 50;
+
+    //Decide output
+    if(gTier==1) gold = parseInt(Math.random()*30)+10;
+    if(gTier==2) gold = parseInt(Math.random()*100)+50;
+    if(gTier==3) gold = parseInt(Math.random()*150)+150;
+    if(cTier==1) credits = parseInt(Math.random()*30)+10;
+    if(cTier==2) credits = parseInt(Math.random()*100)+50;
+    if(cTier==3) credits = parseInt(Math.random()*150)+150;
+
+
 
     //Grab all tiles within 3 blocks from all sides
     for(var x = 0; x < 7; x++){
@@ -3144,23 +3340,27 @@ function newBase(zone, loc){
         }
     }
 
+    //TEMP
+    var owner = parseInt(Math.random()*100)%3;
 
     baseList[id] = {
         "id": id,
-        "lvl":1,
-        "hp":(zone==0?1000:10),
-        "hpMAX": (zone==0?1000:10),
+        "lvl": lvl,
+        "hp":hpMAX,
+        "hpMAX": hpMAX,
         "upgrade": 0,
-        "upgradeMAX": 100,
+        "upgradeMAX": 80,
         "output": {
-            "gold":0,
-            "credits":0
+            "gold":gold,
+            "gTier": gTier,
+            "credits":credits,
+            "cTier": cTier
         },
-        "special": "N",
-        "owner": -1,
+        "special": special,
+        "owner": owner-1,
         "loc": loc,
         "tiles": tiles
-    }
+    };
 
     return id;
 }
@@ -3246,10 +3446,10 @@ function chooseTreasureValue(zone){
     return val;
 }
 
-function isLoot(loc){
-    if(loc.type==="GOLD") return true
-    else if(loc.type==="IRON") return true
-    else if(loc.type==="URANIUM") return true
+function hasLoot(loc){
+    if(loc.loot.gold>0) return true
+    else if(loc.loot.iron>0) return true
+    else if(loc.loot.uranium>0) return true
     return false;
 }
 
@@ -3425,10 +3625,9 @@ function death(p, killer){
         p.info.uranium = parseInt(p.info.uranium*p.stats.insurance*.2);
     }
 
-    map[p.loc[0]][p.loc[1]] = {"type":"GOLD","count":dropGold};
-    map[(p.loc[0]+1)%mapSize][p.loc[1]] = {"type":"IRON","count":dropIron};
-    map[p.loc[0]+1][(p.loc[1]+1)%mapSize] = {"type":"URANIUM","count":dropUranium};
-
+    map[p.loc[0]][p.loc[1]].loot = {"gold":dropGold, "iron":dropIron, "uranium":dropUranium};
+    map[p.loc[0]][p.loc[1]].type = "OPEN";
+    map[p.loc[0]][p.loc[1]].id = -1;
 
 
     //Alert the world of a kill
