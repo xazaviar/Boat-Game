@@ -1101,9 +1101,9 @@ function drawSideBar(){
         ctx.fillText("GOLD : "+me.info.gold+"g ("+me.info.totalGold+"g)",5,sCardHei+100);
         ctx.fillText("IRON : "+me.info.iron+"i ("+me.info.totalIron+"i)",5,sCardHei+120);
         ctx.fillText("URAN : "+me.info.uranium+"u ("+me.info.totalUranium+"u)",5,sCardHei+140);
-        ctx.fillText("KILLS: "+me.info.kills+" | DEATHS: "+me.info.deaths,5,sCardHei+160);
-        ctx.fillText("SCANS: "+me.info.scans+" | HAULS: "+me.info.hauls,5,sCardHei+180);
-        ctx.fillText("TRAPS: "+me.info.traps,5,sCardHei+200);
+        ctx.fillText("KILLS: "+me.info.kills+" | DEATHS  : "+me.info.deaths,5,sCardHei+160);
+        ctx.fillText("SCANS: "+me.info.scans+" | HAULS   : "+me.info.hauls,5,sCardHei+180);
+        ctx.fillText("TRAPS: "+me.info.traps+" | CAPTURES: "+me.info.captures,5,sCardHei+200);
         ctx.fillText("SAVED: "+(cookie===me.token?"TRUE":"FALSE"),5,sCardHei+220);
 
         //Toggle Save button

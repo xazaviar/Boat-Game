@@ -224,7 +224,7 @@ function drawBase(ctx, startX, startY, tileSize, type, lvl, color){
         ctx.restore();
         if(lvl>=2)
             ctx.fillRect(tileSize/4+startX, tileSize/4+startY, tileSize/2, tileSize/2);
-        if(lvl==3){
+        if(lvl>=3){
             ctx.globalAlpha = 0.7;
             ctx.save();
             ctx.translate(tileSize/2+startX, tileSize/2+startY);
@@ -250,7 +250,7 @@ function drawBase(ctx, startX, startY, tileSize, type, lvl, color){
             ctx.beginPath();
             ctx.arc(tileSize/2+startX+tileSize/8,tileSize/2+startY,tileSize/4,0,2*Math.PI);
             ctx.fill();
-        }else if(lvl == 3){
+        }else if(lvl >= 3){
             ctx.beginPath();
             ctx.arc(tileSize/2+startX-tileSize/8,tileSize/2+startY-tileSize/8,tileSize/5,0,2*Math.PI);
             ctx.fill();
@@ -285,7 +285,7 @@ function drawBase(ctx, startX, startY, tileSize, type, lvl, color){
             path.lineTo(startX+tileSize/6,startY+tileSize/4);
             ctx.fill(path);
         }
-        else if(lvl == 3){
+        else if(lvl >= 3){
             var path = new Path2D();
             path.moveTo(startX+tileSize/2,startY+(tileSize-tileSize/4));
             path.lineTo(startX+(tileSize-tileSize/3),startY+tileSize/2);

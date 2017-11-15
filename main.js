@@ -1191,10 +1191,10 @@ function startServer(){
                     "admins": [],
                     "members": [],
                     "vault":{
-                        "gold":100000,
-                        "credits":100000,
-                        "iron":100000,
-                        "uranium":100000
+                        "gold":0,
+                        "credits":0,
+                        "iron":0,
+                        "uranium":0
                     },
                     "income": {
                         "gold": 0,
@@ -1992,6 +1992,7 @@ function roundCleanup(){
                 if(lvl==1) baseList[b].hpMAX = 20;
                 else if(lvl==2) baseList[b].hpMAX = 50;
                 else if(lvl==3) baseList[b].hpMAX = 100;
+                else hpMAX = 10000;
                 baseList[b].hp = baseList[b].hpMAX;
 
                 messageGroup(teamData[baseList[b].owner].members,
@@ -2011,7 +2012,7 @@ function roundCleanup(){
             teamData[t].income = calulateProfit(t);
 
             if(profitCountdown==0){
-
+                dispurseProfit(t);
             }
         }
     }
@@ -3017,67 +3018,203 @@ function dispurseProfit(teamID){
     var gaveMem = false;
     var tax = teamData[teamID].settings.tax;
 
-    //Determine profit divide
-    if(tax < 100){
-        if(teamData[teamID].settings.profitDivide==="FAIR"){
-            //Determine who is online
-            var oCount = 0;
-            for(var m in teamData[teamID].members){
-                if(teamData[teamID].members[m].online) oCount++;
-            }
+    //Determine who is online
+    var mCount1 = 0, //All non leadership online
+        mCount2 = 0, //All mems online
+        aCount = 0,  //All admins online
+        lCount = 0;  //Leader online
+    for(var m in teamData[teamID].members){
+        if(teamData[teamID].members[m].online){
+            mCount1++;
+            mCount2++;
+        }
+    }
+    for(var a in teamData[teamID].admins){
+        if(teamData[teamID].admins[a].online){
+            mCount1--;
+            aCount++;
+        }
+    }
+    if(teamData[teamID].leader.online){
+        mCount1--;
+        lCount = 1;
+    }
 
-            gpp = parseInt((teamData[teamID].income.gold/oCount)*(1 - tax/100));
+    //Determine profit divide
+    if(tax < 100 && mCount2 > 0){
+        gaveMem = true;
+
+        if(teamData[teamID].settings.profitDivide==="FAIR"){
+            //Calculate Profit
+            gpp = parseInt((teamData[teamID].income.gold*(1 - tax/100))/mCount2);
             ipp = teamData[teamID].income.iron;
             upp = teamData[teamID].income.uranium;
 
-            gv = teamData[teamID].income.gold - gpp;
+            gv = teamData[teamID].income.gold - (gpp*mCount2);
             iv = teamData[teamID].income.iron;
             uv = teamData[teamID].income.uranium;
 
+            //give to members
+            if(gpp > 0 || ipp > 0 || upp > 0)
             for(var m in teamData[teamID].members){
                 if(teamData[teamID].members[m].online){
-
+                    giveLoot(players[teamData[teamID].members[m].id],gpp,ipp,upp);
+                    players[teamData[teamID].members[m].id].battleLog.unshift({"type":"loot","msg":"You have been paid."});
+                    if(ipp > 0 || upp > 0)
+                    players[teamData[teamID].members[m].id].battleLog.unshift({"type":"loot","msg":"You have been given resources."});
                 }
             }
         }
-        else if(teamData[teamID].settings.profitDivide==="AD 50%"){
+        else{
+            if(teamData[teamID].settings.profitDivide==="AD 50%"){
+                //calculate shares
+                var split = parseInt(teamData[teamID].income.gold*(1 - tax/100)/2);
 
-        }
-        else if(teamData[teamID].settings.profitDivide==="AD ONLY"){
-            //Determine who is online
-        }
-        else if(teamData[teamID].settings.profitDivide==="LD 50%"){
-
-        }
-        else if(teamData[teamID].settings.profitDivide==="LEADER"){
-            if(teamData[teamID].leader.online){
-                gaveMem = true;
-
-                gpp = parseInt(teamData[teamID].income.gold*(1 - tax/100));
-                ipp = teamData[teamID].income.iron;
-                upp = teamData[teamID].income.uranium;
-
-                gv = teamData[teamID].income.gold - gpp;
-                iv = teamData[teamID].income.iron;
-                uv = teamData[teamID].income.uranium;
-
-                players[teamData[teamID].leader.id].info.gold += gpp;
-                players[teamData[teamID].leader.id].info.goldTotal += gpp;
-                players[teamData[teamID].leader.id].info.iron += ipp;
-                players[teamData[teamID].leader.id].info.ironTotal += ipp;
-                if(upp > 0 && players[teamData[teamID].leader.id].info.uranium<players[teamData[teamID].leader.id].stats.urCarry){
-                    if(players[teamData[teamID].leader.id].info.uranium + upp > players[teamData[teamID].leader.id].stats.urCarry){
-                        var uranDrop = p.info.uranium + upp - p.stats.urCarry;
-                        players[teamData[teamID].leader.id].info.uranium = players[teamData[teamID].leader.id].stats.urCarry;
-                        players[teamData[teamID].leader.id].info.totalUranium += upp-uranDrop;
+                //dispurse
+                if(mCount1 > 0 && split > 0){
+                    gpp = parseInt(split/mCount1);
+                    if(gpp > 0){
+                        for(var m in teamData[teamID].members){
+                            if(teamData[teamID].members[m].online){
+                                if(players[teamData[teamID].members[m].id].info.teamRole==="MEMBER"){
+                                    giveLoot(players[teamData[teamID].members[m].id],gpp,ipp,upp);
+                                    players[teamData[teamID].members[m].id].battleLog.unshift({"type":"loot","msg":"You have been paid."});
+                                }
+                            }
+                        }
                     }
-                    else{
-                        players[teamData[teamID].leader.id].info.uranium += upp;
-                        players[teamData[teamID].leader.id].info.totalUranium += upp;
-                    }
+
+                }
+                else{
+                    gv = split;
                 }
 
-                players[teamData[teamID].leader.id].battleLog.unshift({"type":"loot","msg":"You have been paid your share of the team income."});
+                if((aCount+lCount) > 0 && split > 0){
+                    gpp = parseInt(split/(aCount+lCount));
+                    if(gpp > 0){
+                        if(aCount > 0){
+                            for(var a in teamData[teamID].admins){
+                                if(teamData[teamID].admins[a].online){
+                                    giveLoot(players[teamData[teamID].admins[a].id],gpp,ipp,upp);
+                                    players[teamData[teamID].admins[a].id].battleLog.unshift({"type":"loot","msg":"You have been paid."});
+                                }
+                            }
+                        }
+                        if(lCount>0){
+                            giveLoot(players[teamData[teamID].leader.id],gpp,ipp,upp);
+                            players[teamData[teamID].leader.id].battleLog.unshift({"type":"loot","msg":"You have been paid."});
+                        }
+                    }
+                }
+                else{
+                    gv = split;
+                }
+
+            }
+            else if(teamData[teamID].settings.profitDivide==="AD ONLY"){
+                if(aCount > 0 || lCount > 0){
+                    //Calculate share
+                    gpp = parseInt((teamData[teamID].income.gold*(1 - tax/100))/(aCount+lCount));
+                    gv = teamData[teamID].income.gold - (gpp*(aCount+lCount));
+
+                    //Give to admins
+                    if(gpp > 0)
+                    for(var a in teamData[teamID].admins){
+                        if(teamData[teamID].admins[a].online){
+                            giveLoot(players[teamData[teamID].admins[a].id],gpp,ipp,upp);
+                            players[teamData[teamID].admins[a].id].battleLog.unshift({"type":"loot","msg":"You have been paid."});
+                        }
+                    }
+
+                    if(gpp > 0 && teamData[teamID].leader.online){
+                        giveLoot(players[teamData[teamID].leader.id],gpp,ipp,upp);
+                        players[teamData[teamID].leader.id].battleLog.unshift({"type":"loot","msg":"You have been paid."});
+                    }
+                }
+                else{
+                    gv = teamData[teamID].income.gold;
+                }
+
+            }
+            else if(teamData[teamID].settings.profitDivide==="LD 50%"){
+                //calculate shares
+                var split = parseInt(teamData[teamID].income.gold*(1 - tax/100)/2);
+
+                //Dispurse
+                if(lCount > 0 && split > 0){
+                    giveLoot(players[teamData[teamID].leader.id],split,ipp,upp);
+                    players[teamData[teamID].leader.id].battleLog.unshift({"type":"loot","msg":"You have been paid."});
+                }
+                else{
+                    gv = split;
+                }
+
+                if((mCount1+aCount) > 0 && split > 0){
+                    gpp = parseInt(split/(mCount1+aCount));
+                    for(var m in teamData[teamID].members){
+                        if(teamData[teamID].members[m].online && teamData[teamID].members[m].id!=teamData[teamID].leader.id){
+                            giveLoot(players[teamData[teamID].members[m].id],gpp,ipp,upp);
+                            players[teamData[teamID].members[m].id].battleLog.unshift({"type":"loot","msg":"You have been paid."});
+                        }
+                    }
+                }
+                else{
+                    gv = split;
+                }
+
+
+            }
+            else if(teamData[teamID].settings.profitDivide==="LEADER"){
+                if(lCount>0){
+                    //calculate share
+                    gpp = parseInt(teamData[teamID].income.gold*(1 - tax/100));
+                    gv = teamData[teamID].income.gold - gpp;
+
+                    //Give to leader
+                    if(gpp > 0){
+                        giveLoot(players[teamData[teamID].leader.id],gpp,ipp,upp);
+                        players[teamData[teamID].leader.id].battleLog.unshift({"type":"loot","msg":"You have been paid."});
+                    }
+                }
+                else{
+                    gv = teamData[teamID].income.gold
+                }
+            }
+
+            //Calculate iron and uranium
+            ipp = teamData[teamID].income.iron;
+            upp = teamData[teamID].income.uranium;
+
+            iv = teamData[teamID].income.iron;
+            uv = teamData[teamID].income.uranium;
+
+            //give iron and uranium to members
+            if(ipp > 0 || upp > 0){
+                for(var m in teamData[teamID].members){
+                    if(teamData[teamID].members[m].online){
+                        giveLoot(players[teamData[teamID].members[m].id],0,ipp,upp);
+                        players[teamData[teamID].members[m].id].battleLog.unshift({"type":"loot","msg":"You have been given resources."});
+                    }
+                }
+            }
+
+        }
+
+    }
+    else{
+        //Calculate Iron and uranium
+        ipp = teamData[teamID].income.iron;
+        upp = teamData[teamID].income.uranium;
+
+        iv = teamData[teamID].income.iron;
+        uv = teamData[teamID].income.uranium;
+
+        //give iron and uranium to members
+        if(iv > 0 || uv > 0)
+        for(var m in teamData[teamID].members){
+            if(teamData[teamID].members[m].online){
+                giveLoot(players[teamData[teamID].members[m].id],0,ipp,upp);
+                players[teamData[teamID].members[m].id].battleLog.unshift({"type":"loot","msg":"You have been paid your share of the team's special income."});
             }
         }
     }
@@ -3351,8 +3488,6 @@ function buildMap(){
 }
 
 function baseSpreadMethod1(holeList){
-
-
     var maxBaseSize = 50;
     var add = false;
     while(holeList.length>0){
@@ -3449,7 +3584,7 @@ function newBase(zone, loc){
     var tPoints;
 
     if(zone==0){
-        lvl = 3;
+        lvl = 4;
         hpMAX = 10000;
     }
     else if(zone==1){
@@ -3586,9 +3721,9 @@ function canBuildBase(spot){
 
 function calculateBaseUpgradeCost(lvl){
     if(lvl==1)
-        return {"credits":10000,"iron":50,"uranium":10};
+        return {"credits":5000,"iron":100,"uranium":10};
     else if(lvl==2)
-        return {"credits":20000,"iron":150,"uranium":30};
+        return {"credits":10000,"iron":200,"uranium":30};
     else
         return {"credits":999999,"iron":9999,"uranium":999};
 }
@@ -3945,5 +4080,23 @@ function messageGroup(group, msg, msgS, type, source){
 function calculateIndividualPower(p){
     var upgradeVal = 10, haulVal = 2, killVal = 3, capVal = 5;
 
-    return p.info.shipMass*upgradeVal + p.info.hauls*haulVal + p.info.kills*killVal + p.info.captured*capVal;
+    return p.info.shipMass*upgradeVal + p.info.hauls*haulVal + p.info.kills*killVal + p.info.captures*capVal;
+}
+
+function giveLoot(p, gold, iron, uranium){
+    p.info.gold += gold;
+    p.info.totalGold += gold;
+    p.info.iron += iron;
+    p.info.totalIron += iron;
+    if(uranium > 0 && p.info.uranium < p.stats.urCarry){
+        if(p.info.uranium + uranium > p.stats.urCarry){
+            var uranDrop = p.info.uranium + uranium - p.stats.urCarry;
+            p.info.uranium = p.stats.urCarry;
+            p.info.totalUranium += uranium-uranDrop;
+        }
+        else{
+            p.info.uranium += uranium;
+            p.info.totalUranium += uranium;
+        }
+    }
 }
