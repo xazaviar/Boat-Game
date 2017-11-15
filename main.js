@@ -39,6 +39,8 @@ var cTick = 25; //countdownMax * tick =~ 3 secs
 var aTick = 800; //action tick
 var combatCooldown = 4; //Number of rounds
 var dcCountdown = 2; //d/c cooldown
+var profitCountdown = 0;
+var profitCountdownMax = 5;
 
 //Saving
 var saveCountdown = 0;
@@ -266,6 +268,7 @@ function startServer(){
                 "trapped": 0,
                 "shipMass": 0,
                 "powerLevel": 0,
+                "captures": 0,
                 "ping": 20
             },
             "loc": sp,
@@ -474,7 +477,7 @@ function startServer(){
                         "objective": teamData[t].objective
                     };
                 }
-                else if(teamData[t].status==="OFFLINE"){
+                else if(teamData[t].status==="DELETED"){
                     sendTeam[teamData[t].id] = {};
                 }
                 else{
@@ -1924,6 +1927,7 @@ function actionPhase(){
 
 function roundCleanup(){
     saveCountdown++;
+    profitCountdown = (profitCountdown+1)%profitCountdownMax;
     canDelete = false;
 
     //Refresh energy levels and clear queues
@@ -1998,11 +2002,17 @@ function roundCleanup(){
         baseList[b].inCombat--;
     }
 
+
+
     //Update team data
     for(var t in teamData){
         if(teamData[t].status!=="DELETED"){
             teamData[t].power = calculateTeamPower(t);
             teamData[t].income = calulateProfit(t);
+
+            if(profitCountdown==0){
+
+            }
         }
     }
     rankTeams();
@@ -2688,7 +2698,7 @@ function teamValidation(base, area){
         return "Base color is too similar to Area color";
 
     for(var b in teamData){
-        if(teamData[b].status!=="OFFLINE"){
+        if(teamData[b].status!=="DELETED"){
             hex = teamData[b].colors.baseColor.replace('#','');
             var br2 = parseInt(hex.substring(0,2), 16);
             var bg2 = parseInt(hex.substring(2,4), 16);
@@ -2710,7 +2720,7 @@ function teamValidation(base, area){
 
 function removeFromTeam(pid, teamID, type){
     if(type==="MERGE"){
-        teamData[teamID] = {"id":teamID,"status":"OFFLINE"};
+        teamData[teamID] = {"id":teamID,"status":"DELETED"};
     }
     else if(type==="KICK"){
         for(var a in teamData[teamID].admins){
@@ -2899,7 +2909,7 @@ function rankTeams(){
 
 function initTeamClean(){
     for(var t in teamData){
-        if(teamData[t].status!=="OFFLINE"){
+        if(teamData[t].status!=="DELETED"){
             teamData[t].leader.online = false;
             for(var a in teamData[t].admins){
                 teamData[t].admins[a].online = false;
@@ -2919,7 +2929,7 @@ function changeOnlineStatus(p, status){
     var token = p.token;
 
     if(teamID > -1 && teamID < teamData.length){
-        if(teamData[teamID].status !== "OFFLINE"){
+        if(teamData[teamID].status !== "DELETED"){
             if(p.info.teamRole==="LEADER"){
                 teamData[teamID].leader.online = status;
             }
@@ -2977,7 +2987,7 @@ function updatePower(p){
     var token = p.token;
 
     if(teamID > -1 && teamID < teamData.length){
-        if(teamData[teamID].status !== "OFFLINE"){
+        if(teamData[teamID].status !== "DELETED"){
             if(p.info.teamRole==="LEADER"){
                 teamData[teamID].leader.powerLevel = p.info.powerLevel;
             }
@@ -3001,6 +3011,90 @@ function updatePower(p){
 
 }
 
+function dispurseProfit(teamID){
+    var gpp = 0, ipp = 0, upp = 0;  //player gain
+    var gv = 0, iv = 0, uv = 0;     //team gain
+    var gaveMem = false;
+    var tax = teamData[teamID].settings.tax;
+
+    //Determine profit divide
+    if(tax < 100){
+        if(teamData[teamID].settings.profitDivide==="FAIR"){
+            //Determine who is online
+            var oCount = 0;
+            for(var m in teamData[teamID].members){
+                if(teamData[teamID].members[m].online) oCount++;
+            }
+
+            gpp = parseInt((teamData[teamID].income.gold/oCount)*(1 - tax/100));
+            ipp = teamData[teamID].income.iron;
+            upp = teamData[teamID].income.uranium;
+
+            gv = teamData[teamID].income.gold - gpp;
+            iv = teamData[teamID].income.iron;
+            uv = teamData[teamID].income.uranium;
+
+            for(var m in teamData[teamID].members){
+                if(teamData[teamID].members[m].online){
+
+                }
+            }
+        }
+        else if(teamData[teamID].settings.profitDivide==="AD 50%"){
+
+        }
+        else if(teamData[teamID].settings.profitDivide==="AD ONLY"){
+            //Determine who is online
+        }
+        else if(teamData[teamID].settings.profitDivide==="LD 50%"){
+
+        }
+        else if(teamData[teamID].settings.profitDivide==="LEADER"){
+            if(teamData[teamID].leader.online){
+                gaveMem = true;
+
+                gpp = parseInt(teamData[teamID].income.gold*(1 - tax/100));
+                ipp = teamData[teamID].income.iron;
+                upp = teamData[teamID].income.uranium;
+
+                gv = teamData[teamID].income.gold - gpp;
+                iv = teamData[teamID].income.iron;
+                uv = teamData[teamID].income.uranium;
+
+                players[teamData[teamID].leader.id].info.gold += gpp;
+                players[teamData[teamID].leader.id].info.goldTotal += gpp;
+                players[teamData[teamID].leader.id].info.iron += ipp;
+                players[teamData[teamID].leader.id].info.ironTotal += ipp;
+                if(upp > 0 && players[teamData[teamID].leader.id].info.uranium<players[teamData[teamID].leader.id].stats.urCarry){
+                    if(players[teamData[teamID].leader.id].info.uranium + upp > players[teamData[teamID].leader.id].stats.urCarry){
+                        var uranDrop = p.info.uranium + upp - p.stats.urCarry;
+                        players[teamData[teamID].leader.id].info.uranium = players[teamData[teamID].leader.id].stats.urCarry;
+                        players[teamData[teamID].leader.id].info.totalUranium += upp-uranDrop;
+                    }
+                    else{
+                        players[teamData[teamID].leader.id].info.uranium += upp;
+                        players[teamData[teamID].leader.id].info.totalUranium += upp;
+                    }
+                }
+
+                players[teamData[teamID].leader.id].battleLog.unshift({"type":"loot","msg":"You have been paid your share of the team income."});
+            }
+        }
+    }
+
+    if(!gaveMem){
+        gv = teamData[teamID].income.gold;
+        iv = teamData[teamID].income.iron;
+        uv = teamData[teamID].income.uranium;
+    }
+
+
+    teamData[teamID].vault.gold += gv;
+    teamData[teamID].vault.credits += teamData[teamID].income.credits;
+    teamData[teamID].vault.iron += iv;
+    teamData[teamID].vault.uranium += uv;
+
+}
 
 
 //Traps
@@ -3253,18 +3347,6 @@ function buildMap(){
     //Sweep 5 - Spawn Loot
     spawnLoot();
 
-    //Output Map
-    // for(var y = 0; y < mapSize; y++){
-    //     var line = ""
-    //     for(var x = 0; x < mapSize; x++){
-    //         if(map[x][y].type==="ROCK") line+="* ";
-    //         else if(map[x][y].type==="BASE") line+="_ ";
-    //         else if(map[x][y].baseID!=-1) line+="+ ";
-    //         // else if(map[x][y].zone==0 || map[x][y].zone==4) line+=map[x][y].zone+" ";
-    //         else line+="  "; //line+=map[x][y].zone+" ";
-    //     }
-    //     console.log(line);
-    // }
     console.log("BASE COUNT: "+baseList.length+" ["+minBases+", "+maxBases+"]");
 }
 
@@ -3574,6 +3656,7 @@ function hasLoot(loc){
 }
 
 
+
 //Combat
 function hit(location, p){
     var dmg = p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0);
@@ -3596,6 +3679,8 @@ function hit(location, p){
             hit.inCombat = combatCooldown;
 
         if(hit.hp <= 0){
+            p.info.captured++;
+
             var oldID = hit.owner;
             hit.owner = p.info.teamID;
             hit.hp = parseInt(hit.hpMAX/2);
@@ -3623,7 +3708,6 @@ function hit(location, p){
     else if(location.type==="WALL"){}
 
 }
-
 
 function death(p, killer){
     p.stats.hp = 0;
@@ -3800,6 +3884,7 @@ function death(p, killer){
 }
 
 
+
 //Other
 function generateToken(){
     //Create random 16 character token
@@ -3811,7 +3896,6 @@ function generateToken(){
 
     return token;
 }
-
 
 function messageGroup(group, msg, msgS, type, source){
     if(type==="team"){
@@ -3859,7 +3943,7 @@ function messageGroup(group, msg, msgS, type, source){
 }
 
 function calculateIndividualPower(p){
-    var upgradeVal = 10, haulVal = 2, killVal = 5;
+    var upgradeVal = 10, haulVal = 2, killVal = 3, capVal = 5;
 
-    return p.info.shipMass*upgradeVal + p.info.hauls*haulVal + p.info.kills*killVal;
+    return p.info.shipMass*upgradeVal + p.info.hauls*haulVal + p.info.kills*killVal + p.info.captured*capVal;
 }

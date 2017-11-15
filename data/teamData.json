@@ -194,7 +194,7 @@
             "id": 6,
             "name": "test",
             "powerLevel": 20,
-            "online": true
+            "online": false
         },
         "admins": [],
         "members": [
@@ -203,7 +203,7 @@
                 "id": 6,
                 "name": "test",
                 "powerLevel": 20,
-                "online": true
+                "online": false
             },
             {
                 "token": "LjEN36jhR1JaMBhxXQaKhiJuXMpI4q3KPphcsHVPnHsRUvPq1rfz0xvqVgTLDBMaxYtwzyzvgtn4SSJgRtFAmgY1pji6mEVFd5Cc3wzg2ejCKtbMuqUUUhTdFcSx9abPb4gBvqKX75YduvYN6TA8WYx5Pu3cG4VU1pbkIlvtyDPQrmnuq9WKtGYENWrdO0iNLzqIloqK",
@@ -218,6 +218,13 @@
                 "name": "asdf",
                 "powerLevel": 0,
                 "online": false
+            },
+            {
+                "token": "UL3COFjPGXo3DYYakme1pWjPB2MxlBwyaX9vtBq6j44Jgu2QQL8Pb6yVHf7DtfCARHpC64OpibBVtaOGFoslBBTN6KPCId3PPO3Qj37rB8NP6zAUMFzwMLDVELkl2cbFVjMp2y8dKA7rzHWXtAHEGr93Mi8V1HPV984EZqPW2NhRBkG2QqIr6Qki4iEKuezckEpo6Cjt",
+                "id": 11,
+                "name": "test",
+                "powerLevel": 0,
+                "online": false
             }
         ],
         "vault": {
@@ -227,13 +234,13 @@
             "uranium": 99990
         },
         "income": {
-            "gold": 255,
-            "credits": 905,
-            "iron": 4,
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
             "uranium": 0
         },
         "rank": 1,
-        "power": 198,
+        "power": 20,
         "Objective": -1,
         "settings": {
             "building": "TEAM",
@@ -244,5 +251,46 @@
             "tax": 0
         },
         "objective": 35
+    },
+    {
+        "id": 5,
+        "name": "test",
+        "colors": {
+            "baseColor": "#ff0071",
+            "areaColor": "#80db24",
+            "baseShape": "CIRCLE"
+        },
+        "leader": {
+            "token": "UL3COFjPGXo3DYYakme1pWjPB2MxlBwyaX9vtBq6j44Jgu2QQL8Pb6yVHf7DtfCARHpC64OpibBVtaOGFoslBBTN6KPCId3PPO3Qj37rB8NP6zAUMFzwMLDVELkl2cbFVjMp2y8dKA7rzHWXtAHEGr93Mi8V1HPV984EZqPW2NhRBkG2QqIr6Qki4iEKuezckEpo6Cjt",
+            "id": 11,
+            "name": "test",
+            "powerLevel": 0,
+            "online": true
+        },
+        "admins": [],
+        "members": [],
+        "vault": {
+            "gold": 100000,
+            "credits": 100000,
+            "iron": 100000,
+            "uranium": 100000
+        },
+        "income": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "rank": 6,
+        "power": 0,
+        "Objective": -1,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 25
+        }
     }
 ]
