@@ -508,6 +508,7 @@ function drawMonitor(ctx, width, height){
     }
     else{
         drawGridLines(ctx, width, height);
+
         //Draw map
         var mid = parseInt(me.stats.radar/2);
         for(var x = 0; x < me.stats.radar; x++){
@@ -541,7 +542,11 @@ function drawMonitor(ctx, width, height){
                     ctx.fillRect(x*tileSize+tileSize/2-tileSize*.4,y*tileSize+tileSize/2-tileSize*.4,tileSize*.8,tileSize*.8);
                     ctx.stroke();
 
-                    //DRAW ROCK HP
+                    //ROCK HP
+                    if(map[cX][cY].hp < map[cX][cY].hpMAX){
+                        ctx.fillStyle=colors.hpColor;
+                        ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2-5,tileSize*.6*(map[cX][cY].hp/map[cX][cY].hpMAX),10);
+                    }
                 }
                 else if(map[cX][cY].type==="BASE"){ //Bases
                     var owner = baseList[map[cX][cY].id].owner;
@@ -551,6 +556,19 @@ function drawMonitor(ctx, width, height){
                     else{
                         drawBase(ctx, x*tileSize, y*tileSize, tileSize, "DIAMOND", baseList[map[cX][cY].id].lvl, colors.shopColor);
                     }
+
+                    //BASE HP
+                    if( baseList[map[cX][cY].id].hp <  baseList[map[cX][cY].id].hpMAX){
+                        ctx.fillStyle = colors.hpColor;
+                        ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2-5,tileSize*.6*(baseList[map[cX][cY].id].hp/ baseList[map[cX][cY].id].hpMAX),10);
+                    }
+
+                    //BASE PROGRESS BAR
+                    if( baseList[map[cX][cY].id].upgrading){
+                        ctx.fillStyle = colors.energyColor;
+                        ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2+5,tileSize*.6*(baseList[map[cX][cY].id].upgrade/ baseList[map[cX][cY].id].upgradeMAX),10);
+                    }
+
                 }
                 else if(map[cX][cY].type==="PLAYER" && !(me.loc[0]==cX && me.loc[1]==cY)){ //Players
                     var pid = map[cX][cY].id;
@@ -1670,10 +1688,14 @@ function handleMousedown(e){
         }
         else if(curTeamTab==0){
             if(mouseHover!=-1 && typeof mouseHover.baseID !== "undefined"){
-                setObjective(me.token, me.id, mouseHover.baseID);
+                if(teamList[me.info.teamID].objective!=mouseHover.baseID)
+                    setObjective(me.token, me.id, mouseHover.baseID);
             }
             else if(mouseHover==="UPGRADE"){
                 upgradeBase(me.token,me.id,teamList[me.info.teamID].objective);
+            }
+            else if(mouseHover==-1 && teamList[me.info.teamID].objective!=-1){
+                setObjective(me.token, me.id, -1);
             }
         }
         else if(curTeamTab==1){

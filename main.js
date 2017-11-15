@@ -35,7 +35,7 @@ var lootSpawns = [];
 var phase = 0; //0 -> setup , 1,2,3 -> action x
 var countdownMax = 100; //always 100
 var countdown = countdownMax;
-var cTick = 20; //countdownMax * tick = 3 secs
+var cTick = 25; //countdownMax * tick =~ 3 secs
 var aTick = 800; //action tick
 var combatCooldown = 4; //Number of rounds
 var dcCountdown = 2; //d/c cooldown
@@ -423,6 +423,10 @@ function startServer(){
                             sendMap[x][y].type = "OPEN";
                         }
                         delete sendPlayers[pid].hp;
+                    }
+                    else if(sendMap[x][y].type==="ROCK"){
+                        sendMap[x][y]["hp"] = rockList[sendMap[x][y].id].hp;
+                        sendMap[x][y]["hpMAX"] = rockList[sendMap[x][y].id].hpMAX;
                     }
 
                 }
@@ -1935,7 +1939,8 @@ function roundCleanup(){
                         players[m].battleLog.unshift(msg);
                 }
                 savePlayer(players[i], true);
-            }else{
+            }
+            else{
                 players[i].queue = [];
                 players[i].activeAttacks = [];
                 players[i].info.inCombat--;
@@ -1961,6 +1966,15 @@ function roundCleanup(){
 
     //Update bases
     for(var b in baseList){
+
+        if(baseList[b].inCombat<=0 && baseList[b].hp < baseList[b].hpMAX){
+            baseList[b].hp += parseInt(baseList[b].hpMAX*.1);
+            if(baseList[b].hp >= baseList[b].hpMAX){
+                baseList[b].hp = baseList[b].hpMAX;
+                baseList[b].canAttack = true;
+            }
+        }
+
         if(baseList[b].upgrading){
             baseList[b].upgrade++;
 
@@ -1969,8 +1983,19 @@ function roundCleanup(){
                 baseList[b].lvl++;
                 baseList[b].upgradeCost = calculateBaseUpgradeCost(baseList[b].lvl);
                 baseList[b].upgrading = false;
+
+                //Decide hp
+                if(lvl==1) baseList[b].hpMAX = 20;
+                else if(lvl==2) baseList[b].hpMAX = 50;
+                else if(lvl==3) baseList[b].hpMAX = 100;
+                baseList[b].hp = baseList[b].hpMAX;
+
+                messageGroup(teamData[baseList[b].owner].members,
+                             "Base "+baseList[b].id+" has completed its upgrade! All systems are back online.","", "team", p);
             }
         }
+
+        baseList[b].inCombat--;
     }
 
     //Update team data
@@ -2043,22 +2068,12 @@ function move(p, direction){
     triggeredTrap(p);
 }
 
-function attack(p, location){
+function attack(p, loc){
     p.stats.energy -= attackEnergyUsage;
     p.info.inCombat = combatCooldown;
 
-    var hit = playerInSpot(location,null);
-    if(hit!=null){
-        //HIT
-        var dmg = p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0 - (isEquipped(hit,"DR")?1:0));
-        hit.stats.hp = hit.stats.hp - dmg;
-        hit.info.inCombat = combatCooldown;
-        hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has hit you for "+dmg+" damage."});
-
-        if(hit.stats.hp <= 0){
-            death(hit, p);
-        }
-
+    if(map[loc[0]][loc[1]].type!=="OPEN"){
+        hit(map[loc[0]][loc[1]], p);
     }
 
 }
@@ -2086,17 +2101,8 @@ function cannon(p, location){
     }
 
     for(var i in locs){
-        var hit = playerInSpot(locs[i],null);
-        if(hit!=null){
-            var dmg = parseInt((p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0))*(p.stats.cannon>2?1.5:1)) - (isEquipped(hit,"DR")?1:0);
-            hit.stats.hp = hit.stats.hp - dmg;
-            hit.info.inCombat = combatCooldown;
-            hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has blasted you for "+dmg+" damage."});
-
-            if(hit.stats.hp <= 0){
-                death(hit, p);
-            }
-
+        if(map[loc[0]][loc[1]].type!=="OPEN"){
+            hit(map[loc[0]][loc[1]], p);
         }
     }
 }
@@ -2113,15 +2119,18 @@ function railgun(p, direction){
             if(newY < 0) newY += mapSize;
             locs.push([p.loc[0],newY]);
         }
-    }else if(direction==="E"){
+    }
+    else if(direction==="E"){
         for(var i = 1; i <= railgunRange; i++){
             locs.push([(p.loc[0]+i)%mapSize,p.loc[1]]);
         }
-    }else if(direction==="S"){
+    }
+    else if(direction==="S"){
         for(var i = 1; i <= railgunRange; i++){
             locs.push([p.loc[0],(p.loc[1]+i)%mapSize]);
         }
-    }else if(direction==="W"){
+    }
+    else if(direction==="W"){
         for(var i = 1; i <= railgunRange; i++){
             var newX = p.loc[0]-i;
             if(newX < 0) newX += mapSize;
@@ -2130,17 +2139,8 @@ function railgun(p, direction){
     }
 
     for(var i in locs){
-        var hit = playerInSpot(locs[i],p);
-        if(hit!=null){
-            var dmg = ((p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0))*(p.stats.railgun+1) - (isEquipped(hit,"DR")?1:0));
-            hit.stats.hp = hit.stats.hp - dmg;
-            hit.info.inCombat = combatCooldown;
-            hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has railed you for "+dmg+" damage."});
-
-            if(hit.stats.hp <= 0){
-                death(hit, p);
-            }
-
+        if(map[loc[0]][loc[1]].type!=="OPEN"){
+            hit(map[loc[0]][loc[1]], p);
         }
     }
 }
@@ -2263,10 +2263,10 @@ function scan(p){
                     p.knownTraps.push({"loc":trapList[tr].loc,"lvl":0+trapList[tr].lvl,"id":0+trapList[tr].id,"owned":false});
             }
 
-            var enemyP = playerInSpot([cX,cY], p);
-            if(enemyP!=null){
-                enemyP.battleLog.unshift({"type":"combat", "msg": "Someone has scanned you."});
-                p.scanned.push({"id":enemyP.id,"rounds":3+p.stats.scanner});
+
+            if(map[cX][cY].type==="PLAYER"){
+                players[map[cX][cY].id].battleLog.unshift({"type":"combat", "msg": "Someone has scanned you."});
+                p.scanned.push({"id":map[cX][cY].id,"rounds":3+p.stats.scanner});
             }
         }
     }
@@ -2545,6 +2545,7 @@ function makePurchaseBaseUpgrade(baseID, teamID){
     teamData[teamID].vault.uranium-=cost.uranium;
 
     baseList[baseID].upgrading = true;
+    baseList[baseID].canAttack = false;
 }
 
 
@@ -2604,14 +2605,6 @@ function inScanned(player, id){
     }
 
     return false;
-}
-
-function playerInSpot(location, ignore){
-    for(var i = 0; i < players.length; i++){
-        if(players[i].status!=="OFFLINE")
-            if(players[i].loc[0]==location[0] && players[i].loc[1]==location[1] && players[i].stats.hp>0 && players[i]!=ignore) return players[i];
-    }
-    return null;
 }
 
 function queuedDestealth(p){
@@ -3187,6 +3180,7 @@ function buildMap(){
                 rockList[rockList.length] = {
                     "id": rockList.length,
                     "hp": rockHP,
+                    "hpMAX": rockHP,
                     "loc": [x,y]
                 };
                 map[x][y] = {
@@ -3439,7 +3433,6 @@ function newBase(zone, loc){
     if(cTier==3) credits = parseInt(Math.random()*150)+150;
 
 
-
     //Grab all tiles within 3 blocks from all sides
     for(var x = 0; x < 7; x++){
         for(var y = 0; y < 7; y++){
@@ -3456,16 +3449,16 @@ function newBase(zone, loc){
         }
     }
 
-    //TEMP
-    var owner = parseInt(Math.random()*100)%5;
 
     baseList[id] = {
         "id": id,
         "lvl": lvl,
-        "hp":hpMAX,
+        "hp": hpMAX,
         "hpMAX": hpMAX,
+        "inCombat": 0,
+        "canAttack": true,
         "upgrade": 0,
-        "upgradeMAX": 5,
+        "upgradeMAX": 40,
         "upgradeCost": calculateBaseUpgradeCost(lvl),
         "upgrading": false,
         "output": {
@@ -3475,7 +3468,7 @@ function newBase(zone, loc){
             "cTier": cTier
         },
         "special": special,
-        "owner": owner,
+        "owner": -1,
         "loc": loc,
         "tiles": tiles
     };
@@ -3581,18 +3574,56 @@ function hasLoot(loc){
 }
 
 
+//Combat
+function hit(location, p){
+    var dmg = p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0);
 
-//Other
-function generateToken(){
-    //Create random 16 character token
-    var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    var token = '';
-    for (var i = 0; i < tokenSize; i++) {
-      token += chars[Math.round(Math.random() * (chars.length - 1))];
+    if(location.type==="PLAYER"){
+        var hit = players[location.id];
+        dmg -= (isEquipped(hit,"DR")?1:0);
+        hit.stats.hp -= dmg;
+        hit.info.inCombat = combatCooldown;
+        hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has hit you for "+dmg+" damage."});
+
+        if(hit.stats.hp <= 0){
+            death(hit, p);
+        }
     }
+    else if(location.type==="BASE"){
+        var hit = baseList[location.id];
+        hit.hp -= dmg;
+        if(p.info.teamID!=hit.owner)
+            hit.inCombat = combatCooldown;
 
-    return token;
+        if(hit.hp <= 0){
+            var oldID = hit.owner;
+            hit.owner = p.info.teamID;
+            hit.hp = parseInt(hit.hpMAX/2);
+            hit.inCombat = 0;
+            hit.canAttack = false;
+            hit.upgrading = false;
+            hit.upgrade = 0;
+            if(oldID>-1)
+            messageGroup(teamData[oldID].members,
+                         "Base "+hit.id+" has been captured by "+teamData[p.info.teamID].name+"!", "", "team", null);
+            messageGroup(teamData[p.info.teamID].members,
+                         p.info.name+" has captured Base "+hit.id+"!",
+                         "You have captured Base "+hit.id+"!", "team", p);
+        }
+    }
+    else if(location.type==="ROCK"){
+        var hit = rockList[location.id];
+        hit.hp -= dmg;
+
+        if(hit.hp <= 0){
+            map[hit.loc[0]][hit.loc[1]].type = "OPEN";
+            map[hit.loc[0]][hit.loc[1]].id = -1;
+        }
+    }
+    else if(location.type==="WALL"){}
+
 }
+
 
 function death(p, killer){
     p.stats.hp = 0;
@@ -3767,6 +3798,20 @@ function death(p, killer){
                 players[m].battleLog.unshift({"type":"server", "msg": msg});
     }
 }
+
+
+//Other
+function generateToken(){
+    //Create random 16 character token
+    var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var token = '';
+    for (var i = 0; i < tokenSize; i++) {
+      token += chars[Math.round(Math.random() * (chars.length - 1))];
+    }
+
+    return token;
+}
+
 
 function messageGroup(group, msg, msgS, type, source){
     if(type==="team"){
