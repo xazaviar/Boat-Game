@@ -1690,6 +1690,8 @@ function handleMousedown(e){
             if(mouseHover!=-1 && typeof mouseHover.baseID !== "undefined"){
                 if(teamList[me.info.teamID].objective!=mouseHover.baseID)
                     setObjective(me.token, me.id, mouseHover.baseID);
+                else
+                    setObjective(me.token, me.id, -1);
             }
             else if(mouseHover==="UPGRADE"){
                 upgradeBase(me.token,me.id,teamList[me.info.teamID].objective);

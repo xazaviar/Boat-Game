@@ -418,7 +418,9 @@ function startServer(){
                         var isScanned = inScanned(p, sendPlayers[pid].id);
                         var inVision = visionDistance(p.loc, sendPlayers[pid].loc);
                         var sameTeam = sendPlayers[pid].team == p.info.teamID;
-                        if((!isScanned && (!inVision || (inVision && sendPlayers[pid].stealthed)) && !sameTeam) || sendPlayers[pid].hp <= 0){
+                        var onTurf = baseList[sendMap[x][y].id].owner == p.info.teamID;
+                        var cantSee = !inVision || !onTurf || (inVision && sendPlayers[pid].stealthed) || (onTurf && sendPlayers[pid].stealthed);
+                        if((!isScanned && !cantSee && !sameTeam) || sendPlayers[pid].hp <= 0){
                             delete sendPlayers[pid].loc;
                             delete sendPlayers[pid].stealthed;
 
@@ -1904,7 +1906,7 @@ function actionPhase(){
     //Push base attacks and determine next rounds attacks
     for(var b in baseList){
         for(var a = 0; a < baseList[b].actTargets.length; a++){
-            bAtks.push({"loc":baseList[b].actTargets[a], "dmg": baseList[b].lvl});
+            bAtks.push({"loc":baseList[b].actTargets[a], "dmg": baseList[b].lvl, "baseID":baseList[b].id});
         }
         baseList[b].actTargets = [];
         if(baseList[b].targets.length > 0 && phase < 3){
@@ -1938,7 +1940,7 @@ function actionPhase(){
     for(var i = 0; i < attacks.length; i++)
         attack(attacks[i].player,attacks[i].location);
     for(var i = 0; i < bAtks.length; i++)
-        baseAttack(bAtks[i].loc, bAtks[i].dmg);
+        baseAttack(bAtks[i].loc, bAtks[i].dmg, bAtks[i].baseID);
     for(var i = 0; i < cannons.length; i++)
         cannon(cannons[i].player,cannons[i].location);
     for(var i = 0; i < railguns.length; i++)
@@ -2429,7 +2431,7 @@ function trap(p){
 //******************************************************************************
 // Base Actions
 //******************************************************************************
-function baseAttack(loc, dmg){
+function baseAttack(loc, dmg, baseID){
     if(map[loc[0]][loc[1]].type==="PLAYER"){
         var hit = players[map[loc[0]][loc[1]].id];
         dmg -= (isEquipped(hit,"DR")?1:0);
@@ -2440,6 +2442,12 @@ function baseAttack(loc, dmg){
             hit.battleLog.unshift({"type":"combat", "msg": "You have been hit for "+dmg+" damage."});
 
             if(hit.stats.hp <= 0){
+                for(var t in baseList[baseID].targets){
+                    if(baseList[baseID].targets[t].id==hit.id){
+                        baseList[baseID].targets.splice(t,1);
+                        break;
+                    }
+                }
                 death(hit, null);
             }
         }
@@ -2453,10 +2461,12 @@ function baseAttack(loc, dmg){
 
 //Store Functions
 function withinShop(location, teamID){
+    //TODO: use map's baseid to determine if near shop
+
     for(var x = 0; x < 5; x++){
         for(var y = 0; y < 5; y++){
-            var cX = location[0] - (1-x);
-            var cY = location[1] - (1-y);
+            var cX = location[0] - (2-x);
+            var cY = location[1] - (2-y);
 
             if(cX < 0) cX += mapSize;
             if(cY < 0) cY += mapSize;
@@ -2464,8 +2474,10 @@ function withinShop(location, teamID){
             if(cY >= mapSize) cY -= mapSize;
 
             if(map[cX][cY].type==="BASE"){
-                var own = baseList[map[cX][cY].id].owner;
-                if(own==teamID || own==-1) return baseList[map[cX][cY].id].lvl;
+                if(baseList[map[cX][cY].id].inCombat <= 0){
+                    var own = baseList[map[cX][cY].id].owner;
+                    if(own==teamID || own==-1) return baseList[map[cX][cY].id].lvl;
+                }
             }
         }
     }
@@ -3923,8 +3935,13 @@ function hit(location, p){
         if(nTarget)
             hit.targets.push({"id":p.id,"countdown":5});
 
-        if(p.info.teamID!=hit.owner)
+        if(p.info.teamID!=hit.owner){
+            if(hit.inCombat <= 0 && hit.owner>-1){
+                messageGroup(teamData[hit.owner].members,
+                             "Base "+hit.id+" is under attack!", "", "team", null);
+            }
             hit.inCombat = combatCooldown;
+        }
 
         if(hit.hp <= 0){
             p.info.captures++;
