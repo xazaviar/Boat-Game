@@ -35,7 +35,7 @@ var lootSpawns = [];
 var phase = 0; //0 -> setup , 1,2,3 -> action x
 var countdownMax = 100; //always 100
 var countdown = countdownMax;
-var cTick = 25; //countdownMax * tick =~ 3 secs
+var cTick = 20; //countdownMax * tick =~ 3 secs
 var aTick = 800; //action tick
 var combatCooldown = 4; //Number of rounds
 var dcCountdown = 2; //d/c cooldown
@@ -1598,24 +1598,26 @@ function startServer(){
                 p = players[id];
 
         if(p!=null){
-            if(p.info.teamRole==="LEADER" ||
-               p.info.teamRole==="ADMIN" && teamData[p.info.teamID].ping!=="LEADER" ||
-               p.info.teamRole==="MEMBER" && teamData[p.info.teamID].ping==="TEAM"){
-                teamData[p.info.teamID].objective = baseID;
-                var msg;
-                if(baseID>-1){
-                    var type = (baseList[teamData[p.info.teamID].objective].owner==p.info.teamID?"DEFEND":"CAPTURE");
-                    msg = "The objective hase been set to "+type+" BASE "+baseID+". Check your map for more details.";
+            if(teamData[p.info.teamID].objective!=baseID){
+                if(p.info.teamRole==="LEADER" ||
+                   p.info.teamRole==="ADMIN" && teamData[p.info.teamID].ping!=="LEADER" ||
+                   p.info.teamRole==="MEMBER" && teamData[p.info.teamID].ping==="TEAM"){
+                    teamData[p.info.teamID].objective = baseID;
+                    var msg;
+                    if(baseID>-1){
+                        var type = (baseList[teamData[p.info.teamID].objective].owner==p.info.teamID?"DEFEND":"CAPTURE");
+                        msg = "The objective hase been set to "+type+" BASE "+baseID+". Check your map for more details.";
+                    }
+                    else{
+                        msg = "The team's objective has been removed."
+                    }
+
+                    messageGroup(teamData[p.info.teamID].members,
+                                 msg, "You changed the team's objective.", "team", p);
                 }
                 else{
-                    msg = "The team's objective has been removed."
+                    p.battleLog.unshift({"type":"action", "msg": "You can't set an objective."});
                 }
-
-                messageGroup(teamData[p.info.teamID].members,
-                             msg, "You changed the team's objective.", "team", p);
-            }
-            else{
-                p.battleLog.unshift({"type":"action", "msg": "You can't set an objective."});
             }
         }
 
@@ -1773,6 +1775,24 @@ function setupPhase(){
             }
         }
 
+        //Determine base attacks
+        for(var b in baseList){
+            if(baseList[b].targets.length > 0){
+                baseList[b].actTargets = [];
+                for(var a = 0; a < baseList[b].attacks[phase-1]; a++){
+                    var r = parseInt(Math.random()*1000)%baseList[b].targets.length;
+                    var loc = [players[baseList[b].targets[r].id].loc[0], players[baseList[b].targets[r].id].loc[1]];
+
+                    var canHit = attackDistance(baseList[b].loc, loc); //Check attack range
+
+                    if(canHit){
+                        actAttacks.push(loc);
+                        baseList[b].actTargets.push(loc);
+                    }
+                }
+            }
+        }
+
         //Show attacks that are coming
         for(var i = 0; i < players.length; i++){
             if(players[i].status!=="OFFLINE")
@@ -1787,7 +1807,9 @@ function setupPhase(){
 }
 
 function actionPhase(){
-    var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[], stealths=[], destealths=[], cannons = [], railguns =[], blinks=[], traps=[];
+    var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[],
+        stealths=[], destealths=[], cannons = [], railguns =[], blinks=[], traps=[],
+        bAtks = [];
     var actAttacks = [];
 
     //Grab all actions
@@ -1879,6 +1901,28 @@ function actionPhase(){
         }
     }
 
+    //Push base attacks and determine next rounds attacks
+    for(var b in baseList){
+        for(var a = 0; a < baseList[b].actTargets.length; a++){
+            bAtks.push({"loc":baseList[b].actTargets[a], "dmg": baseList[b].lvl});
+        }
+        baseList[b].actTargets = [];
+        if(baseList[b].targets.length > 0 && phase < 3){
+            for(var a = 0; a < baseList[b].attacks[phase]; a++){
+                var r = parseInt(Math.random()*1000)%baseList[b].targets.length;
+                var loc = [players[baseList[b].targets[r].id].loc[0], players[baseList[b].targets[r].id].loc[1]];
+
+                var canHit = attackDistance(baseList[b].loc, loc); //Check attack range
+
+                if(canHit){
+                    actAttacks.push(loc);
+                    baseList[b].actTargets.push(loc);
+                }
+            }
+        }
+    }
+
+    //send active Attacks
     for(var i = 0; i < players.length; i++){
         if(players[i].status!=="OFFLINE")
             players[i].activeAttacks = actAttacks;
@@ -1893,6 +1937,8 @@ function actionPhase(){
 
     for(var i = 0; i < attacks.length; i++)
         attack(attacks[i].player,attacks[i].location);
+    for(var i = 0; i < bAtks.length; i++)
+        baseAttack(bAtks[i].loc, bAtks[i].dmg);
     for(var i = 0; i < cannons.length; i++)
         cannon(cannons[i].player,cannons[i].location);
     for(var i = 0; i < railguns.length; i++)
@@ -1920,7 +1966,8 @@ function actionPhase(){
     if(phase == 0){
         roundCleanup();
         setTimeout(function(){setupPhase();},cTick);
-    }else{
+    }
+    else{
         setTimeout(function(){actionPhase()},aTick);
     }
 }
@@ -1970,7 +2017,6 @@ function roundCleanup(){
 
     //Update bases
     for(var b in baseList){
-
         if(baseList[b].inCombat<=0 && baseList[b].hp < baseList[b].hpMAX){
             baseList[b].hp += parseInt(baseList[b].hpMAX*.1);
             if(baseList[b].hp >= baseList[b].hpMAX){
@@ -2001,9 +2047,23 @@ function roundCleanup(){
         }
 
         baseList[b].inCombat--;
+        for(var t = 0; t < baseList[b].targets.length; t++){
+            baseList[b].targets[t].countdown--;
+            if(baseList[b].targets[t].countdown < 0){
+                baseList[b].targets.splice(t,1);
+                t--;
+            }
+        }
+
+        baseList[b].attacks = [0,0,0];
+        for(var i = 0; i < baseList[b].lvl; i++){
+            var r = parseInt(Math.random()*1000)%3;
+            baseList[b].attacks[r]++;
+        }
+
+        if(baseList[b].lvl>3)
+            baseList[b].attacks = [4, 4, 4];
     }
-
-
 
     //Update team data
     for(var t in teamData){
@@ -2067,6 +2127,23 @@ function move(p, direction){
         map[beforeLoc[0]][beforeLoc[1]].id = -1;
         map[p.loc[0]][p.loc[1]].type = "PLAYER";
         map[p.loc[0]][p.loc[1]].id = p.id;
+
+        if(map[p.loc[0]][p.loc[1]].baseID > -1){
+            if(baseList[map[p.loc[0]][p.loc[1]].baseID].owner!=p.info.teamID && baseList[map[p.loc[0]][p.loc[1]].baseID].owner>-1){
+                var base = baseList[map[p.loc[0]][p.loc[1]].baseID];
+                var nTarget = true;
+                for(var t in base.targets){
+                    if(base.targets[t].id===p.id){
+                        nTarget = false;
+                        base.targets[t].countdown = 5;
+                        break;
+                    }
+                }
+                if(nTarget)
+                    base.targets.push({"id":p.id,"countdown":5});
+            }
+        }
+
 
         if(before && !after){
             p.battleLog.unshift({"type":"action", "msg": "You have left a shoping area."});
@@ -2349,6 +2426,26 @@ function trap(p){
     p.knownTraps.push({"loc":[p.loc[0],p.loc[1]],"lvl":0+p.stats.trap,"id":0+trapCounter,"owned":true});
 }
 
+//******************************************************************************
+// Base Actions
+//******************************************************************************
+function baseAttack(loc, dmg){
+    if(map[loc[0]][loc[1]].type==="PLAYER"){
+        var hit = players[map[loc[0]][loc[1]].id];
+        dmg -= (isEquipped(hit,"DR")?1:0);
+
+        if(dmg>0){
+            hit.stats.hp -= dmg;
+            hit.info.inCombat = combatCooldown;
+            hit.battleLog.unshift({"type":"combat", "msg": "You have been hit for "+dmg+" damage."});
+
+            if(hit.stats.hp <= 0){
+                death(hit, null);
+            }
+        }
+    }
+}
+
 
 //******************************************************************************
 // Utility Functions
@@ -2356,8 +2453,8 @@ function trap(p){
 
 //Store Functions
 function withinShop(location, teamID){
-    for(var x = 0; x < 3; x++){
-        for(var y = 0; y < 3; y++){
+    for(var x = 0; x < 5; x++){
+        for(var y = 0; y < 5; y++){
             var cX = location[0] - (1-x);
             var cY = location[1] - (1-y);
 
@@ -2597,7 +2694,6 @@ function blinkDistance(player, spot){
 
     return cX < player.stats.radar && cY < player.stats.radar;
 }
-
 
 
 //List Checkers
@@ -3674,6 +3770,9 @@ function newBase(zone, loc){
         "hpMAX": hpMAX,
         "inCombat": 0,
         "canAttack": true,
+        "targets": [],
+        "attacks": [0,0,0],
+        "actTargets": [],
         "upgrade": 0,
         "upgradeMAX": 40,
         "upgradeCost": calculateBaseUpgradeCost(lvl),
@@ -3799,33 +3898,49 @@ function hit(location, p){
     if(location.type==="PLAYER"){
         var hit = players[location.id];
         dmg -= (isEquipped(hit,"DR")?1:0);
-        hit.stats.hp -= dmg;
-        hit.info.inCombat = combatCooldown;
-        hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has hit you for "+dmg+" damage."});
+        if(dmg>0){
+            hit.stats.hp -= dmg;
+            hit.info.inCombat = combatCooldown;
+            hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has hit you for "+dmg+" damage."});
 
-        if(hit.stats.hp <= 0){
-            death(hit, p);
+            if(hit.stats.hp <= 0){
+                death(hit, p);
+            }
         }
     }
     else if(location.type==="BASE"){
         var hit = baseList[location.id];
         hit.hp -= dmg;
+
+        var nTarget = true;
+        for(var t in hit.targets){
+            if(hit.targets[t].id===p.id){
+                nTarget = false;
+                hit.targets[t].countdown = 5;
+                break;
+            }
+        }
+        if(nTarget)
+            hit.targets.push({"id":p.id,"countdown":5});
+
         if(p.info.teamID!=hit.owner)
             hit.inCombat = combatCooldown;
 
         if(hit.hp <= 0){
-            p.info.captured++;
+            p.info.captures++;
 
             var oldID = hit.owner;
             hit.owner = p.info.teamID;
             hit.hp = parseInt(hit.hpMAX/2);
+            hit.attacks = [0,0,0];
+            hit.targets = [];
             hit.inCombat = 0;
             hit.canAttack = false;
             hit.upgrading = false;
             hit.upgrade = 0;
             if(oldID>-1)
-            messageGroup(teamData[oldID].members,
-                         "Base "+hit.id+" has been captured by "+teamData[p.info.teamID].name+"!", "", "team", null);
+                messageGroup(teamData[oldID].members,
+                             "Base "+hit.id+" has been captured by "+teamData[p.info.teamID].name+"!", "", "team", null);
             messageGroup(teamData[p.info.teamID].members,
                          p.info.name+" has captured Base "+hit.id+"!",
                          "You have captured Base "+hit.id+"!", "team", p);
@@ -3849,7 +3964,8 @@ function death(p, killer){
     p.info.deaths = p.info.deaths + 1;
     p.queue = [];
     p.battleLog.unshift({"type":"combat", "msg": "You died."});
-    killer.info.kills = killer.info.kills + 1;
+    if(killer!=null)
+        killer.info.kills = killer.info.kills + 1;
 
     var dropGold, dropIron, dropUranium;
     if(!p.info.hasInsurance){
@@ -4008,13 +4124,22 @@ function death(p, killer){
 
 
     //Alert the world of a kill
-    var msg = ""+killer.info.name+" has killed "+p.info.name+".";
-    for(var m = 0; m < players.length; m++){
-        if(players[m].status!=="OFFLINE")
-            if(players[m].token === killer.token)
-                killer.battleLog.unshift({"type":"server", "msg": "You have killed "+p.info.name});
-            else
+    if(killer!=null){
+        var msg = ""+killer.info.name+" has killed "+p.info.name+".";
+        for(var m = 0; m < players.length; m++){
+            if(players[m].status!=="OFFLINE")
+                if(players[m].token === killer.token)
+                    killer.battleLog.unshift({"type":"server", "msg": "You have killed "+p.info.name});
+                else
+                    players[m].battleLog.unshift({"type":"server", "msg": msg});
+        }
+    }
+    else{
+        var msg = ""+p.info.name+" has died.";
+        for(var m = 0; m < players.length; m++){
+            if(players[m].status!=="OFFLINE")
                 players[m].battleLog.unshift({"type":"server", "msg": msg});
+        }
     }
 }
 

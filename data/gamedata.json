@@ -1,16 +1,28 @@
 {
-    "playerSize": 12,
+    "playerSize": 19,
     "nameList": [
         {
             "name": "test",
             "changes": null
         },
         {
-            "name": "Test",
+            "name": "asdf",
             "changes": null
         },
         {
-            "name": "noob",
+            "name": "TEst",
+            "changes": null
+        },
+        {
+            "name": "Test ",
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "changes": null
+        },
+        {
+            "name": "asdfa",
             "changes": null
         },
         {
@@ -18,23 +30,7 @@
             "changes": null
         },
         {
-            "name": "Test 1",
-            "changes": null
-        },
-        {
-            "name": "test 2",
-            "changes": null
-        },
-        {
-            "name": "test 3",
-            "changes": null
-        },
-        {
-            "name": "test 1",
-            "changes": null
-        },
-        {
-            "name": "test 2",
+            "name": "asdf",
             "changes": null
         },
         {
@@ -46,7 +42,39 @@
             "changes": null
         },
         {
-            "name": "asdfdddd",
+            "name": "addd",
+            "changes": null
+        },
+        {
+            "name": "test",
+            "changes": null
+        },
+        {
+            "name": "test",
+            "changes": null
+        },
+        {
+            "name": "test",
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "changes": null
+        },
+        {
+            "name": "what now",
+            "changes": null
+        },
+        {
+            "name": "test",
+            "changes": null
+        },
+        {
+            "name": "test",
+            "changes": null
+        },
+        {
+            "name": "asdf",
             "changes": null
         }
     ]
