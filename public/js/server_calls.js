@@ -172,7 +172,7 @@ function removeFromQueue(token, id, i){
 //Team functions
 //*****************************************************************************
 function createTeam(token, id, tName, aColor, bColor, bShape, teamList){
-    var valid = teamValidation($("#color-picker1").val(),$("#color-picker2").val(), teamList);
+    var valid = teamValidation($("#color-picker1").val(),$("#color-picker2").val(), tName, teamList);
     if(valid==true){
         var dat = {
             "token": token,

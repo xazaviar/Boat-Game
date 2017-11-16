@@ -952,12 +952,13 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         //Draw Base Info
         ctx.fillStyle=colors.hudColor;
         ctx.globalAlpha = 1.0;
-        ctx.font = "20pt Courier";
-        ctx.fillText("BASE INFO",sX+5*wid/8+10, sY+175);
-        ctx.font = "16pt Courier";
         if(typeof mouseHover.baseID !== "undefined" || teamList[me.info.teamID].objective > -1){
             var base = baseList[(mouseHover.baseID > -1?mouseHover.baseID:teamList[me.info.teamID].objective)];
             var yAdj = 0;
+            ctx.font = "20pt Courier";
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("BASE "+base.id,sX+5*wid/8+10, sY+175);
+            ctx.font = "16pt Courier";
 
             if(base.owner==me.info.teamID){
                 ctx.fillText("HP : ",sX+5*wid/8+10, sY+200);
@@ -974,11 +975,14 @@ function drawTeamMenu(ctx, startX, startY, width, height){
 
             ctx.fillStyle=colors.hudColor;
             ctx.fillText("LVL: "+base.lvl,sX+5*wid/8+10, sY+200+yAdj);
-            if(base.owner>-1)
+            if(base.owner>-1){
+                ctx.fillStyle=teamList[base.owner].colors.baseColor;
                 ctx.fillText(""+teamList[base.owner].name,sX+5*wid/8+10, sY+220+yAdj);
+            }
             else
                 ctx.fillText("NEUTRAL",sX+5*wid/8+10, sY+220+yAdj);
 
+            ctx.fillStyle=colors.hudColor;
             ctx.fillText("OUTPUT:",sX+5*wid/8+10, sY+240+yAdj);
             var spec = "NONE";
             if(base.special==="I") spec = "IRON";
@@ -1030,38 +1034,44 @@ function drawTeamMenu(ctx, startX, startY, width, height){
 
                 //Base upgrading
                 ctx.fillText("UPGRADE COST: ",sX+5*wid/8+10, sY+340+yAdj);
+                if(base.upgradeCost.gold > teamList[me.info.teamID].vault.gold) ctx.fillStyle = colors.needMoreColor;
+                else ctx.fillStyle=colors.hudColor;
+                ctx.fillText("GOLD : "+base.upgradeCost.gold+"g",sX+5*wid/8+30, sY+360+yAdj);
                 if(base.upgradeCost.credits > teamList[me.info.teamID].vault.credits) ctx.fillStyle = colors.needMoreColor;
                 else ctx.fillStyle=colors.hudColor;
-                ctx.fillText("CREDS: "+base.upgradeCost.credits+"c",sX+5*wid/8+30, sY+360+yAdj);
+                ctx.fillText("CREDS: "+base.upgradeCost.credits+"c",sX+5*wid/8+30, sY+380+yAdj);
                 if(base.upgradeCost.iron > teamList[me.info.teamID].vault.iron) ctx.fillStyle = colors.needMoreColor;
                 else ctx.fillStyle=colors.hudColor;
-                ctx.fillText("IRON : "+base.upgradeCost.iron+"i",sX+5*wid/8+30, sY+380+yAdj);
+                ctx.fillText("IRON : "+base.upgradeCost.iron+"i",sX+5*wid/8+30, sY+400+yAdj);
                 if(base.upgradeCost.uranium > teamList[me.info.teamID].vault.uranium) ctx.fillStyle = colors.needMoreColor;
                 else ctx.fillStyle=colors.hudColor;
-                ctx.fillText("URAN : "+base.upgradeCost.uranium+"u",sX+5*wid/8+30, sY+400+yAdj);
+                ctx.fillText("URAN : "+base.upgradeCost.uranium+"u",sX+5*wid/8+30, sY+420+yAdj);
 
                 //Upgrade?
                 if((me.info.teamRole==="LEADER" || me.info.teamRole==="ADMIN" && teamList[me.info.teamID].settings.upgrading!=="LEADER") && !base.upgrading){
                     ctx.font = "bold 16pt Courier";
                     if(mX < sX+6*wid/8+90 && mX > sX+6*wid/8-20 &&
-                       mY < sY+450+yAdj && mY > sY+420+yAdj){
+                       mY < sY+470+yAdj && mY > sY+440+yAdj){
                         ctx.fillStyle = colors.hudColor;
-                        ctx.fillRect(sX+6*wid/8-20,sY+420+yAdj,110,30);
+                        ctx.fillRect(sX+6*wid/8-20,sY+440+yAdj,110,30);
                         ctx.fillStyle = colors.hudBackColor;
-                        ctx.fillText("UPGRADE",sX+6*wid/8-10,sY+440+yAdj);
+                        ctx.fillText("UPGRADE",sX+6*wid/8-10,sY+460+yAdj);
                         mouseHover = "UPGRADE";
                     }
                     else{
                         ctx.strokeStyle = colors.hudColor;
-                        ctx.strokeRect(sX+6*wid/8-20,sY+420+yAdj,110,30);
+                        ctx.strokeRect(sX+6*wid/8-20,sY+440+yAdj,110,30);
                         ctx.fillStyle = colors.hudColor;
-                        ctx.fillText("UPGRADE",sX+6*wid/8-10,sY+440+yAdj);
+                        ctx.fillText("UPGRADE",sX+6*wid/8-10,sY+460+yAdj);
                     }
                 }
             }
         }
         else{
             ctx.fillStyle=colors.hudColor;
+            ctx.font = "20pt Courier";
+            ctx.fillText("BASE INFO",sX+5*wid/8+10, sY+175);
+            ctx.font = "16pt Courier";
             ctx.fillText("Hover over the",sX+5*wid/8+10, sY+200);
             ctx.fillText("map to see more. ",sX+5*wid/8+10, sY+220);
         }

@@ -25,7 +25,7 @@ function getCookie(name){
     return "";
 }
 
-function teamValidation(base, area, teamList){
+function teamValidation(base, area, name, teamList){
     if(base=="" || area=="")
         return "Base and/or area color missing";
     if(base === area)
@@ -62,6 +62,10 @@ function teamValidation(base, area, teamList){
             if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
                Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
                 return "Color combo has been  taken";
+            }
+
+            if(teamList[b].name.toLowerCase()===name.toLowerCase()){
+                return "Name has been taken";
             }
         }
     }

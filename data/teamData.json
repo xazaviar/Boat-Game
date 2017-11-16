@@ -15,21 +15,99 @@
             "online": false
         },
         "admins": [],
-        "members": [],
+        "members": [
+            {
+                "token": "h7cZPB6FM47QsLRgluJPexbQi3xaZjAAZloAMsQ71mn6bdTijcuv4LQ2M1ENLfFLDiIV5qggLl6rWUP5qjl8RlfDduESiP8OlVy5PDrTbxHuSKrvADMKIItKS7oWAMi5b2CxbTdr7ppyGvV4l7iVLN35rQ49R8KoTpLyeXwLTMeNPd8mjkXaxK211VrSFXDQ06q4UaVL",
+                "id": 0,
+                "name": "test",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "PkIpRiXfda3xqcnveVzYrnQxrIkAGnMnHJJSeVG8gJn7k70tkrNa79RgYikdExHDFOjfFEfnSQ0tRsxtUWZMQU5VoVcFIacAyaA8iUugX5Oh4gGwfjFX1yDfFFByQVKcM1wyJQFvTROge8h5iTiAMPQSzHTAKKmOUojXAcPgau41XGkfdp58xGhXM4gPoAtePlVKquqJ",
+                "id": 2,
+                "name": "test",
+                "powerLevel": 5,
+                "online": false
+            },
+            {
+                "token": "TkJ4C0dDhwmrwKJyoTMaBCiuxPsrohnwcwJWQHSnpdFLawQcldGxLNDZjIpTftZpVeuU2PqLzhHU525UonQ5CkvCyTudqgvR54wWshYLD7TR8Dfoms3t4NeiQsM8FQpVzjMjCdn1IQPHTAPvDQlqwGKASSFxSUfOq6ExHG5k7xMhyj1240mfluf6AMWsfHoDRSdFySkV",
+                "id": 4,
+                "name": "test",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "rd2lcZqG22xfuPWywaVuYRgICVJmrbNdcobhvuUbFcZvcFtjtm5ySdoN4oUL0dNAprtJril5PzHhsFaepOwB7v8GoZa47Tm6vFIj7ppeExkUQTeIDEXxUx6muIAzDLOGHGp5e1RPACuhgqsES9HqEBJhjzUdeu10OWGce85yTJMlzcA5TzE7Hk05rXK5OZQpgecuus1h",
+                "id": 6,
+                "name": "tset",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "OZQMo2OEwXmgdCtlns7bs9cXTzOdTXXgFKcpgjXVLazk3kcVnDU37ronVYDetRJr4ikfzb74hx8ShqGpRU3VaPxQG2o3K7z6UYiamxOv4WVFwo8QbqHaOYMFlrjIXh83tASPl9cT1YOU9usYcbKudcwYimvG1hcYAeF2rJCsPQKR89TYFkzkb3s54VaLgyh9wIHV2yjF",
+                "id": 11,
+                "name": "sdfg",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "53KVFPwGq9GXP7A8Q7OWYGn22YUAmzDE8xUM7zJ9f24tkU4BofaMhMk9sTQAFeUxw6g1Q5kN15tYnvWKzd7HDIrfpIzCQUPEN8UFv1aW2he6K5aUrT4D1xgYZhN2OvyrhSKFsAFebwNaAUAH3LJ1JycexWLjo11LySXYhDvyRJr1LbZEU6ZCwMEe8MgAtDyUkOO1M8NW",
+                "id": 12,
+                "name": "test",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "J2ErLeYiXzfr5s6o17F9KAQRgE9sxErPSvztHvjYWmk9F828LqtNYzIVMww7WLnNSaN76rmpjArsbC9mrCMpcNoNsXz9RKSpLgeAZdxSzCUjph69DgCB6StP8KeS6cknhaGHI86ukpXgYYzeOPgcMG53N7uvYpw1b4CK27ixmU0sUg2ks22WRjQ3viozt65KSl1UbrSy",
+                "id": 13,
+                "name": "test",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "1fWvfVIjlRuMhwKlLrExWLAj21Uon27fePtqxbQdmaVqiUgrJz9bLjtZKpNg45kXCeJ5GpJDWLAOiXW2o2fq8IA3RB8lqXMoPCKDvLLIJ17o24Yb55I7BcDx4I29NHPjLL9BoFtW5hj5sHsVxU41BPP7bFpBxaKcndPDCVdzVSpOCRXdrthPCBSdqYuzI4hPM9MPyoKY",
+                "id": 15,
+                "name": "asdf",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "LGfuOYzkpYKROhJZc7CrwRuAak4d3oG6g5E8zWModbOLQeTmCMSheXoUTo0nekQ5g9HagH8EKncjpMjvKttU5bgDTELezqUoO8hb2VW7mltWNKOvaxlEOvduZo7IRpKlmOfSeIJlSxENCtJRccfxfIWZTTLOcrtFsBMLuj6Y0zcRHQ5FVxTlbNDwG3vkXV8ugehMSefi",
+                "id": 16,
+                "name": "asdf",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "xGCDXhvLB2YG89qkxUx7zGI7y6Uq2hNp7O5lJnQq0qDNb818eTt37SPuvApHmseVUDvpFD3Yv64lEkRl0WkQJl5EAvSJ4ZBL5d2W2UYCcXYGjFBR6PO5j323NkyUoUNzMydtr9pH3MeA3aDRJy8RET1kfcIRXOlZqzQPBnjhUwOv6wbTvakkk4tkwqUrcStCLF4SWG7c",
+                "id": 17,
+                "name": "asdf",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "8ozYbmWowomPhE4JlEC302NE5NBfhXvY8hWYrzcyCyk6zL5EiAxdo4kHEA9lCpDJ2lqmIxpWGmqAsFmotroE6pFVodSnO2Vxtwv9uPUyKLsKu6k1bwJTCn9XFeOdUrAooCWrkzBrYhdo3NLLFUh064qxDZIJsWImhWQTJWxVlEEtigATAQ9eqGVGMvrAQI3GjNuYp52k",
+                "id": 18,
+                "name": "asdf",
+                "powerLevel": 5,
+                "online": true
+            }
+        ],
         "vault": {
             "gold": 0,
-            "credits": 1995,
+            "credits": 2155,
             "iron": 0,
             "uranium": 0
         },
         "income": {
-            "gold": 28,
-            "credits": 29,
+            "gold": 0,
+            "credits": 145,
             "iron": 0,
             "uranium": 0
         },
         "rank": 1,
-        "power": 73,
+        "power": 84,
         "settings": {
             "building": "TEAM",
             "ping": "ADMIN",
@@ -55,10 +133,32 @@
             "online": false
         },
         "admins": [],
-        "members": [],
+        "members": [
+            {
+                "token": "KJVSkKrDcboemiY2VllW5T89xexjEvzIaJ6C9f8HpPzVhIf3rkVMJeYEdYMwWyXuzN45EgKdD3IcyIEWPNlnfMuOUlcHTdMIdmXAykXkKELDKwJvojig7yKZLPhcthoTk3jrQlzxre8pr61EFIQzZibS6K6C7yX414ZD28C7Beg3hI4vhRS5o9p3khNgYxq9KQ3FORLO",
+                "id": 1,
+                "name": "test 2",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "WCg3BEMntdC2ADH1xsmsrSNKlQcKrfWJpGxG8WKpzB7FovPb43UYOgnQjaorMEPOiutRwAmQkDZzzUB7VNNupU9lbgdiZg6JTLH5188QFQLgNy20rpKFdceiY0ZvfeUrFfphv2s1jpG2c2zfnPQwHTuhfLd9kLVMXztclG99t9DKJxQKt1vz9sGPPSyED5kO0dlSxhWG",
+                "id": 3,
+                "name": "test 2",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "ICrfg4nh4h3gSK7mHlfcRXmfd53Fl5wYNq3WoCeF2jsWHqEOGDffUGGynVi47z38f248dPy1iPcH5gTnsBp7tPTKjUGLG2WvZoNQRS2WfwErUCGo7UXPLeoQgcIGq49SBnxunnR3qG2Ers2wvazHYkA01RdfBtbdUCaeHPzSihZ6X1XgmCkjuauq2TPNLg996uDNOcj3",
+                "id": 7,
+                "name": "erdd_",
+                "powerLevel": 5,
+                "online": false
+            }
+        ],
         "vault": {
             "gold": 0,
-            "credits": 0,
+            "credits": 142,
             "iron": 0,
             "uranium": 0
         },
@@ -68,8 +168,8 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 4,
-        "power": 5,
+        "rank": 2,
+        "power": 15,
         "settings": {
             "building": "TEAM",
             "ping": "ADMIN",
@@ -95,7 +195,15 @@
             "online": false
         },
         "admins": [],
-        "members": [],
+        "members": [
+            {
+                "token": "WMJeao78h5UTqg4WwpbknKafORsxhlvkRFExDaNNyyICNOgCeGfvnItFXDDyeeQFPgmEg0rmKH53LvLb5NPkT8lQ60nGJ6dV8kge9LdBv4he4guHJzxP2XIG2FUBb5ByUJ0uKIUujivzKVqHuFWDPzlLvN7NsPt1BNTSNKsPpXcaPnIZILghlM9lPhuTgktaYHow1K7h",
+                "id": 14,
+                "name": "asdf",
+                "powerLevel": 0,
+                "online": false
+            }
+        ],
         "vault": {
             "gold": 0,
             "credits": 0,
@@ -108,7 +216,7 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 5,
+        "rank": 3,
         "power": 5,
         "settings": {
             "building": "TEAM",
@@ -148,13 +256,160 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 6,
+        "rank": 7,
         "power": 0,
         "settings": {
             "building": "TEAM",
             "ping": "ADMIN",
             "upgrading": "ADMIN",
             "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 4,
+        "name": "test",
+        "colors": {
+            "baseColor": "#5c4b3d",
+            "areaColor": "#a9a456",
+            "baseShape": "CIRCLE"
+        },
+        "leader": {
+            "token": "lU1NxRJSj0KWFZE5iqNlHkV5YurNmhJUVkRHt7I7Cxqtl19mGLV3GgFBeKUaLFSQq1iwQeHAqxpuMigi0403apNl8wJpdU3DjIA0fsL2JzEPC5oSTqctBS9f8NbsGa601FwRkoSw9FkOurdfMV3BIiTwVhBRdiqHaotqGe7YsaQOVWtVjgdCVem4MmOcaTB4D7ovJUiv",
+            "id": 8,
+            "name": "yrdyf",
+            "powerLevel": 0,
+            "online": false
+        },
+        "admins": [],
+        "members": [
+            {
+                "token": "lU1NxRJSj0KWFZE5iqNlHkV5YurNmhJUVkRHt7I7Cxqtl19mGLV3GgFBeKUaLFSQq1iwQeHAqxpuMigi0403apNl8wJpdU3DjIA0fsL2JzEPC5oSTqctBS9f8NbsGa601FwRkoSw9FkOurdfMV3BIiTwVhBRdiqHaotqGe7YsaQOVWtVjgdCVem4MmOcaTB4D7ovJUiv",
+                "id": 8,
+                "name": "yrdyf",
+                "powerLevel": 0,
+                "online": false
+            }
+        ],
+        "vault": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "income": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "rank": 4,
+        "power": 5,
+        "Objective": -1,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "INVITE",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 5,
+        "name": "Test",
+        "colors": {
+            "baseColor": "#ff0071",
+            "areaColor": "#f29a0d",
+            "baseShape": "TRIANGLE"
+        },
+        "leader": {
+            "token": "e9jo65JdSydYUgBTMGJEWD6vgWjn3LBcrWlhN5P2tA9NbMTH5gVYiAeZ4C2EOgrC0X6qeXO9f81XDJIwbYeuKAWmz7ZzV3vy5qrUvyIWsyTp2M2v1efmqmEaP2zItc94nV8aRDJTGHHehfyD5gt4SbeMFwX8vEPH6s1cxF23LLR1l6xTCfcgd6Px9EiTyWsREWecXnJe",
+            "id": 9,
+            "name": "rdddd",
+            "powerLevel": 0,
+            "online": false
+        },
+        "admins": [],
+        "members": [
+            {
+                "token": "e9jo65JdSydYUgBTMGJEWD6vgWjn3LBcrWlhN5P2tA9NbMTH5gVYiAeZ4C2EOgrC0X6qeXO9f81XDJIwbYeuKAWmz7ZzV3vy5qrUvyIWsyTp2M2v1efmqmEaP2zItc94nV8aRDJTGHHehfyD5gt4SbeMFwX8vEPH6s1cxF23LLR1l6xTCfcgd6Px9EiTyWsREWecXnJe",
+                "id": 9,
+                "name": "rdddd",
+                "powerLevel": 0,
+                "online": false
+            }
+        ],
+        "vault": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "income": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "rank": 5,
+        "power": 5,
+        "Objective": -1,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "INVITE",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 6,
+        "name": "ReD TEa",
+        "colors": {
+            "baseColor": "#f20d23",
+            "areaColor": "#d2c82d",
+            "baseShape": "TRIANGLE"
+        },
+        "leader": {
+            "token": "rkySzRbFVNhjcLmj8G93dfoHGYHsbdTXfM52XWq0suT4bKvhDjJM1hFE6KGHSL9RhTL5ok5rt0RpPx2LBVaW5qSlxe3djYq1eneKNEseO52wEDeYxQg2W7szHe5T2UsfNIrdjJFGHrj81a7fUmdNJXEUSA5pfapc76lBAJ6atJeQOXcyrlNHgOncgzdsv3weNjISkxJI",
+            "id": 10,
+            "name": "dddssf",
+            "powerLevel": 0,
+            "online": false
+        },
+        "admins": [],
+        "members": [
+            {
+                "token": "rkySzRbFVNhjcLmj8G93dfoHGYHsbdTXfM52XWq0suT4bKvhDjJM1hFE6KGHSL9RhTL5ok5rt0RpPx2LBVaW5qSlxe3djYq1eneKNEseO52wEDeYxQg2W7szHe5T2UsfNIrdjJFGHrj81a7fUmdNJXEUSA5pfapc76lBAJ6atJeQOXcyrlNHgOncgzdsv3weNjISkxJI",
+                "id": 10,
+                "name": "dddssf",
+                "powerLevel": 0,
+                "online": false
+            }
+        ],
+        "vault": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "income": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "rank": 6,
+        "power": 5,
+        "Objective": -1,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "INVITE",
             "profitDivide": "FAIR",
             "tax": 0
         }

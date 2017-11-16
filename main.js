@@ -418,9 +418,14 @@ function startServer(){
                         var isScanned = inScanned(p, sendPlayers[pid].id);
                         var inVision = visionDistance(p.loc, sendPlayers[pid].loc);
                         var sameTeam = sendPlayers[pid].team == p.info.teamID;
-                        var onTurf = baseList[sendMap[x][y].id].owner == p.info.teamID;
-                        var cantSee = !inVision || !onTurf || (inVision && sendPlayers[pid].stealthed) || (onTurf && sendPlayers[pid].stealthed);
-                        if((!isScanned && !cantSee && !sameTeam) || sendPlayers[pid].hp <= 0){
+                        var onTurf = false;
+                        if(sendMap[x][y].baseID>-1)
+                            onTurf = baseList[sendMap[x][y].baseID].owner == p.info.teamID;
+                        var canSee = (inVision || onTurf) && !sendPlayers[pid].stealthed;
+
+
+
+                        if((!isScanned && !canSee && !sameTeam) || sendPlayers[pid].hp <= 0){
                             delete sendPlayers[pid].loc;
                             delete sendPlayers[pid].stealthed;
 
@@ -1172,7 +1177,7 @@ function startServer(){
                 if(players[id].token===token)
                     p = players[id];
 
-            var valid = teamValidation(baseColor, areaColor);
+            var valid = teamValidation(baseColor, areaColor, teamName);
             if(p!=null && valid == true){
                 var tid = teamData.length;
                 teamData.push({
@@ -2808,7 +2813,7 @@ function canUseMod(p, mod){
 
 
 //Team Functions
-function teamValidation(base, area){
+function teamValidation(base, area, name){
     if(base === area)
         return "Base and area need to be different colors";
 
@@ -2841,6 +2846,10 @@ function teamValidation(base, area){
             if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
                Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
                 return "Color combo has been taken";
+            }
+
+            if(teamData[b].name.toLowerCase()===name.toLowerCase()){
+                return "Name has been taken";
             }
         }
     }
