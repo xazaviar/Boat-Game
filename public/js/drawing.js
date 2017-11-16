@@ -132,7 +132,7 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
                     ctx.fillStyle = teamList[owner].colors.areaColor;
                 }
                 else{
-                    ctx.fillStyle = "#333";
+                    ctx.fillStyle = "#666";
                 }
                 ctx.fillRect(sX+x*tileSize,sY+y*tileSize,tileSize,tileSize);
                 ctx.stroke();

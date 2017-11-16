@@ -1,13 +1,4 @@
 {
-    "playerSize": 2,
-    "nameList": [
-        {
-            "name": "test",
-            "changes": null
-        },
-        {
-            "name": "test",
-            "changes": null
-        }
-    ]
+    "playerSize": 0,
+    "nameList": []
 }

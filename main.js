@@ -2017,6 +2017,8 @@ function roundCleanup(){
         }
     }
 
+    canDelete = true;
+
     //Update bases
     for(var b in baseList){
         if(baseList[b].inCombat<=0 && baseList[b].hp < baseList[b].hpMAX){
@@ -2049,6 +2051,7 @@ function roundCleanup(){
         }
 
         baseList[b].inCombat--;
+        baseList[b].canTarget = true;
         for(var t = 0; t < baseList[b].targets.length; t++){
             baseList[b].targets[t].countdown--;
             if(baseList[b].targets[t].countdown < 0){
@@ -2088,7 +2091,7 @@ function roundCleanup(){
     //Spawn Treasures
     spawnLoot();
 
-    canDelete = true;
+
 }
 
 
@@ -2410,6 +2413,22 @@ function blink(p, location){
         map[location[0]][location[1]].type = "PLAYER";
         map[location[0]][location[1]].id = p.id;
         p.loc = location;
+
+        if(map[p.loc[0]][p.loc[1]].baseID > -1){
+            if(baseList[map[p.loc[0]][p.loc[1]].baseID].owner!=p.info.teamID && baseList[map[p.loc[0]][p.loc[1]].baseID].owner>-1){
+                var base = baseList[map[p.loc[0]][p.loc[1]].baseID];
+                var nTarget = true;
+                for(var t in base.targets){
+                    if(base.targets[t].id===p.id){
+                        nTarget = false;
+                        base.targets[t].countdown = 5;
+                        break;
+                    }
+                }
+                if(nTarget)
+                    base.targets.push({"id":p.id,"countdown":5});
+            }
+        }
     }
 
     triggeredTrap(p);
@@ -2427,6 +2446,7 @@ function trap(p){
     trapList.push({"loc":[p.loc[0],p.loc[1]],"lvl":0+p.stats.trap,"id":0+trapCounter, "num":0+p.info.traps, "owner":p.token});
     p.knownTraps.push({"loc":[p.loc[0],p.loc[1]],"lvl":0+p.stats.trap,"id":0+trapCounter,"owned":true});
 }
+
 
 //******************************************************************************
 // Base Actions
@@ -2654,12 +2674,13 @@ function canPurchaseBaseUpgrade(baseID, teamID){
     var vault = teamData[teamID].vault;
     var cost = baseList[baseID].upgradeCost;
 
-    return vault.credits >= cost.credits && vault.iron >= cost.iron && vault.uranium >= cost.uranium;
+    return vault.gold >= cost.gold && vault.credits >= cost.credits && vault.iron >= cost.iron && vault.uranium >= cost.uranium;
 }
 
 function makePurchaseBaseUpgrade(baseID, teamID){
     var cost = baseList[baseID].upgradeCost;
 
+    teamData[teamID].vault.gold-=cost.gold;
     teamData[teamID].vault.credits-=cost.credits;
     teamData[teamID].vault.iron-=cost.iron;
     teamData[teamID].vault.uranium-=cost.uranium;
@@ -3785,6 +3806,7 @@ function newBase(zone, loc){
         "targets": [],
         "attacks": [0,0,0],
         "actTargets": [],
+        "canTarget": true,
         "upgrade": 0,
         "upgradeMAX": 40,
         "upgradeCost": calculateBaseUpgradeCost(lvl),
@@ -3832,11 +3854,11 @@ function canBuildBase(spot){
 
 function calculateBaseUpgradeCost(lvl){
     if(lvl==1)
-        return {"credits":5000,"iron":100,"uranium":10};
+        return {"gold":5000,"credits":10000,"iron":80,"uranium":10};
     else if(lvl==2)
-        return {"credits":10000,"iron":200,"uranium":30};
+        return {"gold":10000,"credits":20000,"iron":160,"uranium":30};
     else
-        return {"credits":999999,"iron":9999,"uranium":999};
+        return {"gold":999999,"credits":999999,"iron":9999,"uranium":999};
 }
 
 function spawnLoot(){
@@ -3924,16 +3946,19 @@ function hit(location, p){
         var hit = baseList[location.id];
         hit.hp -= dmg;
 
-        var nTarget = true;
-        for(var t in hit.targets){
-            if(hit.targets[t].id===p.id){
-                nTarget = false;
-                hit.targets[t].countdown = 5;
-                break;
+        if(hit.canTarget){
+            var nTarget = true;
+            for(var t in hit.targets){
+                if(hit.targets[t].id===p.id){
+                    nTarget = false;
+                    hit.targets[t].countdown = 5;
+                    break;
+                }
             }
+            if(nTarget)
+                hit.targets.push({"id":p.id,"countdown":5});
         }
-        if(nTarget)
-            hit.targets.push({"id":p.id,"countdown":5});
+
 
         if(p.info.teamID!=hit.owner){
             if(hit.inCombat <= 0 && hit.owner>-1){
@@ -3954,6 +3979,7 @@ function hit(location, p){
             hit.inCombat = 0;
             hit.canAttack = false;
             hit.upgrading = false;
+            hit.canTarget = false;
             hit.upgrade = 0;
             if(oldID>-1)
                 messageGroup(teamData[oldID].members,

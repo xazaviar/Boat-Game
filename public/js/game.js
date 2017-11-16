@@ -529,7 +529,7 @@ function drawMonitor(ctx, width, height){
                     if(owner > -1){
                         ctx.fillStyle = teamList[owner].colors.areaColor;
                     }else{
-                        ctx.fillStyle = "#333";
+                        ctx.fillStyle = "#666";
                     }
                     ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
                     ctx.stroke();
