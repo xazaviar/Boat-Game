@@ -5,6 +5,9 @@ var offsetX2;
 var offsetY2;
 var prevWid = 0;
 
+var openWindow = "";
+
+var curShopTab = 0;
 
 //Colors
 //Monitor Colors
@@ -50,11 +53,9 @@ var mX, mY;
 var mouseHover = -1;
 
 //Team Globals
-var joinTeamMenu = false;
 var teamRec = [];
 var joinTeamScroll = 0;
 
-var createTeamMenu = false;
 var tName = '';
 var bColor = "#00FF00", aColor = "#FFFFFF", bShape = "DIAMOND";
 var createTeamError = "";
@@ -62,7 +63,6 @@ var createTeamError = "";
 var confirmDialog = -1;
 var valueLock = -1;
 
-var teamMenu = false;
 var teamSetSaved = false;
 var teamScroll = 0;
 var curTeamTab = 0;
@@ -71,7 +71,6 @@ var curSettings;
 var errorMsg = '';
 
 //PlayerList
-var playerListMenu = false;
 var playerListScroll = 0
 
 setInterval(function(){
@@ -144,8 +143,10 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
                 ctx.fillStyle= colors.rockColor;
                 ctx.fillRect(sX+x*tileSize+tileSize/2-tileSize*.4,sY+y*tileSize+tileSize/2-tileSize*.4,tileSize*.8,tileSize*.8);
                 ctx.stroke();
-
-                //DRAW ROCK HP
+            }
+            else if(map[x][y].type==="WALL"){ //Walls
+                var owner = baseList[map[x][y].baseID].owner;
+                drawWall(ctx, sX+x*tileSize, sY+y*tileSize, tileSize, map[x][y].lvl, teamList[owner].colors.baseColor);
             }
             else if(map[x][y].type==="BASE"){ //Bases
                 var owner = baseList[map[x][y].id].owner;
@@ -307,6 +308,31 @@ function drawBase(ctx, startX, startY, tileSize, type, lvl, color){
     }
 }
 
+function drawWall(ctx, startX, startY, tileSize, lvl, color){
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    if(lvl == 1){
+        var size = .4;
+        ctx.fillRect(startX+tileSize/2-tileSize*(size/2),startY+tileSize/2-tileSize*(size/2),tileSize*size,tileSize*size);
+    }
+    else if(lvl == 2){
+        var size = .5;
+        ctx.fillRect(startX+tileSize/2-tileSize*(size/2),startY+tileSize/2-tileSize*(size/2),tileSize*size,tileSize*size);
+    }
+    else if(lvl == 3){
+        var size = .7;
+        ctx.fillRect(startX+tileSize/2-tileSize*(size/2),startY+tileSize/2-tileSize*(size/2),tileSize*size,tileSize*size);
+    }
+    else if(lvl == 4){
+        var size = .8;
+        ctx.fillRect(startX+tileSize/2-tileSize*(size/2),startY+tileSize/2-tileSize*(size/2),tileSize*size,tileSize*size);
+    }
+    else{
+        var size = 1;
+        ctx.fillRect(startX+tileSize/2-tileSize*(size/2),startY+tileSize/2-tileSize*(size/2),tileSize*size,tileSize*size);
+    }
+    ctx.stroke();
+}
 
 //*****************************************************************************
 //  Action Drawing functions

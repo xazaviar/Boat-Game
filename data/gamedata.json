@@ -1,80 +1,48 @@
 {
-    "playerSize": 19,
+    "playerSize": 11,
     "nameList": [
         {
             "name": "test",
             "changes": null
         },
         {
-            "name": "test 2",
+            "name": "ddd",
+            "changes": null
+        },
+        {
+            "name": "dddsf",
+            "changes": null
+        },
+        {
+            "name": "ddd",
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "changes": null
+        },
+        {
+            "name": "dsffs",
+            "changes": null
+        },
+        {
+            "name": "dddd",
+            "changes": null
+        },
+        {
+            "name": "dsdf",
+            "changes": null
+        },
+        {
+            "name": "dasdf",
             "changes": null
         },
         {
             "name": "test",
-            "changes": null
-        },
-        {
-            "name": "test 2",
-            "changes": null
-        },
-        {
-            "name": "test",
-            "changes": null
-        },
-        {
-            "name": "test 2",
-            "changes": null
-        },
-        {
-            "name": "tset",
-            "changes": null
-        },
-        {
-            "name": "erdd_",
-            "changes": null
-        },
-        {
-            "name": "yrdyf",
-            "changes": null
-        },
-        {
-            "name": "rdddd",
-            "changes": null
-        },
-        {
-            "name": "dddssf",
-            "changes": null
-        },
-        {
-            "name": "sdfg",
-            "changes": null
-        },
-        {
-            "name": "test",
-            "changes": null
-        },
-        {
-            "name": "test",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
             "changes": null
         }
     ]

@@ -11,6 +11,11 @@ var activeAttacks;
 var me = {"token":null,"loc":[],"id":-1};
 
 
+//Chat data
+var chatMode = false;
+var chatMsg = '';
+
+
 //*****************************************************************************
 //Other functions
 //*****************************************************************************
@@ -32,7 +37,6 @@ function requestRespawn(token,id){
             console.log('Sent');
         },
         error: function(xhr, status, error){
-            // console.log('Add Project Error: ' + error.message);
         }
     });
 }
@@ -57,7 +61,7 @@ function sendChatMsg(token, id, msg){
         },
         error: function(xhr, status, error){
             chatMsg = '';
-            // console.log('Add Project Error: ' + error.message);
+            chatMode = false;
         }
     });
 }
@@ -85,7 +89,6 @@ function makePurchase(token, id, item){
             console.log('Sent');
         },
         error: function(xhr, status, error){
-            // console.log('Add Project Error: ' + error.message);
         }
     });
 }
@@ -110,7 +113,6 @@ function changeLoadout(token, id, slot, item){
             console.log('Sent');
         },
         error: function(xhr, status, error){
-            // console.log('Add Project Error: ' + error.message);
         }
     });
 }
@@ -138,7 +140,6 @@ function updateQueue(token, id, action){
             console.log('Sent');
         },
         error: function(xhr, status, error){
-            // console.log('Add Project Error: ' + error.message);
         }
     });
 }
@@ -162,7 +163,6 @@ function removeFromQueue(token, id, i){
             console.log('Sent');
         },
         error: function(xhr, status, error){
-            // console.log('Add Project Error: ' + error.message);
         }
     });
 }
@@ -196,11 +196,9 @@ function createTeam(token, id, tName, aColor, bColor, bShape, teamList){
             },
             error: function(xhr, status, error){
                 createTeamError = "";
-                mouseHover = -1;
                 $(".input1").toggle(false);
                 $(".input2").toggle(false);
-                createTeamMenu = false;
-                teamMenu = true;
+                openWindow = "teamMenu";
                 curTeamTab = 3;
             }
         });
@@ -229,7 +227,7 @@ function joinTeam(token, id, tid, type){
             console.log('Sent');
         },
         error: function(xhr, status, error){
-            joinTeamMenu = false;
+            openWindow = "";
         }
     });
 }
@@ -325,7 +323,6 @@ function updateTeamSettings(token, id, settings){
             console.log('Sent');
         },
         error: function(xhr, status, error){
-            // console.log('Add Project Error: ' + error.message);
             teamSetSaved = true;
         }
     });

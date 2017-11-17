@@ -1,10 +1,6 @@
 var mX2, mY2;
 var hover = [-1,-1];
-var shopMode = false;
-var curShopTab = 0;
 var gameStart = true;
-var settingsView = false;
-var mapView = false;
 var chatBlink = true;
 var tabs;
 var baseStore;
@@ -18,14 +14,11 @@ var intervalTimer;
 var tick = 50;
 var lastRound = -1;
 
-//Chat data
-var chatMode = false;
-var chatMsg = '';
-
 
 var displayBlink = false;
 var displayCannon = false;
 var displayRailgun = false;
+var displayWall = false;
 var railDir = "N";
 
 //Data for server
@@ -412,6 +405,18 @@ function newData(){
                     "maxLvl":   me.stats.urCarryUpgradesMAX
                 },
                 {
+                    "pLabel":   "wallU",
+                    "label":    (me.stats.wall>0?"Upgrade Wall License":"Purchase Wall License."),
+                    "canBuy":   shop.wallU.canBuy,
+                    "price":{
+                        "gold":     shop.wallU.price.gold,
+                        "iron":     shop.wallU.price.iron,
+                        "uranium":  shop.wallU.price.uranium
+                    },
+                    "level":    me.stats.wallUpgrades,
+                    "maxLvl":   me.stats.wallUpgradesMAX
+                },
+                {
                     "pLabel":   "insuranceU",
                     "label":    "Upgrade Insurance.",
                     "canBuy":   shop.insuranceU.canBuy,
@@ -434,6 +439,18 @@ function newData(){
                     },
                     "level":    0,
                     "maxLvl":   0
+                },
+                {
+                    "pLabel":   "wall",
+                    "label":    "Purchase Wall.",
+                    "canBuy":   shop.wall.canBuy,
+                    "price":{
+                        "gold":     shop.wall.price.gold,
+                        "iron":     shop.wall.price.iron,
+                        "uranium":  shop.wall.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
                 }
             ]
         ];
@@ -442,8 +459,8 @@ function newData(){
         if($( document ).width()!=prevWid) screenResize();
 
         if(me.info.teamID == -1){
-            if(!createTeamMenu)
-                joinTeamMenu = true;
+            if(openWindow!=="createTeamMenu")
+                openWindow = "joinTeamMenu";
         }
 
         drawScreen();
@@ -503,8 +520,12 @@ function drawMonitor(ctx, width, height){
         ctx.font = "30px Courier";
         ctx.fillText("Enter Name: "+name,width/8+35,height/4+60);
     }
-    else if(mapView){
+    else if(openWindow === "mapView"){
         drawMap(ctx, 0, 0, width, height, map, baseList, players, me);
+
+        if(confirmDialog > -1){
+            drawConfirmDialog(ctx,0,0,width,height);
+        }
     }
     else{
         drawGridLines(ctx, width, height);
@@ -543,6 +564,16 @@ function drawMonitor(ctx, width, height){
                     ctx.stroke();
 
                     //ROCK HP
+                    if(map[cX][cY].hp < map[cX][cY].hpMAX){
+                        ctx.fillStyle=colors.hpColor;
+                        ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2-5,tileSize*.6*(map[cX][cY].hp/map[cX][cY].hpMAX),10);
+                    }
+                }
+                else if(map[cX][cY].type==="WALL"){ //Walls
+                    var owner = baseList[map[cX][cY].baseID].owner;
+                    drawWall(ctx, x*tileSize, y*tileSize, tileSize, map[cX][cY].lvl, teamList[owner].colors.baseColor);
+
+                    //Wall HP
                     if(map[cX][cY].hp < map[cX][cY].hpMAX){
                         ctx.fillStyle=colors.hpColor;
                         ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2-5,tileSize*.6*(map[cX][cY].hp/map[cX][cY].hpMAX),10);
@@ -678,6 +709,8 @@ function drawMonitor(ctx, width, height){
             }else if(me.queue[i].type==="BLINK"){
                 actions.push({"type":"BLINK","loc":me.queue[i].location});
                 prevLoc = me.queue[i].location;
+            }else if(me.queue[i].type==="BLINK"){
+                actions.push({"type":"WALL","loc":me.queue[i].location});
             }else if(me.queue[i].type==="MOVE"){
                 var loc;
                 if(me.queue[i].direction==="N"){
@@ -730,28 +763,32 @@ function drawMonitor(ctx, width, height){
                 ctx.stroke();
                 ctx.font = "14px Courier";
                 ctx.fillText(""+actions[i].num,x*tileSize+6,y*tileSize+actions[i].num*15);
-            }else if(actions[i].type==="MOVE"){
+            }
+            else if(actions[i].type==="MOVE"){
                 ctx.beginPath();
                 ctx.fillStyle = colors.moveColor;
                 ctx.globalAlpha = 0.4;
                 ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
                 ctx.globalAlpha = 1.0;
                 ctx.stroke();
-            }else if(actions[i].type==="BLINK"){
+            }
+            else if(actions[i].type==="BLINK"){
                 ctx.beginPath();
                 ctx.fillStyle = colors.moveColor;
                 ctx.globalAlpha = 0.4;
                 ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
                 ctx.globalAlpha = 1.0;
                 ctx.stroke();
-            }else if(actions[i].type==="LOOT"){
+            }
+            else if(actions[i].type==="LOOT"){
                 ctx.beginPath();
                 ctx.fillStyle = colors.lootColor;
                 ctx.globalAlpha = 0.4;
                 ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
                 ctx.globalAlpha = 1.0;
                 ctx.stroke();
-            }else if(actions[i].type==="CANNON"){
+            }
+            else if(actions[i].type==="CANNON"){
                 var size = (me.stats.cannon>1?5:3);
                 ctx.beginPath();
                 ctx.fillStyle = colors.abilityColor;
@@ -759,7 +796,8 @@ function drawMonitor(ctx, width, height){
                 ctx.fillRect(x*tileSize-parseInt(size/2)*tileSize,y*tileSize-parseInt(size/2)*tileSize,tileSize*size,tileSize*size);
                 ctx.globalAlpha = 1.0;
                 ctx.stroke();
-            }else if(actions[i].type==="RAILGUN"){
+            }
+            else if(actions[i].type==="RAILGUN"){
                 ctx.beginPath();
                 ctx.fillStyle = colors.abilityColor;
                 ctx.globalAlpha = 0.4;
@@ -775,14 +813,11 @@ function drawMonitor(ctx, width, height){
                 ctx.globalAlpha = 1.0;
                 ctx.stroke();
             }
-            // else if(actions[i].type==="HOLD"){
-            //     ctx.beginPath();
-            //     ctx.fillStyle = colors.holdColor;
-            //     ctx.globalAlpha = 0.4;
-            //     ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
-            //     ctx.globalAlpha = 1.0;
-            //     ctx.stroke();
-            // }
+            else if(actions[i].type==="WALL"){
+                ctx.globalAlpha = 0.4;
+                drawWall(ctx, x*tileSize, y*tileSize, tileSize, me.stats.wall, colors.cantBuyColor);
+                ctx.globalAlpha = 1.0;
+            }
         }
 
         //Draw my ship
@@ -812,29 +847,29 @@ function drawMonitor(ctx, width, height){
 
 
         //Draw shop Screen
-        if(shopMode && shop.withinShop==1){
+        if(openWindow === "shopMode" && shop.withinShop==1){
             drawShopMenu(ctx, 0, 0, width, height, baseStore, me);
         }
-        else if(shopMode && shop.withinShop>1){
+        else if(openWindow === "shopMode" && shop.withinShop>1){
             drawSShopMenu(ctx, 0, 0, width, height, tabs, curShopTab, me);
         }
-        else if(joinTeamMenu){
+        else if(openWindow === "joinTeamMenu"){
             drawJoinTeam(ctx, 0, 0, width, height);
         }
-        else if(createTeamMenu){
+        else if(openWindow === "createTeamMenu"){
             drawCreateTeam(ctx, 0, 0, width, height);
         }
-        else if(teamMenu){
+        else if(openWindow === "teamMenu"){
             drawTeamMenu(ctx, 0, 0, width, height);
         }
-        else if(playerListMenu){
+        else if(openWindow === "playerListMenu"){
             drawPlayerList(ctx, 0, 0, width, height)
         }
 
         //Draw grid hover
-        else if(mX > -1 && mY > -1 && mX < width && mY < height && !settingsView){
+        else if(mX > -1 && mY > -1 && mX < width && mY < height && openWindow===""){
             ctx.beginPath();
-            if(displayBlink || displayCannon || displayRailgun){
+            if(displayBlink || displayCannon || displayRailgun || displayWall){
                 ctx.strokeStyle = colors.abilityColor;
                 ctx.fillStyle = colors.abilityColor;
             }
@@ -876,7 +911,7 @@ function drawMonitor(ctx, width, height){
         }
 
 
-        if(!createTeamMenu){
+        if(openWindow !== "createTeamMenu"){
             $(".input1").toggle(false);
             $(".input2").toggle(false);
         }
@@ -887,7 +922,7 @@ function drawMonitor(ctx, width, height){
 
     }
 
-    if(settingsView){
+    if(openWindow==="settingsView"){
         drawSettings(ctx, 0, 0, width, height);
     }
 
@@ -978,7 +1013,10 @@ function drawSideBar(){
             text = "SHIP REPAIR";
         }else if(me.queue[i].type==="BLINK"){
             ctx.fillStyle = colors.abilityColor;
-            text = "BLINK "+me.queue[i].location;
+            text = "BLINK ("+me.queue[i].location+")";
+        }else if(me.queue[i].type==="WALL"){
+            ctx.fillStyle = colors.cantBuyColor;
+            text = "WALL ("+me.queue[i].location+")";
         }else if(me.queue[i].type==="ENERGY"){
             ctx.fillStyle = colors.abilityColor;
             text = "ENERGY REGEN";
@@ -1065,7 +1103,7 @@ function drawSideBar(){
             ctx.fillText("DECLINE",c.width-120,sCardHei+120);
         }
     }
-    else if(shopMode){
+    else if(openWindow==="shopMode"){
         //Named Stats
         ctx.beginPath();
         ctx.fillStyle = colors.hudColor;
@@ -1101,10 +1139,11 @@ function drawSideBar(){
         ctx.fillText("GOLD : "+me.info.gold+"g ("+me.info.totalGold+"g)",5,sCardHei+100);
         ctx.fillText("IRON : "+me.info.iron+"i ("+me.info.totalIron+"i)",5,sCardHei+120);
         ctx.fillText("URAN : "+me.info.uranium+"u ("+me.info.totalUranium+"u)",5,sCardHei+140);
-        ctx.fillText("KILLS: "+me.info.kills+" | DEATHS  : "+me.info.deaths,5,sCardHei+160);
-        ctx.fillText("SCANS: "+me.info.scans+" | HAULS   : "+me.info.hauls,5,sCardHei+180);
-        ctx.fillText("TRAPS: "+me.info.traps+" | CAPTURES: "+me.info.captures,5,sCardHei+200);
-        ctx.fillText("SAVED: "+(cookie===me.token?"TRUE":"FALSE"),5,sCardHei+220);
+        ctx.fillText("POWER: "+me.info.powerLevel,5,sCardHei+160);
+        ctx.fillText("KILLS: "+me.info.kills+" | DEATHS  : "+me.info.deaths,5,sCardHei+180);
+        ctx.fillText("SCANS: "+me.info.scans+" | HAULS   : "+me.info.hauls,5,sCardHei+200);
+        ctx.fillText("TRAPS: "+me.info.traps+" | CAPTURES: "+me.info.captures,5,sCardHei+220);
+        ctx.fillText("SAVED: "+(cookie===me.token?"TRUE":"FALSE"),5,sCardHei+240);
 
         //Toggle Save button
         ctx.font = "24px Courier";
@@ -1139,7 +1178,8 @@ function drawSideBar(){
             ctx.fillStyle = colors.hudColor;
             ctx.strokeStyle = colors.hudColor;
             ctx.fillText("INSURED",195,sCardHei);
-        }else{
+        }
+        else{
             ctx.fillStyle = colors.needMoreColor;
             ctx.strokeStyle = colors.needMoreColor;
             ctx.fillText("UNINSURED",185,sCardHei);
@@ -1154,7 +1194,7 @@ function drawSideBar(){
         //HP and PWR
         ctx.beginPath();
         ctx.fillText("HP  ",5,sCardHei+162);
-        ctx.fillText("PWR ",5,sCardHei+202);
+        ctx.fillText("ENG ",5,sCardHei+202);
         ctx.fillText("UR  ",5,sCardHei+242);
         ctx.fillStyle = colors.hpColor;
         ctx.fillRect(60,sCardHei+145,220*(me.stats.hp/me.stats.hpMAX),20);
@@ -1183,6 +1223,7 @@ function drawSideBar(){
         }
 
         //Ability Boxes
+        //Ability 1
         ctx.beginPath();
         sCardHei = 370;
         if(me.abilitySlots[0].canUse && game.phase==0){
@@ -1192,35 +1233,62 @@ function drawSideBar(){
             ctx.fillStyle = colors.cantBuyColor;
             ctx.strokeStyle = colors.cantBuyColor;
         }
-        ctx.strokeRect(80,sCardHei+20,50,50);
+        ctx.strokeRect(20,sCardHei+20,50,50);
         ctx.font = "22px Courier";
-        ctx.fillText("Q",99,sCardHei+90);
+        ctx.fillText("Q",39,sCardHei+90);
         ctx.font = "18px Courier";
-        if(me.abilitySlots[0].type!=="NONE") ctx.fillText(me.abilitySlots[0].type,82,sCardHei+50);
+        if(me.abilitySlots[0].type!=="NONE") ctx.fillText(me.abilitySlots[0].type,22,sCardHei+50);
 
-
+        //Ability 2
         if(me.abilitySlots[1].canUse){
             ctx.fillStyle = colors.hudColor;
             ctx.strokeStyle = colors.hudColor;
-        }else{
+        }
+        else{
             ctx.fillStyle = colors.cantBuyColor;
             ctx.strokeStyle = colors.cantBuyColor;
         }
-        ctx.strokeRect(180,sCardHei+20,50,50);
+        ctx.strokeRect(120,sCardHei+20,50,50);
         if(me.stats.loadoutSize < 2){//If not unlocked
             ctx.beginPath();
-            ctx.moveTo(180,sCardHei+20);
-            ctx.lineTo(230,sCardHei+70);
+            ctx.moveTo(120,sCardHei+20);
+            ctx.lineTo(170,sCardHei+70);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(230,sCardHei+20);
-            ctx.lineTo(180,sCardHei+70);
+            ctx.moveTo(170,sCardHei+20);
+            ctx.lineTo(120,sCardHei+70);
             ctx.stroke();
         }
         ctx.font = "22px Courier";
-        ctx.fillText("E",199,sCardHei+90);
+        ctx.fillText("E",139,sCardHei+90);
         ctx.font = "18px Courier";
-        if(me.abilitySlots[1].type!=="NONE") ctx.fillText(me.abilitySlots[1].type,182,sCardHei+50);
+        if(me.abilitySlots[1].type!=="NONE") ctx.fillText(me.abilitySlots[1].type,122,sCardHei+50);
+
+        //Walls
+        if(me.info.walls>0){
+            ctx.fillStyle = colors.hudColor;
+            ctx.strokeStyle = colors.hudColor;
+        }
+        else{
+            ctx.fillStyle = colors.cantBuyColor;
+            ctx.strokeStyle = colors.cantBuyColor;
+        }
+        ctx.strokeRect(220,sCardHei+20,50,50);
+        ctx.font = "18px Courier";
+        ctx.fillText("WALL",222,sCardHei+40);
+        ctx.fillText(me.info.walls,235,sCardHei+60);
+        if(me.stats.wall < 1){//If not unlocked
+            ctx.beginPath();
+            ctx.moveTo(220,sCardHei+20);
+            ctx.lineTo(270,sCardHei+70);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(270,sCardHei+20);
+            ctx.lineTo(220,sCardHei+70);
+            ctx.stroke();
+        }
+        ctx.font = "22px Courier";
+        ctx.fillText("R",239,sCardHei+90);
 
         //Mode
         sCardHei = 500;
@@ -1230,15 +1298,18 @@ function drawSideBar(){
             ctx.fillStyle=colors.trapColor;
             ctx.fillText("TRAPPED",5,sCardHei);
 
-        }else if(me.info.stealthTime>0){ //stealthed
+        }
+        else if(me.info.stealthTime>0){ //stealthed
             ctx.fillStyle=colors.hudColor;
             ctx.fillText("STEALTHED",5,sCardHei);
 
-        }else if(me.info.inCombat>0){ //Combat
+        }
+        else if(me.info.inCombat>0){ //Combat
             ctx.fillStyle=colors.enemyColor;
             ctx.fillText("IN COMBAT",5,sCardHei);
 
-        }else{ //Exploring
+        }
+        else{ //Exploring
             ctx.fillStyle=colors.uraniumColor;
             ctx.fillText("EXPLORING",5,sCardHei);
         }
@@ -1327,7 +1398,7 @@ function handleKeypress(e){
             chatMsg = chatMsg.replace("/","_").replace("#","_");
         }
         drawScreen();
-    }else if(createTeamMenu){
+    }else if(openWindow === "createTeamMenu"){
         if(((keyCode > 31 && keyCode < 128) || (keyCode > 185)) && tName.length < 20){
             tName = tName+""+String.fromCharCode(keyCode);
             tName = tName.replace("/","_").replace("#","_");
@@ -1341,10 +1412,12 @@ function handleKeypress(e){
 function handleKeydown(e){
     var keyCode = e.which || e.keyCode;
 
-    if (keyCode == 27 && !shopMode && !createTeamMenu && !joinTeamMenu && !teamMenu && !playerListMenu){ //Open Menu (esc)
-        settingsView = !settingsView;
-        if(!settingsView)
-            $(".modal").toggle(false);
+    if (keyCode == 27 && openWindow===""){ //Open Menu (esc)
+        openWindow = "settingsView";
+        drawScreen();
+    }
+    else if (keyCode == 27 && openWindow==="settingsView"){ //Open Menu (esc)
+        openWindow = "";
         drawScreen();
     }
     else if(gameStart){
@@ -1364,53 +1437,40 @@ function handleKeydown(e){
             drawScreen();
         }
     }
-    else if(createTeamMenu){
+
+
+    else if(openWindow === "createTeamMenu"){
         if(keyCode == 8){ //backspace
             tName = tName.substring(0,tName.length-1);
             drawScreen();
-        }
-        else if(keyCode == 27){
-            createTeamMenu = false;
-        }
+        }else if(keyCode == 27)
+            openWindow = "";
     }
     else if(me.info.teamID==-1){
-        if(!createTeamMenu)
-            joinTeamMenu = true;
+        if(openWindow !== "createTeamMenu")
+            openWindow = "joinTeamMenu";
     }
     else if(keyCode == 27){
-        joinTeamMenu = false;
-        playerListMenu = false;
-        teamMenu = false;
-        createTeamMenu = false;
-        shopMode = false;
+        openWindow = "";
         confirmDialog = -1;
     }
     else if(keyCode == 56){
-        joinTeamMenu = !joinTeamMenu;
-        teamMenu = false;
-        createTeamMenu = false;
-        playerListMenu = false;
-        shopMode = false;
+        if(openWindow !== "joinTeamMenu") openWindow = "joinTeamMenu";
+        else openWindow = "";
         confirmDialog = -1;
 
-        if(joinTeamMenu){
+        if(openWindow === "joinTeamMenu"){
             teamRec = [];
         }
     }
     else if(keyCode == 57){
-        playerListMenu = !playerListMenu;
-        joinTeamMenu = false;
-        createTeamMenu = false;
-        teamMenu = false;
-        shopMode = false;
+        if(openWindow !== "playerListMenu") openWindow = "playerListMenu";
+        else openWindow = "";
         confirmDialog = -1;
     }
     else if(keyCode == 48){
-        teamMenu = !teamMenu;
-        joinTeamMenu = false;
-        createTeamMenu = false;
-        playerListMenu = false;
-        shopMode = false;
+        if(openWindow !== "teamMenu") openWindow = "teamMenu";
+        else openWindow = "";
         confirmDialog = -1;
     }
     else if(keyCode == 73){  //i
@@ -1419,16 +1479,11 @@ function handleKeydown(e){
     else if(keyCode == 13){
         chatMode = true;
     }
-    else if(keyCode == 77 && !settingsView){  //M
-        mapView = !mapView;
-        shopMode = false;
+    else if(keyCode == 77 ){  //M
+        if(openWindow !== "mapView") openWindow = "mapView";
+        else openWindow = "";
     }
-    else if(keyCode == 77 && mapView){  //M
-        mapView = false;
-        shopMode = false;
-        settingsView = false;
-    }
-    else if(!shopMode && !mapView && game.phase==0){
+    else if(openWindow === "" && game.phase==0){
         if(keyCode == 65 || keyCode == 37){        //A
             updateQueue(me.token,me.id,{"type":"MOVE","direction":"W"});
         }else if(keyCode == 68 || keyCode == 39){  //D
@@ -1445,18 +1500,20 @@ function handleKeydown(e){
             updateQueue(me.token,me.id,{"type":"HOLD"});
         }else if(keyCode == 89 && me.stats.hp == 0){  //Y
             requestRespawn(me.token,me.id);
-        }else if(keyCode == 79 && shop.withinShop!=null && !settingsView){  //O
-            shopMode = true;
-            mapView = false;
+        }else if(keyCode == 79 && shop.withinShop>-1){  //O
+            if(openWindow !== "shopMode") openWindow = "shopMode";
+            else openWindow = "";
         }else if(keyCode == 81){          //Q
             doSpecialAction(0);
         }else if(keyCode == 69){          //E
             doSpecialAction(1);
+        }else if(keyCode == 82 && me.info.walls>0){          //r
+            displayWall = !displayWall;
         }
     }
-    else if(shopMode){
-        if(keyCode == 79 || keyCode == 27){  //O or escape
-            shopMode = false;
+    else if(openWindow === "shopMode"){
+        if(keyCode == 79){  //O or escape
+            openWindow = "";
         }
         if(shop.withinShop==1){
             for(var i = 0; i < baseStore.length; i++){
@@ -1494,9 +1551,9 @@ function handleKeydown(e){
             }
         }
     }
-    else if(keyCode == 79 && shop.withinShop!=null && !settingsView){  //O
-        shopMode = true;
-        mapView = false;
+    else if(keyCode == 79 && shop.withinShop>-1){  //O
+        if(openWindow === "") openWindow = "shopMode";
+        else openWindow = "";
     }
 
     autoDCCount = 0;
@@ -1504,7 +1561,7 @@ function handleKeydown(e){
 
 function handleMousedown(e){
     var c = document.getElementById("monitor");
-    if(settingsView){
+    if(openWindow === "settingsView"){
 
        //Check for color click
        var i = 1;
@@ -1650,23 +1707,22 @@ function handleMousedown(e){
         }
 
     }
-    else if(joinTeamMenu){
+    else if(openWindow === "joinTeamMenu"){
         if(mouseHover==="CREATE"){
-            createTeamMenu = true;
-            joinTeamMenu = false;
+            openWindow = "createTeamMenu";
         }
         else if(mouseHover>-1){
             confirmDialog = 0;
             valueLock = mouseHover;
         }
     }
-    else if(createTeamMenu){
+    else if(openWindow === "createTeamMenu"){
         if(mouseHover==="CREATE"){
             confirmDialog = 1;
             valueLock = mouseHover;
         }
         else if(mouseHover==="CANCEL"){
-            createTeamMenu = false;
+            openWindow = "";
         }
         else{
             if(mouseHover == 0){
@@ -1678,7 +1734,7 @@ function handleMousedown(e){
             }
         }
     }
-    else if(teamMenu){
+    else if(openWindow === "teamMenu"){
         if(mouseHover < 4 && mouseHover > -1){
             curTeamTab = mouseHover;
 
@@ -1736,7 +1792,7 @@ function handleMousedown(e){
             }
         }
     }
-    else if(playerListMenu){
+    else if(openWindow === "playerListMenu"){
         var setting = teamList[me.info.teamID].settings.membership;
         if((me.info.teamRole!=="MEMBER" || (me.info.teamRole==="MEMBER" && setting!=="AD INV")) && me.info.teamID>-1)
             if(mouseHover > -1){
@@ -1744,7 +1800,7 @@ function handleMousedown(e){
                 confirmDialog = 8;
             }
     }
-    else if(shopMode && shop.withinShop>1){
+    else if(openWindow === "shopMode" && shop.withinShop>1){
        //Change tabs
        var startX = c.width/8;
        var startY = c.height/4;
@@ -1760,8 +1816,7 @@ function handleMousedown(e){
        }
 
     }
-    else if(!gameStart && !mapView && !shopMode &&
-            !joinTeamMenu && !teamMenu && !createTeamMenu){
+    else if(openWindow === ""){
         var mid = parseInt(me.stats.radar/2);
         var cX = me.loc[0] - (mid-hover[0]);
         var cY = me.loc[1] - (mid-hover[1]);
@@ -1784,6 +1839,10 @@ function handleMousedown(e){
             displayBlink = false;
             updateQueue(me.token,me.id,{"type":"BLINK","location":[cX, cY]})
         }
+        else if(displayWall){
+            displayWall = false;
+            updateQueue(me.token,me.id,{"type":"WALL","location":[cX, cY]})
+        }
         else
             updateQueue(me.token,me.id,{"type":"ATTACK","location":[cX, cY]})
      }
@@ -1796,7 +1855,7 @@ function handleMousemove(e){
     e.stopPropagation();
     mX = parseInt(e.clientX - offsetX);
     mY = parseInt(e.clientY - offsetY);
-    if(!shopMode && !mapView){
+    if(openWindow === "mapView"){
         drawScreen();
     }
 }
@@ -1881,14 +1940,14 @@ function handleMousedown2(e){
 }
 
 function handleMouseWheel(e){
-    if(joinTeamMenu){
+    if(openWindow === "joinTeamMenu"){
         if(e.deltaY<0 && joinTeamScroll > 0){
             joinTeamScroll--;
         }else if(e.deltaY > 0 && joinTeamScroll < teamList.length-22 && teamList.length > 22){
             joinTeamScroll++;
         }
     }
-    else if(teamMenu){
+    else if(openWindow === "teamMenu"){
         if(e.deltaY < 0 && teamScroll > 0){
             teamScroll--;
         }else if(e.deltaY > 0){
@@ -1897,7 +1956,7 @@ function handleMouseWheel(e){
 
         if(teamScroll < 0) teamScroll = 0;
     }
-    if(playerListMenu){
+    if(openWindow === "playerListMenu"){
         if(e.deltaY<0 && playerListScroll > 0){
             playerListScroll--;
         }else if(e.deltaY > 0 ){

@@ -18,7 +18,8 @@ var shopSpread = .007;  //decimal as percent
 var map = [];
 var spawnList = [];
 var rockList = [];
-var rockHP = 10;
+var wallList = [];
+var rockHP = 20;
 var baseList = [];
 
 var attackFromShop = false;
@@ -35,7 +36,7 @@ var lootSpawns = [];
 var phase = 0; //0 -> setup , 1,2,3 -> action x
 var countdownMax = 100; //always 100
 var countdown = countdownMax;
-var cTick = 20; //countdownMax * tick =~ 3 secs
+var cTick = 30; //countdownMax * tick =~ 3 secs
 var aTick = 800; //action tick
 var combatCooldown = 4; //Number of rounds
 var dcCountdown = 2; //d/c cooldown
@@ -87,6 +88,7 @@ var destealthActionUsage    = 1;
 var trapActionUsage         = 2;
 var railgunActionUsage      = 2;
 var quickHealActionUsage    = 1;
+var wallActionUsage         = 1;
 
 var shopData;
 var shopList = [];
@@ -249,12 +251,14 @@ function startServer(){
                 "name": name,
                 "teamID": -1,
                 "teamRole": "NONE",
-                "gold": 5000,
+                "gold": 100000,
                 "totalGold":0,
-                "iron": 0,
+                "iron": 5000,
                 "totalIron":0,
                 "uranium": 0,
                 "totalUranium":0,
+                "walls": 0,
+                "wallsPlaced": 0,
                 "kills": 0,
                 "deaths": 0,
                 "scans": 0,
@@ -335,6 +339,10 @@ function startServer(){
                 "insurance": statData.insuranceStart,
                 "insuranceUpgrades":0,
                 "insuranceUpgradesMAX": (statData.insuranceMAX-statData.insuranceStart)/statData.insuranceINC,
+
+                "wall": statData.wallStart,
+                "wallUpgrades": 0,
+                "wallUpgradesMAX": (statData.wallMAX-statData.wallStart)/statData.wallINC,
 
                 "staticHp":false,
                 "staticEng":false,
@@ -437,6 +445,11 @@ function startServer(){
                     else if(sendMap[x][y].type==="ROCK"){
                         sendMap[x][y]["hp"] = rockList[sendMap[x][y].id].hp;
                         sendMap[x][y]["hpMAX"] = rockList[sendMap[x][y].id].hpMAX;
+                    }
+                    else if(sendMap[x][y].type==="WALL"){
+                        sendMap[x][y]["hp"] = wallList[sendMap[x][y].id].hp;
+                        sendMap[x][y]["hpMAX"] = wallList[sendMap[x][y].id].hpMAX;
+                        sendMap[x][y]["lvl"] = wallList[sendMap[x][y].id].lvl;
                     }
 
                 }
@@ -543,7 +556,7 @@ function startServer(){
 
         if(p!=null && phase==0 ){
             if(p.queue.length < 3 && p.stats.hp>0){
-                var inUse = 0, inUseUR = 0;
+                var inUse = 0, inUseUR = 0, inUseW = 0;
                 for(var a = 0; a < p.queue.length; a++){
                     if(p.queue[a].type=="ATTACK")
                         inUse= inUse + attackEnergyUsage;
@@ -575,6 +588,9 @@ function startServer(){
                         inUse = inUse + trapEnergyUsage;
                         inUseUR = inUseUR + trapUraniumUsage;
                         a++;
+                    }
+                    else if(p.queue[a].type=="WALL"){
+                        inUseW++;
                     }
                 }
 
@@ -621,6 +637,16 @@ function startServer(){
                         p.queue.push(req.body.action);
                     else if(req.body.action.type==="ATTACK" && !attackDistance(p.loc,req.body.action.location))
                         p.battleLog.unshift({"type":"action", "msg": "Out of range."});
+
+                    else if(req.body.action.type==="WALL" && p.info.walls-inUseW>=0 && canPlaceWall(p, req.body.action.location) && wallInRange(p.loc,req.body.action.location))
+                        p.queue.push(req.body.action);
+                    else if(req.body.action.type==="WALL" && p.info.walls-inUseW<0)
+                        p.battleLog.unshift({"type":"action", "msg": "Not enough walls."});
+                    else if(req.body.action.type==="WALL" && !wallInRange(p.loc,req.body.action.location))
+                        p.battleLog.unshift({"type":"action", "msg": "Wall placement out of range."});
+                    else if(req.body.action.type==="WALL" && !canPlaceWall(p, req.body.action.location))
+                        p.battleLog.unshift({"type":"action", "msg": "Can't place a wall there."});
+
                     else if(req.body.action.type==="QUICKHEAL" && isEquipped(p,"HEAL") && p.stats.energy>=quickHealEnergyUsage+inUse)
                         p.queue.push(req.body.action);
                     else if(req.body.action.type==="BLINK" && isEquipped(p,"BLNK") && p.info.trapped<1 && blinkDistance(p,req.body.action.location) && p.stats.energy>=(blinkEnergyUsage-2*p.stats.blink)+inUse && p.info.uranium>=blinkUraniumUsage+inUseUR)
@@ -710,11 +736,12 @@ function startServer(){
         if(p!=null){
             var shop = buildStore(p);
             var inventory = {"gold":p.info.gold,"iron":p.info.iron,"uranium":p.info.uranium};
-
+            var madePurchase = false;
 
             //Regular shop
-            if(shop.withinShop==1){
+            if(shop.withinShop!=2){
                 if(req.body.item==="hpF" && canPurchase(shop.hpF.price,inventory) && shop.hpF.canBuy){
+                    madePurchase = true;
                     makePurchase(shop.hpF.price,p);
                     p.stats.hp = p.stats.hpMAX;
                     p.battleLog.unshift({"type":"purchase", "msg": "You repaired your ship."});
@@ -727,6 +754,7 @@ function startServer(){
                 }
 
                 else if(req.body.item==="hp5" && canPurchase(shop.hp5.price,inventory) && shop.hp5.canBuy){
+                    madePurchase = true;
                     makePurchase(shop.hp5.price,p);
                     p.stats.hp = p.stats.hp + 5;
                     if(p.stats.hp > p.stats.hpMAX) p.stats.hp = p.stats.hpMAX;
@@ -741,6 +769,7 @@ function startServer(){
 
                 else if(req.body.item==="insurance" && canPurchase(shop.insurance.price,inventory) && shop.insurance.canBuy){
                     makePurchase(shop.insurance.price,p);
+                    madePurchase = true;
                     p.info.hasInsurance = true;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased insurance."});
                 }
@@ -753,6 +782,7 @@ function startServer(){
 
                 else if(req.body.item==="hpU" && canPurchase(shop.hpU.price,inventory) && shop.hpU.canBuy){
                     makePurchase(shop.hpU.price,p);
+                    madePurchase = true;
                     p.stats.hpUpgrades++;
                     p.info.shipMass++;
                     p.stats.hpMAX = p.stats.hpMAX + statData.hpINC;
@@ -765,6 +795,7 @@ function startServer(){
 
                 else if(req.body.item==="enU" && canPurchase(shop.enU.price,inventory) && shop.enU.canBuy){
                     makePurchase(shop.enU.price,p);
+                    madePurchase = true;
                     p.stats.energyUpgrades++;
                     p.info.shipMass++;
                     p.stats.energyMAX = p.stats.energyMAX + statData.energyINC;
@@ -776,6 +807,7 @@ function startServer(){
 
                 else if(req.body.item==="radU" && canPurchase(shop.radU.price,inventory) && shop.radU.canBuy){
                     makePurchase(shop.radU.price,p);
+                    madePurchase = true;
                     p.stats.radarUpgrades++;
                     p.info.shipMass++;
                     p.stats.radar = p.stats.radar + statData.radarINC;
@@ -787,6 +819,7 @@ function startServer(){
 
                 else if(req.body.item==="atkU" && canPurchase(shop.atkU.price,inventory) && shop.atkU.canBuy){
                     makePurchase(shop.atkU.price,p);
+                    madePurchase = true;
                     p.stats.attackUpgrades++;
                     p.info.shipMass++;
                     p.stats.attack = p.stats.attack + statData.attackINC;
@@ -796,15 +829,41 @@ function startServer(){
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
-                else{
-                    p.battleLog.unshift({"type":"action", "msg": "You can't purchase that."});
-                }
+
             }
 
             //Super Shop
-            else if(shop.withinShop>1){
-                if(req.body.item==="loadout" && canPurchase(shop.loadout.price,inventory) && shop.loadout.canBuy){
+            if(shop.withinShop>1){
+                if(req.body.item==="wallU" && canPurchase(shop.wallU.price,inventory) && shop.wallU.canBuy){
+                    makePurchase(shop.wallU.price,p);
+                    madePurchase = true;
+                    p.stats.wallUpgrades = p.stats.wallUpgrades+statData.wallINC;
+                    p.stats.wall = p.stats.wall+statData.wallINC;
+                    p.battleLog.unshift({"type":"purchase", "msg": "You increased your wall expertise."});
+                }
+                else if(req.body.item==="wallU" && !canPurchase(shop.wallU.price,inventory)){
+                    p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
+                }
+                else if(req.body.item==="wallU" && !shop.wallU.canBuy){
+                    p.battleLog.unshift({"type":"action", "msg": "You have already maxed your walls."});
+                }
+
+                else if(req.body.item==="wall" && canPurchase(shop.wall.price,inventory) && shop.wall.canBuy){
+                    makePurchase(shop.wall.price,p);
+                    madePurchase = true;
+                    p.info.walls++;
+                    p.battleLog.unshift({"type":"purchase", "msg": "You purchased a wall."});
+                }
+                else if(req.body.item==="wall" && !canPurchase(shop.wall.price,inventory)){
+                    p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
+                }
+                else if(req.body.item==="wall" && !shop.wall.canBuy){
+                    p.battleLog.unshift({"type":"action", "msg": "You can't carry anymore walls."});
+                }
+
+                else if(req.body.item==="loadout" && canPurchase(shop.loadout.price,inventory) && shop.loadout.canBuy){
                     makePurchase(shop.loadout.price,p);
+                    madePurchase = true;
                     p.stats.loadoutSize = p.stats.loadoutSize+statData.loadoutINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You increased your loadout."});
                 }
@@ -817,6 +876,7 @@ function startServer(){
 
                 else if(req.body.item==="canU" && canPurchase(shop.canU.price,inventory) && shop.canU.canBuy){
                     makePurchase(shop.canU.price,p);
+                    madePurchase = true;
                     p.stats.cannonUpgrades++;
                     p.stats.cannon = p.stats.cannon + statData.cannonINC;
                     p.info.shipMass++;
@@ -837,6 +897,7 @@ function startServer(){
 
                 else if(req.body.item==="bliU" && canPurchase(shop.bliU.price,inventory) && shop.bliU.canBuy){
                     makePurchase(shop.bliU.price,p);
+                    madePurchase = true;
                     p.stats.blinkUpgrades++;
                     p.stats.blink = p.stats.blink + statData.blinkINC;
                     p.info.shipMass++;
@@ -856,6 +917,7 @@ function startServer(){
 
                 else if(req.body.item==="steU" && canPurchase(shop.steU.price,inventory) && shop.steU.canBuy){
                     makePurchase(shop.steU.price,p);
+                    madePurchase = true;
                     p.stats.stealthUpgrades++;
                     p.stats.stealth = p.stats.stealth + statData.stealthINC;
                     p.info.shipMass++;
@@ -875,6 +937,7 @@ function startServer(){
 
                 else if(req.body.item==="trapU" && canPurchase(shop.trapU.price,inventory) && shop.trapU.canBuy){
                     makePurchase(shop.trapU.price,p);
+                    madePurchase = true;
                     p.stats.trapUpgrades++;
                     p.stats.trap = p.stats.trap + statData.trapINC;
                     p.info.shipMass++;
@@ -894,6 +957,7 @@ function startServer(){
 
                 else if(req.body.item==="engModU" && canPurchase(shop.engModU.price,inventory) && shop.engModU.canBuy){
                     makePurchase(shop.engModU.price,p);
+                    madePurchase = true;
                     p.stats.engModUpgrades++;
                     p.stats.engMod = p.stats.engMod + statData.engModINC;
                     p.info.shipMass++;
@@ -913,6 +977,7 @@ function startServer(){
 
                 else if(req.body.item==="railU" && canPurchase(shop.railU.price,inventory) && shop.railU.canBuy){
                     makePurchase(shop.railU.price,p);
+                    madePurchase = true;
                     p.stats.railgunUpgrades++;
                     p.stats.railgun = p.stats.railgun + statData.railgunINC;
                     p.info.shipMass++;
@@ -932,6 +997,7 @@ function startServer(){
 
                 else if(req.body.item==="carryU" && canPurchase(shop.carryU.price,inventory) && shop.carryU.canBuy){
                     makePurchase(shop.carryU.price,p);
+                    madePurchase = true;
                     p.stats.urCarryUpgrades++;
                     p.stats.urCarry = p.stats.urCarry + statData.urCarryINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You upgraded your Uranium Carry Capacity."});
@@ -942,6 +1008,7 @@ function startServer(){
 
                 else if(req.body.item==="insuranceU" && canPurchase(shop.insuranceU.price,inventory) && shop.insuranceU.canBuy){
                     makePurchase(shop.insuranceU.price,p);
+                    madePurchase = true;
                     p.stats.insuranceUpgrades++;
                     p.stats.insurance = p.stats.insurance + statData.insuranceINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You upgraded your Insurance."});
@@ -952,6 +1019,7 @@ function startServer(){
 
                 else if(req.body.item==="scanU" && canPurchase(shop.scanU.price,inventory) && shop.scanU.canBuy){
                     makePurchase(shop.scanU.price,p);
+                    madePurchase = true;
                     p.stats.scannerUpgrades++;
                     p.stats.scanner = p.stats.scanner + statData.scannerINC;
                     p.info.shipMass++;
@@ -963,6 +1031,7 @@ function startServer(){
 
                 else if(req.body.item==="statHP" && canPurchase(shop.statHP.price,inventory) && shop.statHP.canBuy){
                     makePurchase(shop.statHP.price,p);
+                    madePurchase = true;
                     p.stats.staticHp = true;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the Health+ Module."});
                     p.storage.push({"name":"HP+","val":1});
@@ -976,6 +1045,7 @@ function startServer(){
 
                 else if(req.body.item==="statEng" && canPurchase(shop.statEng.price,inventory) && shop.statEng.canBuy){
                     makePurchase(shop.statEng.price,p);
+                    madePurchase = true;
                     p.stats.staticEng = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the Energy+ Module."});
@@ -989,6 +1059,7 @@ function startServer(){
 
                 else if(req.body.item==="statAtk" && canPurchase(shop.statAtk.price,inventory) && shop.statAtk.canBuy){
                     makePurchase(shop.statAtk.price,p);
+                    madePurchase = true;
                     p.stats.staticAtk = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the Attack+ Module."});
@@ -1002,6 +1073,7 @@ function startServer(){
 
                 else if(req.body.item==="statRdr" && canPurchase(shop.statRdr.price,inventory) && shop.statRdr.canBuy){
                     makePurchase(shop.statRdr.price,p);
+                    madePurchase = true;
                     p.stats.staticRdr = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the Radar+ Module."});
@@ -1015,6 +1087,7 @@ function startServer(){
 
                 else if(req.body.item==="statDR" && canPurchase(shop.statDR.price,inventory) && shop.statDR.canBuy){
                     makePurchase(shop.statDR.price,p);
+                    madePurchase = true;
                     p.stats.staticDR = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the DR Module."});
@@ -1028,6 +1101,7 @@ function startServer(){
 
                 else if(req.body.item==="quickHeal" && canPurchase(shop.quickHeal.price,inventory) && shop.quickHeal.canBuy){
                     makePurchase(shop.quickHeal.price,p);
+                    madePurchase = true;
                     p.stats.quickHeal = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased a Quick Heal."});
@@ -1041,6 +1115,7 @@ function startServer(){
 
                 else if(req.body.item==="uranium" && canPurchase(shop.uranium.price,inventory) && shop.uranium.canBuy){
                     makePurchase(shop.uranium.price,p);
+                    madePurchase = true;
                     p.info.uranium = p.info.uranium + 1;
                     p.info.totalUranium = p.info.totalUranium + 1;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased uranium."});
@@ -1049,9 +1124,6 @@ function startServer(){
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
-                else{
-                    p.battleLog.unshift({"type":"action", "msg": "You can't purchase that."});
-                }
 
                 //Check for Changes
                 if(isEquipped(p,"RDR+")){
@@ -1076,6 +1148,11 @@ function startServer(){
 
                 if(!isEquipped(p,"HIDE"))
                     p.info.stealthed = false;
+            }
+
+
+            if(!madePurchase){
+                p.battleLog.unshift({"type":"action", "msg": "You can't purchase that."});
             }
         }
         res.send('');
@@ -1784,7 +1861,7 @@ function setupPhase(){
 
         //Determine base attacks
         for(var b in baseList){
-            if(baseList[b].targets.length > 0){
+            if(baseList[b].targets.length > 0 && baseList[b].canAttack){
                 baseList[b].actTargets = [];
                 for(var a = 0; a < baseList[b].attacks[phase-1]; a++){
                     var r = parseInt(Math.random()*1000)%baseList[b].targets.length;
@@ -1816,7 +1893,7 @@ function setupPhase(){
 function actionPhase(){
     var moves = [], attacks = [], loots = [], scans = [], heals=[], engMods=[],
         stealths=[], destealths=[], cannons = [], railguns =[], blinks=[], traps=[],
-        bAtks = [];
+        bAtks = [], walls = [];
     var actAttacks = [];
 
     //Grab all actions
@@ -1828,6 +1905,8 @@ function actionPhase(){
                     moves.push({"player":players[i],"direction":players[i].queue[0].direction});
                 }else if(players[i].queue[0].type==="BLINK" && players[i].info.trapped<1){
                     blinks.push({"player":players[i],"location":players[i].queue[0].location});
+                }else if(players[i].queue[0].type==="WALL"){
+                    walls.push({"player":players[i],"location":players[i].queue[0].location});
                 }else if(players[i].queue[0].type==="ATTACK" ){
                     attacks.push({"player":players[i], "location":players[i].queue[0].location});
                 }else if(players[i].queue[0].type==="CANNON"  && (players[i].queue.length == 1 || players[i].queue[1].type!=="CANNON")){
@@ -1910,20 +1989,22 @@ function actionPhase(){
 
     //Push base attacks and determine next rounds attacks
     for(var b in baseList){
-        for(var a = 0; a < baseList[b].actTargets.length; a++){
-            bAtks.push({"loc":baseList[b].actTargets[a], "dmg": baseList[b].lvl, "baseID":baseList[b].id});
-        }
-        baseList[b].actTargets = [];
-        if(baseList[b].targets.length > 0 && phase < 3){
-            for(var a = 0; a < baseList[b].attacks[phase]; a++){
-                var r = parseInt(Math.random()*1000)%baseList[b].targets.length;
-                var loc = [players[baseList[b].targets[r].id].loc[0], players[baseList[b].targets[r].id].loc[1]];
+        if(baseList[b].canAttack){
+            for(var a = 0; a < baseList[b].actTargets.length; a++){
+                bAtks.push({"loc":baseList[b].actTargets[a], "dmg": baseList[b].lvl, "baseID":baseList[b].id});
+            }
+            baseList[b].actTargets = [];
+            if(baseList[b].targets.length > 0 && phase < 3){
+                for(var a = 0; a < baseList[b].attacks[phase]; a++){
+                    var r = parseInt(Math.random()*1000)%baseList[b].targets.length;
+                    var loc = [players[baseList[b].targets[r].id].loc[0], players[baseList[b].targets[r].id].loc[1]];
 
-                var canHit = attackDistance(baseList[b].loc, loc); //Check attack range
+                    var canHit = attackDistance(baseList[b].loc, loc); //Check attack range
 
-                if(canHit){
-                    actAttacks.push(loc);
-                    baseList[b].actTargets.push(loc);
+                    if(canHit){
+                        actAttacks.push(loc);
+                        baseList[b].actTargets.push(loc);
+                    }
                 }
             }
         }
@@ -1937,6 +2018,8 @@ function actionPhase(){
 
     //Perform actions in order
     // var order = [moves,attacks,heals,engMods,destealths,scans,stealths];
+    for(var i = 0; i < walls.length; i++)
+        placeWall(walls[i].player,walls[i].location);
     for(var i = 0; i < blinks.length; i++)
         blink(blinks[i].player,blinks[i].location);
     for(var i = 0; i < moves.length; i++)
@@ -2452,6 +2535,23 @@ function trap(p){
     p.knownTraps.push({"loc":[p.loc[0],p.loc[1]],"lvl":0+p.stats.trap,"id":0+trapCounter,"owned":true});
 }
 
+function placeWall(p, loc){
+    p.info.walls--;
+    p.info.wallsPlaced++;
+
+    if(map[loc[0]][loc[1]].type === "OPEN"){
+        wallList[wallList.length] = {
+            "id": wallList.length,
+            "lvl": p.stats.wall,
+            "hp": p.stats.wall*10,
+            "hpMAX": p.stats.wall*10,
+            "loc": [loc[0], loc[1]]
+        };
+        map[loc[0]][loc[1]].type = "WALL";
+        map[loc[0]][loc[1]].id = wallList.length-1;
+    }
+}
+
 
 //******************************************************************************
 // Base Actions
@@ -2604,6 +2704,14 @@ function buildStore(p){
         },
 
         //Super Shop
+        "wallU":{
+            "price":calculatePrices(shopData.wallUpgrades, p.stats.wall+1),
+            "canBuy":p.stats.wallUpgrades!=p.stats.wallUpgradesMAX
+        },
+        "wall":{
+            "price":calculatePrices(shopData.wall, 1),
+            "canBuy":p.info.walls < (p.stats.wall<5?p.stats.wall*20:99)
+        },
         "loadout":{
             "price":calculatePrices(shopData.loadoutUpgrades,0),
             "canBuy":p.stats.loadoutSize!=statData.loadoutMAX
@@ -2731,6 +2839,33 @@ function blinkDistance(player, spot){
     if(cY<0)cY+=mapSize;
 
     return cX < player.stats.radar && cY < player.stats.radar;
+}
+
+function canPlaceWall(p, wall){
+    var ownedBase = false;
+    if(map[wall[0]][wall[1]].baseID > -1){
+        ownedBase = baseList[map[wall[0]][wall[1]].baseID].owner == p.info.teamID;
+    }
+
+    var canBuild = p.info.teamRole==="LEADER" ||
+                   teamData[p.info.teamID].settings.building==="TEAM" ||
+                   (p.info.teamRole==="ADMIN" && teamData[p.info.teamID].settings.building!=="LEADER");
+
+    var open = map[wall[0]][wall[1]].type==="OPEN";
+
+    return open && ownedBase && canBuild;
+}
+
+function wallInRange(player, wall){
+    var range = 3;
+    var t = parseInt(range/2);
+    var xAdj = t-player[0], yAdj = t-player[1];
+    var cX = (wall[0] + xAdj)%mapSize, cY = (wall[1] + yAdj)%mapSize;
+
+    if(cX<0)cX+=mapSize;
+    if(cY<0)cY+=mapSize;
+
+    return cX < range && cY < range
 }
 
 
@@ -4007,7 +4142,36 @@ function hit(location, p){
             map[hit.loc[0]][hit.loc[1]].id = -1;
         }
     }
-    else if(location.type==="WALL"){}
+    else if(location.type==="WALL"){
+        var hit = wallList[location.id];
+        var base = baseList[location.baseID];
+
+        if(hit.hp == hit.hpMAX){
+            messageGroup(teamData[base.owner].members,
+                         "Base "+hit.id+"'s walls are under attack!", "", "team", null);
+        }
+        hit.hp -= dmg;
+
+        if(base.canTarget){
+            var nTarget = true;
+            for(var t in base.targets){
+                if(base.targets[t].id === p.id){
+                    nTarget = false;
+                    base.targets[t].countdown = 5;
+                    break;
+                }
+            }
+            if(nTarget)
+                base.targets.push({"id":p.id,"countdown":5});
+        }
+
+        if(hit.hp <= 0){
+            map[hit.loc[0]][hit.loc[1]].type = "OPEN";
+            map[hit.loc[0]][hit.loc[1]].id = -1;
+            messageGroup(teamData[base.owner].members,
+                         "Enemies have breached Base "+hit.id+"'s walls!", "", "team", null);
+        }
+    }
 
 }
 
@@ -4255,9 +4419,9 @@ function messageGroup(group, msg, msgS, type, source){
 }
 
 function calculateIndividualPower(p){
-    var upgradeVal = 10, haulVal = 2, killVal = 3, capVal = 5;
+    var upgradeVal = 10, haulVal = 2, killVal = 3, capVal = 5, wallPVal = 1;
 
-    return p.info.shipMass*upgradeVal + p.info.hauls*haulVal + p.info.kills*killVal + p.info.captures*capVal;
+    return p.info.shipMass*upgradeVal + p.info.hauls*haulVal + p.info.kills*killVal + p.info.captures*capVal + p.info.wallsPlaced*wallPVal;
 }
 
 function giveLoot(p, gold, iron, uranium){
