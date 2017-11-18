@@ -159,7 +159,7 @@
         "gold":{
             "cap":10000,
             "model": 4,
-            "mod": 2000,
+            "mod": 1500,
             "mod2": 1000
         },
         "iron":{
@@ -203,14 +203,14 @@
         "gold":{
             "cap":10000,
             "model": 3,
-            "mod": 3000,
+            "mod": 5000,
             "mod2": 0
         },
         "iron":{
             "cap":10000,
             "model": 3,
             "threshold": 2,
-            "mod": 3,
+            "mod": 5,
             "mod2": 0
         },
         "uranium":{

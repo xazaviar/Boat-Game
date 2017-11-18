@@ -1,10 +1,7 @@
 function canPurchase(costs, inventory){
-    if(costs.gold    <= inventory.gold &&
-       costs.iron    <= inventory.iron &&
-       costs.uranium <= inventory.uranium)
-        return true;
-
-    return false;
+    return costs.gold    <= inventory.gold &&
+           costs.iron    <= inventory.iron &&
+           costs.uranium <= inventory.uranium;
 }
 
 function getCookie(name){

@@ -171,15 +171,10 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
                 ctx.fill();
             }
             else if(typeof map[x][y].loot!=="undefined"){ //Loot
-                if(map[x][y].loot.uranium){
-                    ctx.fillStyle=colors.uraniumColor;
-                }
-                else if(map[x][y].loot.iron){
-                    ctx.fillStyle=colors.ironColor;
-                }
-                else if(map[x][y].loot.gold){
-                    ctx.fillStyle=colors.goldColor;
-                }
+                if(map[x][y].loot.uranium) ctx.fillStyle=colors.uraniumColor;
+                else if(map[x][y].loot.iron) ctx.fillStyle=colors.ironColor;
+                else if(map[x][y].loot.gold) ctx.fillStyle=colors.goldColor;
+
                 ctx.beginPath();
                 ctx.arc(sX+x*tileSize+tileSize/2-tileSize/8,sY+y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
                 ctx.fill();
@@ -189,6 +184,7 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
                 ctx.beginPath();
                 ctx.arc(sX+x*tileSize+tileSize/2,sY+y*tileSize+tileSize/2-tileSize/4+tileSize/10,tileSize/6,0,2*Math.PI);
                 ctx.fill();
+
             }
 
             //Draw me
@@ -399,6 +395,15 @@ function drawSettings(ctx, startX, startY, width, height){
     for(var property in colors){
         if(colors.hasOwnProperty(property)){
             if(property!=="timerGradient"){
+                if(mX < sX+365 && mX > sX+20 &&
+                   mY < sY+75+20*i && mY > sY+60+20*i){
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillStyle = colors.hudColor;
+                    ctx.fillRect(sX+15,sY+58+20*i,360,20);
+                    mouseHover = property;
+                }
+                ctx.globalAlpha = 1.0;
+
                 ctx.beginPath();
                 ctx.fillStyle = colors.hudColor;
                 ctx.fillText(property,sX+20,sY+75+20*i);
@@ -412,19 +417,33 @@ function drawSettings(ctx, startX, startY, width, height){
     }
 
     //Draw return to default button
-    ctx.fillStyle = colors.hudColor;
-    ctx.strokeStyle = colors.hudColor;
+    ctx.globalAlpha = 1.0;
     ctx.font = "25px Courier";
-    ctx.fillText("Default",sX+260,sY+107+20*i);
-    ctx.strokeRect(sX+255,sY+60+20*i+20,115,40);
+    if(mX < sX+370 && mX > sX+255 &&
+       mY < sY+120+20*i && mY > sY+80+20*i){
+        ctx.fillStyle = colors.hudColor;
+        ctx.fillRect(sX+255,sY+60+20*i+20,115,40);
+        ctx.fillStyle = colors.hudBackColor;
+        ctx.fillText("DEFAULT",sX+260,sY+107+20*i);
+        mouseHover = "DEFAULT";
+    }
+    else{
+        ctx.strokeStyle = colors.hudColor;
+        ctx.strokeRect(sX+255,sY+60+20*i+20,115,40);
+        ctx.fillStyle = colors.hudColor;
+        ctx.fillText("DEFAULT",sX+260,sY+107+20*i);
+    }
 }
 
-function drawShopMenu(ctx, startX, startY, width, height, baseStore, me){
-    var sX = startX+width/6;
+function drawShopMenu(ctx, startX, startY, width, height, store, lvl, me){
+    var sX = startX+width/8;
     var sY = startY+height/4;
     var wid = width-(sX-startX)*2;
     var hei = height-(sY-startY)*2;
 
+    mouseHover = -1;
+
+    //Draw box
     ctx.beginPath();
     ctx.strokeStyle=colors.hudColor;
     ctx.fillStyle=colors.hudBackColor;
@@ -433,35 +452,164 @@ function drawShopMenu(ctx, startX, startY, width, height, baseStore, me){
     ctx.fillRect(sX,sY,wid,hei);
     ctx.stroke();
 
-    //Store Labels
-    ctx.fillStyle=colors.hudColor;
-    ctx.font = "40px Courier";
-    ctx.fillText("Store",sX+5,sY+45);
+    var display;
+    var name;
+    var len;
+    if(lvl == 1){
+        name = "Store";
+        len = 1;
+        display = store[0];
+    }
+    else if(lvl == 2){
+        name = "Special Store";
+        len = store.length -1;
+        if(curShopTab > -1 && curShopTab < store.length)
+            display = store[curShopTab+1];
+    }
+    else if(lvl >= 3){
+        name = "Super Store";
+        len = store.length;
+        if(curShopTab > -1 && curShopTab < store.length)
+            display = store[curShopTab];
+    }
 
-    ctx.font = "18px Courier";
-    ctx.fillText("Press the key to do the following",sX+5,sY+85);
+    if(curShopTab>len || curShopTab < 0) curShopTab = 0;
 
-    var i = 0;
-    for(; i < baseStore.length; i++){
-        if(baseStore[i].canBuy && !canPurchase(baseStore[i].price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium})) ctx.fillStyle=colors.needMoreColor;
-        else if(baseStore[i].canBuy) ctx.fillStyle=colors.canBuyColor;
-        else ctx.fillStyle=colors.cantBuyColor;
-        ctx.fillText(" "+(i+1)+" : "+baseStore[i].label,sX+5,sY+110+25*i);
-        if(baseStore[i].canBuy && me.info.gold < baseStore[i].price.gold) ctx.fillStyle=colors.needMoreColor;
-        else if(baseStore[i].canBuy) ctx.fillStyle=colors.canBuyColor;
-        ctx.fillText(baseStore[i].price.gold+"g",sX+wid-140,sY+110+25*i);
-        if(baseStore[i].canBuy && me.info.iron < baseStore[i].price.iron) ctx.fillStyle=colors.needMoreColor;
-        else if(baseStore[i].canBuy) ctx.fillStyle=colors.canBuyColor;
-        ctx.fillText(baseStore[i].price.iron+"i",sX+wid-68,sY+110+25*i);
-        if(baseStore[i].canBuy && me.info.uranium < baseStore[i].price.uranium) ctx.fillStyle=colors.needMoreColor;
-        else if(baseStore[i].canBuy) ctx.fillStyle=colors.canBuyColor;
-        ctx.fillText(baseStore[i].price.uranium+"u",sX+wid-30,sY+110+25*i);
+    //Check if need to draw tabs
+    if(lvl > 1){
+        ctx.strokeStyle=colors.hudColor;
+        ctx.fillStyle=colors.hudBackColor;
+        ctx.font = "18px Courier";
+        for(var i = 0; i < len+1; i++){
+            ctx.globalAlpha = 1.0;
+            ctx.beginPath();
+            var tHei = 60;//(height/2)/(tabs.length+1);
+            if(i==curShopTab) ctx.fillStyle=colors.hudColor;
+            else ctx.fillStyle=colors.hudBackColor;
+            ctx.strokeRect(sX+wid,sY+tHei*i,25,tHei);
+            ctx.fillRect(sX+wid,sY+tHei*i,25,tHei);
 
-        //upgrade bars
-        for(var u = 0; u < baseStore[i].maxLvl; u++){
-            if(u < baseStore[i].level) ctx.fillStyle = colors.upgradeColor;
-            else ctx.fillStyle = colors.voidUpgradeColor;
-            ctx.fillRect(sX+wid-250+u*10,sY+95+i*25,5,20);
+            if(i==curShopTab) ctx.fillStyle=colors.hudBackColor;
+            else ctx.fillStyle=colors.hudColor;
+            ctx.fillText((i==len?"LO":"T"+(i+1)),sX+wid+2,sY+35+tHei*i);
+            ctx.stroke();
+
+            if(mX > sX+wid && mX < sX+wid+25 &&
+               mY > sY+tHei*i && mY < sY+tHei*i+tHei){
+                mouseHover = {"tab":i};
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle=colors.hudColor;
+                ctx.fillRect(sX+wid,sY+tHei*i,25,tHei);
+            }
+        }
+    }
+    ctx.globalAlpha = 1.0;
+
+    if((curShopTab > -1 && curShopTab < len) || lvl == 1){ //Main Store
+        //Store Labels
+        ctx.fillStyle=colors.hudColor;
+        ctx.font = "40px Courier";
+        ctx.fillText(name,sX+5,sY+45);
+
+        ctx.font = "18px Courier";
+        ctx.fillText("Click any item to purchase",sX+5,sY+85);
+
+        var i = 0;
+        for(; i < display.length; i++){
+            if(mX > sX+5 && mX < sX+wid-10 &&
+               mY > sY+95+i*25 && mY < sY+120+i*25){
+                mouseHover = {"item":display[i].pLabel};
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle=colors.hudColor;
+                ctx.fillRect(sX+5,sY+93+i*25,wid-10,25);
+            }
+            ctx.globalAlpha = 1.0;
+
+
+            if(display[i].canBuy && !canPurchase(display[i].price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium}) && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
+            else if(display[i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
+            else ctx.fillStyle=colors.cantBuyColor;
+            ctx.fillText(" "+display[i].label,sX+5,sY+110+25*i);
+            if(display[i].canBuy && me.info.gold < display[i].price.gold && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
+            else if(display[i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
+            ctx.fillText(display[i].price.gold+"g",sX+wid-140,sY+110+25*i);
+            if(display[i].canBuy && me.info.iron < display[i].price.iron && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
+            else if(display[i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
+            ctx.fillText(display[i].price.iron+"i",sX+wid-68,sY+110+25*i);
+            if(display[i].canBuy && me.info.uranium < display[i].price.uranium && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
+            else if(display[i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
+            ctx.fillText(display[i].price.uranium+"u",sX+wid-30,sY+110+25*i);
+
+            //upgrade bars
+            for(var u = 0; u < display[i].maxLvl; u++){
+                if(u < display[i].level) ctx.fillStyle = colors.upgradeColor;
+                else ctx.fillStyle = colors.voidUpgradeColor;
+                if(lvl == 1 || (lvl >= 3 && curShopTab == 0))
+                    ctx.fillRect(sX+wid-250+u*10,sY+95+i*25,5,20);
+                else
+                    ctx.fillRect(sX+wid-200+u*10,sY+95+i*25,5,20);
+
+            }
+        }
+    }
+    else if(curShopTab == len){
+        //Edit Loadout Labels
+        ctx.beginPath();
+        ctx.fillStyle=colors.hudColor;
+        ctx.strokeStyle=colors.hudColor;
+        ctx.font = "40px Courier";
+        ctx.fillText("Loadout",sX+5,sY+45);
+
+        ctx.font = "18px Courier";
+        ctx.fillText("Hover over item and press 'Q' or 'E' to equip.",sX+5,sY+85);
+
+        //Selection Boxes
+        ctx.font = "22px Courier";
+        ctx.fillText("SLOTS",sX+45,sY+185);
+        ctx.strokeRect(sX+15,sY*2+20,50,50);
+        ctx.strokeRect(sX+90,sY*2+20,50,50);
+        //If not unlocked
+        if(me.stats.loadoutSize < 2){
+            ctx.beginPath();
+            ctx.moveTo(sX+90,sY*2+20);
+            ctx.lineTo(sX+140,sY*2+70);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(sX+140,sY*2+20);
+            ctx.lineTo(sX+90,sY*2+70);
+            ctx.stroke();
+        }
+        ctx.fillText("Q",sX+35,sY*2+90);
+        ctx.fillText("E",sX+107,sY*2+90);
+        ctx.font = "18px Courier";
+        if(me.abilitySlots[0].type!=="NONE") ctx.fillText(me.abilitySlots[0].type,sX+17,sY*2+50);
+        if(me.abilitySlots[1].type!=="NONE") ctx.fillText(me.abilitySlots[1].type,sX+92,sY*2+50);
+
+        ctx.stroke();
+
+        //line
+        ctx.beginPath();
+        ctx.moveTo(sX+150,sY+120);
+        ctx.lineTo(sX+150,sY+height/2);
+        ctx.stroke();
+
+        //Options
+        ctx.font = "22px Courier";
+        for(var i = 0; i < me.storage.length; i++){
+            if(mX > sX+170+70*(i%6) && mX < sX+230+70*(i%6) &&
+               mY > sY+130+70*parseInt(i/6) && mY < sY+190+70*parseInt(i/6)){
+                mouseHover = {"load":i};
+                ctx.fillStyle=colors.hudColor;
+                ctx.fillRect(sX+170+70*(i%6),sY+130+70*parseInt(i/6),60,60);
+                ctx.fillStyle=colors.hudBackColor;
+                ctx.fillText(me.storage[i].name,sX+170+70*(i%6)+3,sY+130+70*parseInt(i/6)+35);
+            }
+            else{
+                ctx.strokeStyle=colors.hudColor;
+                ctx.strokeRect(sX+170+70*(i%6),sY+130+70*parseInt(i/6),60,60);
+                ctx.fillStyle=colors.hudColor;
+                ctx.fillText(me.storage[i].name,sX+170+70*(i%6)+3,sY+130+70*parseInt(i/6)+35);
+            }
         }
     }
 
@@ -485,8 +633,7 @@ function drawSShopMenu(ctx, startX, startY, width, height, tabs, curShopTab, me)
 
     //Tab contents
     //0 - combat
-    //1 - travel
-    //2 - util
+    //1 - util
     //3 - static
     //4 - other
     //5 - loadout
@@ -520,18 +667,18 @@ function drawSShopMenu(ctx, startX, startY, width, height, tabs, curShopTab, me)
 
         for(var i = 0; i < tabs[curShopTab].length; i++){
             ctx.beginPath();
-            if(tabs[curShopTab][i].canBuy && !canPurchase(tabs[curShopTab][i].price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium})) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[curShopTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            if(tabs[curShopTab][i].canBuy && !canPurchase(tabs[curShopTab][i].price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium}) && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[curShopTab][i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
             else ctx.fillStyle=colors.cantBuyColor;
             ctx.fillText(" "+(i+1)+": "+tabs[curShopTab][i].label,sX+5,sY+110+i*25);
-            if(tabs[curShopTab][i].canBuy && me.info.gold < tabs[curShopTab][i].price.gold) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[curShopTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            if(tabs[curShopTab][i].canBuy && me.info.gold < tabs[curShopTab][i].price.gold && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[curShopTab][i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
             ctx.fillText(tabs[curShopTab][i].price.gold+"g",sX+wid-140,sY+110+i*25);
-            if(tabs[curShopTab][i].canBuy && me.info.iron < tabs[curShopTab][i].price.iron) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[curShopTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            if(tabs[curShopTab][i].canBuy && me.info.iron < tabs[curShopTab][i].price.iron && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[curShopTab][i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
             ctx.fillText(tabs[curShopTab][i].price.iron+"i",sX+wid-68,sY+110+i*25);
-            if(tabs[curShopTab][i].canBuy && me.info.uranium < tabs[curShopTab][i].price.uranium) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[curShopTab][i].canBuy) ctx.fillStyle=colors.canBuyColor;
+            if(tabs[curShopTab][i].canBuy && me.info.uranium < tabs[curShopTab][i].price.uranium && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
+            else if(tabs[curShopTab][i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
             ctx.fillText(tabs[curShopTab][i].price.uranium+"u",sX+wid-30,sY+110+i*25);
 
             //upgrade bars
@@ -1811,6 +1958,10 @@ function screenResize(){
     $(".gameScreen").css("margin-left",(prevWid-c1.width-c2.width)/2+"px");
 
     //Position the input boxes
+    $(".modal").css({
+        "left": (prevWid-c1.width-c2.width)/2 + 12*c1.width/16,
+        "top": c1.height/4-50
+    });
     $(".input1").css({
         "left": (prevWid-c1.width-c2.width)/2 + c1.width/3.5+177,
         "top": c1.height/4+60+132

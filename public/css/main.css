@@ -38,11 +38,11 @@ body {
     display: none;
     z-index: 101;
     background-color: white;
+    position: absolute;
+    top: 200px;
+    left: 50px;
     width: 5%;
     height: 5%;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: -40%;
 }
 
 .input1 {

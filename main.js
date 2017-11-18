@@ -197,7 +197,12 @@ function startServer(){
                 players[id] = obj;
                 var name = ""
                 players[id].battleLog = [];
+                if(players[id].stats.hp <=0) players[id].stats.hp = players[id].stats.hpMAX;
                 players[id].loc = spawn();
+                players[id].knownLocs =  [];
+                players[id].scanned =  [];
+                players[id].knownTraps =  [];
+                players[id].activeAttacks = [];
                 map[players[id].loc[0]][players[id].loc[1]].type = "PLAYER";
                 map[players[id].loc[0]][players[id].loc[1]].id = id;
                 name = players[id].info.name;
@@ -251,7 +256,7 @@ function startServer(){
                 "name": name,
                 "teamID": -1,
                 "teamRole": "NONE",
-                "gold": 100000,
+                "gold": 1000000,
                 "totalGold":0,
                 "iron": 5000,
                 "totalIron":0,
@@ -412,10 +417,9 @@ function startServer(){
                         "type": map[x][y].type,
                         "baseID": map[x][y].baseID,
                         "loot":{
-                            "gold": map[x][y].loot.gold>0,
-                            "iron": map[x][y].loot.iron>0,
-                            "uranium": map[x][y].loot.uranium>0
-
+                            "gold": map[x][y].loot.gold > 0,
+                            "iron": p.stats.scanner > 1 && map[x][y].loot.iron > 0,
+                            "uranium": p.stats.scanner > 2 && map[x][y].loot.uranium > 0
                         },
                         "id": map[x][y].id
                     };
@@ -517,7 +521,43 @@ function startServer(){
 
             var sendBase = [];
             for(var b in baseList){
-                sendBase[b] = baseList[b];
+                if(baseList[b].owner===p.info.teamID){
+                    sendBase[b] = {
+                        "hp": baseList[b].hp,
+                        "hpMAX": baseList[b].hpMAX,
+                        "id": baseList[b].id,
+                        "lvl": baseList[b].lvl,
+                        "output": {
+                            "gold": baseList[b].output.gold,
+                            "credits": baseList[b].output.credits
+                        },
+                        "owner": baseList[b].owner,
+                        "special": baseList[b].special,
+                        "tiles": baseList[b].tiles,
+                        "upgrade": baseList[b].upgrade,
+                        "upgradeCost": baseList[b].upgradeCost,
+                        "upgradeMAX": baseList[b].upgradeMAX,
+                        "upgrading": baseList[b].upgrading
+                    };
+                }
+                else{
+                    sendBase[b] = {
+                        "hp": baseList[b].hp,
+                        "hpMAX": baseList[b].hpMAX,
+                        "id": baseList[b].id,
+                        "lvl": baseList[b].lvl,
+                        "output": {
+                            "gTier": baseList[b].output.gTier,
+                            "cTier": baseList[b].output.cTier
+                        },
+                        "owner": baseList[b].owner,
+                        "special": baseList[b].special,
+                        "tiles": baseList[b].tiles,
+                        "upgrade": baseList[b].upgrade,
+                        "upgradeMAX": baseList[b].upgradeMAX,
+                        "upgrading": baseList[b].upgrading
+                    };
+                }
             }
 
             //Update canUse
@@ -736,53 +776,59 @@ function startServer(){
         if(p!=null){
             var shop = buildStore(p);
             var inventory = {"gold":p.info.gold,"iron":p.info.iron,"uranium":p.info.uranium};
-            var madePurchase = false;
+            var messagedUser = false;
 
             //Regular shop
-            if(shop.withinShop!=2){
+            if(shop.withinShop!=2 && p.stats.hp>0){
                 if(req.body.item==="hpF" && canPurchase(shop.hpF.price,inventory) && shop.hpF.canBuy){
-                    madePurchase = true;
+                    messagedUser = true;
                     makePurchase(shop.hpF.price,p);
                     p.stats.hp = p.stats.hpMAX;
                     p.battleLog.unshift({"type":"purchase", "msg": "You repaired your ship."});
                 }
                 else if(req.body.item==="hpF" && !canPurchase(shop.hpF.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
                 else if(req.body.item==="hpF" && !shop.hpF.canBuy){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "Your ship is at full health."});
                 }
 
                 else if(req.body.item==="hp5" && canPurchase(shop.hp5.price,inventory) && shop.hp5.canBuy){
-                    madePurchase = true;
+                    messagedUser = true;
                     makePurchase(shop.hp5.price,p);
                     p.stats.hp = p.stats.hp + 5;
                     if(p.stats.hp > p.stats.hpMAX) p.stats.hp = p.stats.hpMAX;
                     p.battleLog.unshift({"type":"purchase", "msg": "You repaired your ship."});
                 }
                 else if(req.body.item==="hp5" && !canPurchase(shop.hp5.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
                 else if(req.body.item==="hp5" && !shop.hp5.canBuy){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "Your ship is at full health."});
                 }
 
                 else if(req.body.item==="insurance" && canPurchase(shop.insurance.price,inventory) && shop.insurance.canBuy){
                     makePurchase(shop.insurance.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.info.hasInsurance = true;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased insurance."});
                 }
                 else if(req.body.item==="insurance" && !canPurchase(shop.insurance.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
                 else if(req.body.item==="insurance" && !shop.insurance.canBuy){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You are already insured."});
                 }
 
                 else if(req.body.item==="hpU" && canPurchase(shop.hpU.price,inventory) && shop.hpU.canBuy){
                     makePurchase(shop.hpU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.hpUpgrades++;
                     p.info.shipMass++;
                     p.stats.hpMAX = p.stats.hpMAX + statData.hpINC;
@@ -790,42 +836,46 @@ function startServer(){
                     p.battleLog.unshift({"type":"purchase", "msg": "You upgraded your health."});
                 }
                 else if(req.body.item==="hpU" && !canPurchase(shop.hpU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="enU" && canPurchase(shop.enU.price,inventory) && shop.enU.canBuy){
                     makePurchase(shop.enU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.energyUpgrades++;
                     p.info.shipMass++;
                     p.stats.energyMAX = p.stats.energyMAX + statData.energyINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You upgraded your energy."});
                 }
                 else if(req.body.item==="enU" && !canPurchase(shop.enU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="radU" && canPurchase(shop.radU.price,inventory) && shop.radU.canBuy){
                     makePurchase(shop.radU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.radarUpgrades++;
                     p.info.shipMass++;
                     p.stats.radar = p.stats.radar + statData.radarINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You upgraded your radar."});
                 }
                 else if(req.body.item==="radU" && !canPurchase(shop.radU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="atkU" && canPurchase(shop.atkU.price,inventory) && shop.atkU.canBuy){
                     makePurchase(shop.atkU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.attackUpgrades++;
                     p.info.shipMass++;
                     p.stats.attack = p.stats.attack + statData.attackINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You upgraded your radar."});
                 }
                 else if(req.body.item==="atkU" && !canPurchase(shop.atkU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
@@ -833,50 +883,56 @@ function startServer(){
             }
 
             //Super Shop
-            if(shop.withinShop>1){
+            if(shop.withinShop>1 && p.stats.hp>0){
                 if(req.body.item==="wallU" && canPurchase(shop.wallU.price,inventory) && shop.wallU.canBuy){
                     makePurchase(shop.wallU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.wallUpgrades = p.stats.wallUpgrades+statData.wallINC;
                     p.stats.wall = p.stats.wall+statData.wallINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You increased your wall expertise."});
                 }
                 else if(req.body.item==="wallU" && !canPurchase(shop.wallU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
                 else if(req.body.item==="wallU" && !shop.wallU.canBuy){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You have already maxed your walls."});
                 }
 
                 else if(req.body.item==="wall" && canPurchase(shop.wall.price,inventory) && shop.wall.canBuy){
                     makePurchase(shop.wall.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.info.walls++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased a wall."});
                 }
                 else if(req.body.item==="wall" && !canPurchase(shop.wall.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
                 else if(req.body.item==="wall" && !shop.wall.canBuy){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You can't carry anymore walls."});
                 }
 
                 else if(req.body.item==="loadout" && canPurchase(shop.loadout.price,inventory) && shop.loadout.canBuy){
                     makePurchase(shop.loadout.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.loadoutSize = p.stats.loadoutSize+statData.loadoutINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You increased your loadout."});
                 }
                 else if(req.body.item==="loadout" && !canPurchase(shop.loadout.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
                 else if(req.body.item==="loadout" && !shop.loadout.canBuy){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You have already maxed your loadout."});
                 }
 
                 else if(req.body.item==="canU" && canPurchase(shop.canU.price,inventory) && shop.canU.canBuy){
                     makePurchase(shop.canU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.cannonUpgrades++;
                     p.stats.cannon = p.stats.cannon + statData.cannonINC;
                     p.info.shipMass++;
@@ -892,12 +948,13 @@ function startServer(){
 
                 }
                 else if(req.body.item==="canU" && !canPurchase(shop.canU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="bliU" && canPurchase(shop.bliU.price,inventory) && shop.bliU.canBuy){
                     makePurchase(shop.bliU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.blinkUpgrades++;
                     p.stats.blink = p.stats.blink + statData.blinkINC;
                     p.info.shipMass++;
@@ -912,12 +969,13 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="BLNK") p.abilitySlots[0]={"type":"BLNK","canUse":false};
                 }
                 else if(req.body.item==="bliU" && !canPurchase(shop.bliU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="steU" && canPurchase(shop.steU.price,inventory) && shop.steU.canBuy){
                     makePurchase(shop.steU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.stealthUpgrades++;
                     p.stats.stealth = p.stats.stealth + statData.stealthINC;
                     p.info.shipMass++;
@@ -932,12 +990,13 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="HIDE") p.abilitySlots[0]={"type":"HIDE","canUse":false};
                 }
                 else if(req.body.item==="steU" && !canPurchase(shop.steU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="trapU" && canPurchase(shop.trapU.price,inventory) && shop.trapU.canBuy){
                     makePurchase(shop.trapU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.trapUpgrades++;
                     p.stats.trap = p.stats.trap + statData.trapINC;
                     p.info.shipMass++;
@@ -952,12 +1011,13 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="TRAP") p.abilitySlots[0]={"type":"TRAP","canUse":false};
                 }
                 else if(req.body.item==="trapU" && !canPurchase(shop.trapU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="engModU" && canPurchase(shop.engModU.price,inventory) && shop.engModU.canBuy){
                     makePurchase(shop.engModU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.engModUpgrades++;
                     p.stats.engMod = p.stats.engMod + statData.engModINC;
                     p.info.shipMass++;
@@ -972,12 +1032,13 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="ENG") p.abilitySlots[0]={"type":"ENG","canUse":false};
                 }
                 else if(req.body.item==="engModU" && !canPurchase(shop.engModU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="railU" && canPurchase(shop.railU.price,inventory) && shop.railU.canBuy){
                     makePurchase(shop.railU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.railgunUpgrades++;
                     p.stats.railgun = p.stats.railgun + statData.railgunINC;
                     p.info.shipMass++;
@@ -992,46 +1053,50 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="RAIL") p.abilitySlots[0]={"type":"RAIL","canUse":false};
                 }
                 else if(req.body.item==="railU" && !canPurchase(shop.railU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="carryU" && canPurchase(shop.carryU.price,inventory) && shop.carryU.canBuy){
                     makePurchase(shop.carryU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.urCarryUpgrades++;
                     p.stats.urCarry = p.stats.urCarry + statData.urCarryINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You upgraded your Uranium Carry Capacity."});
                 }
                 else if(req.body.item==="carryU" && !canPurchase(shop.carryU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="insuranceU" && canPurchase(shop.insuranceU.price,inventory) && shop.insuranceU.canBuy){
                     makePurchase(shop.insuranceU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.insuranceUpgrades++;
                     p.stats.insurance = p.stats.insurance + statData.insuranceINC;
                     p.battleLog.unshift({"type":"purchase", "msg": "You upgraded your Insurance."});
                 }
                 else if(req.body.item==="insuranceU" && !canPurchase(shop.insuranceU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="scanU" && canPurchase(shop.scanU.price,inventory) && shop.scanU.canBuy){
                     makePurchase(shop.scanU.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.scannerUpgrades++;
                     p.stats.scanner = p.stats.scanner + statData.scannerINC;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You upgraded your Scanner."});
                 }
                 else if(req.body.item==="scanU" && !canPurchase(shop.scanU.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="statHP" && canPurchase(shop.statHP.price,inventory) && shop.statHP.canBuy){
                     makePurchase(shop.statHP.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.staticHp = true;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the Health+ Module."});
                     p.storage.push({"name":"HP+","val":1});
@@ -1040,26 +1105,28 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="HP+") p.abilitySlots[0]={"type":"HP+","canUse":false};
                 }
                 else if(req.body.item==="statHP" && !canPurchase(shop.statHP.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="statEng" && canPurchase(shop.statEng.price,inventory) && shop.statEng.canBuy){
                     makePurchase(shop.statEng.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.staticEng = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the Energy+ Module."});
-                    p.storage.push({"name":"PWR+","val":1});
-                    if(p.abilitySlots[1].type==="NONE" && p.stats.loadoutSize>1) p.abilitySlots[1]={"type":"PWR+","canUse":false};
-                    else if(p.abilitySlots[1].type!=="PWR+") p.abilitySlots[0]={"type":"PWR+","canUse":false};
+                    p.storage.push({"name":"ENG+","val":1});
+                    if(p.abilitySlots[1].type==="NONE" && p.stats.loadoutSize>1) p.abilitySlots[1]={"type":"ENG+","canUse":false};
+                    else if(p.abilitySlots[1].type!=="ENG+") p.abilitySlots[0]={"type":"ENG+","canUse":false};
                 }
                 else if(req.body.item==="statEng" && !canPurchase(shop.statEng.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="statAtk" && canPurchase(shop.statAtk.price,inventory) && shop.statAtk.canBuy){
                     makePurchase(shop.statAtk.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.staticAtk = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the Attack+ Module."});
@@ -1068,12 +1135,13 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="ATK+") p.abilitySlots[0]={"type":"ATK+","canUse":false};
                 }
                 else if(req.body.item==="statAtk" && !canPurchase(shop.statAtk.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="statRdr" && canPurchase(shop.statRdr.price,inventory) && shop.statRdr.canBuy){
                     makePurchase(shop.statRdr.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.staticRdr = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the Radar+ Module."});
@@ -1082,12 +1150,13 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="RDR+") p.abilitySlots[0]={"type":"RDR+","canUse":false};
                 }
                 else if(req.body.item==="statRdr" && !canPurchase(shop.statRdr.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="statDR" && canPurchase(shop.statDR.price,inventory) && shop.statDR.canBuy){
                     makePurchase(shop.statDR.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.staticDR = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased the DR Module."});
@@ -1096,12 +1165,13 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="DR") p.abilitySlots[0]={"type":"DR","canUse":false};
                 }
                 else if(req.body.item==="statDR" && !canPurchase(shop.statDR.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="quickHeal" && canPurchase(shop.quickHeal.price,inventory) && shop.quickHeal.canBuy){
                     makePurchase(shop.quickHeal.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.stats.quickHeal = true;
                     p.info.shipMass++;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased a Quick Heal."});
@@ -1110,17 +1180,19 @@ function startServer(){
                     else if(p.abilitySlots[1].type!=="HEAL") p.abilitySlots[0]={"type":"HEAL","canUse":false};
                 }
                 else if(req.body.item==="quickHeal" && !canPurchase(shop.quickHeal.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
                 else if(req.body.item==="uranium" && canPurchase(shop.uranium.price,inventory) && shop.uranium.canBuy){
                     makePurchase(shop.uranium.price,p);
-                    madePurchase = true;
+                    messagedUser = true;
                     p.info.uranium = p.info.uranium + 1;
                     p.info.totalUranium = p.info.totalUranium + 1;
                     p.battleLog.unshift({"type":"purchase", "msg": "You purchased uranium."});
                 }
                 else if(req.body.item==="uranium" && !canPurchase(shop.uranium.price,inventory)){
+                    messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
 
@@ -1139,7 +1211,7 @@ function startServer(){
                     if(p.stats.hp > p.stats.hpMAX) p.stats.hp = p.stats.hpMAX;
                 }
 
-                if(isEquipped(p,"PWR+")){
+                if(isEquipped(p,"ENG+")){
                     p.stats.energyMAX = statData.energyStart+(statData.energyINC*p.stats.energyUpgrades)+5;
                 }else{
                     p.stats.energyMAX = statData.energyStart+(statData.energyINC*(p.stats.energyUpgrades));
@@ -1151,8 +1223,11 @@ function startServer(){
             }
 
 
-            if(!madePurchase){
+            if(!messagedUser && p.stats.hp>0){
                 p.battleLog.unshift({"type":"action", "msg": "You can't purchase that."});
+            }
+            else if(p.stats.hp<=0){
+                p.battleLog.unshift({"type":"action", "msg": "You can't purchase stuff while dead."});
             }
         }
         res.send('');
@@ -1171,51 +1246,58 @@ function startServer(){
                 p = players[id];
 
         if(p!=null && item!=null && slot!=null){
-            if(slot == 1 && p.stats.loadoutSize<2){ //Don't have slot
-                p.battleLog.unshift({"type":"action", "msg": "You don't have that slot unlocked yet."});
-            }else{
-                //Check if valid option, and apply
-                var valid = false;
-                for(var i = 0; i < p.storage.length; i++){
-                    if(item===p.storage[i].name){
-                        valid = true;
-                        if(slot==0 && p.abilitySlots[1].type===item) p.abilitySlots[1]={"type":"NONE","canUse":false};
-                        else if(slot==1 && p.abilitySlots[0].type===item) p.abilitySlots[0]={"type":"NONE","canUse":false};
-                        p.abilitySlots[slot]={"type":item,"canUse":false};
-                        p.battleLog.unshift({"type":"action", "msg": "You equipped "+p.storage[i].name+" in slot "+slot+"."});
+            if(p.stats.hp > 0 && withinShop(p.loc, p.info.teamID)>1){
+                if(slot == 1 && p.stats.loadoutSize<2){ //Don't have slot
+                    p.battleLog.unshift({"type":"action", "msg": "You don't have that slot unlocked yet."});
+                }
+                else{
+                    //Check if valid option, and apply
+                    var valid = false;
+                    for(var i = 0; i < p.storage.length; i++){
+                        if(item===p.storage[i].name){
+                            valid = true;
+                            if(slot==0 && p.abilitySlots[1].type===item) p.abilitySlots[1]={"type":"NONE","canUse":false};
+                            else if(slot==1 && p.abilitySlots[0].type===item) p.abilitySlots[0]={"type":"NONE","canUse":false};
+                            p.abilitySlots[slot]={"type":item,"canUse":false};
+                            p.battleLog.unshift({"type":"action", "msg": "You equipped "+p.storage[i].name+" in slot "+slot+"."});
 
-                        //Check for Changes
-                        if(isEquipped(p,"RDR+")){
-                            p.stats.radar = statData.radarStart+(statData.radarINC*p.stats.radarUpgrades);
-                        }else{
-                            p.stats.radar = statData.radarStart+(statData.radarINC*(p.stats.radarUpgrades-1));
+                            //Check for Changes
+                            if(isEquipped(p,"RDR+")){
+                                p.stats.radar = statData.radarStart+(statData.radarINC*p.stats.radarUpgrades);
+                            }else{
+                                p.stats.radar = statData.radarStart+(statData.radarINC*(p.stats.radarUpgrades-1));
+                            }
+
+                            if(isEquipped(p,"HP+")){
+                                p.stats.hpMAX = statData.hpStart+(statData.hpINC*p.stats.hpUpgrades)+5;
+                            }else{
+                                p.stats.hpMAX = statData.hpStart+(statData.hpINC*(p.stats.hpUpgrades));
+                                if(p.stats.hp > p.stats.hpMAX) p.stats.hp = p.stats.hpMAX;
+                            }
+
+                            if(isEquipped(p,"ENG+")){
+                                p.stats.energyMAX = statData.energyStart+(statData.energyINC*p.stats.energyUpgrades)+5;
+                            }else{
+                                p.stats.energyMAX = statData.energyStart+(statData.energyINC*(p.stats.energyUpgrades));
+                                if(p.stats.energy > p.stats.energyMAX) p.stats.energy = p.stats.energyMAX;
+                            }
+
+                            if(!isEquipped(p,"HIDE"))
+                                p.info.stealthed = false;
+
+
+                            break;
                         }
-
-                        if(isEquipped(p,"HP+")){
-                            p.stats.hpMAX = statData.hpStart+(statData.hpINC*p.stats.hpUpgrades)+5;
-                        }else{
-                            p.stats.hpMAX = statData.hpStart+(statData.hpINC*(p.stats.hpUpgrades));
-                            if(p.stats.hp > p.stats.hpMAX) p.stats.hp = p.stats.hpMAX;
-                        }
-
-                        if(isEquipped(p,"PWR+")){
-                            p.stats.energyMAX = statData.energyStart+(statData.energyINC*p.stats.energyUpgrades)+5;
-                        }else{
-                            p.stats.energyMAX = statData.energyStart+(statData.energyINC*(p.stats.energyUpgrades));
-                            if(p.stats.energy > p.stats.energyMAX) p.stats.energy = p.stats.energyMAX;
-                        }
-
-                        if(!isEquipped(p,"HIDE"))
-                            p.info.stealthed = false;
-
-
-                        break;
+                    }
+                    if(!valid){
+                        p.battleLog.unshift({"type":"action", "msg": "You can't cheat me bitch."});
+                        // p.stats.hp--;
                     }
                 }
-                if(!valid){
-                    p.battleLog.unshift({"type":"action", "msg": "You can't cheat me bitch."});
-                    // p.stats.hp--;
-                }
+
+            }
+            else{
+                p.battleLog.unshift({"type":"action", "msg": "You can't change loadout while dead."});
             }
         }
 
@@ -1863,15 +1945,21 @@ function setupPhase(){
         for(var b in baseList){
             if(baseList[b].targets.length > 0 && baseList[b].canAttack){
                 baseList[b].actTargets = [];
-                for(var a = 0; a < baseList[b].attacks[phase-1]; a++){
+                for(var a = 0; a < baseList[b].attacks[phase-1] && baseList[b].targets.length > 0; a++){
                     var r = parseInt(Math.random()*1000)%baseList[b].targets.length;
-                    var loc = [players[baseList[b].targets[r].id].loc[0], players[baseList[b].targets[r].id].loc[1]];
+                    if(players[baseList[b].targets[r].id].status!=="OFFLINE"){
+                        var loc = [players[baseList[b].targets[r].id].loc[0], players[baseList[b].targets[r].id].loc[1]];
 
-                    var canHit = attackDistance(baseList[b].loc, loc); //Check attack range
+                        var canHit = attackDistance(baseList[b].loc, loc); //Check attack range
 
-                    if(canHit){
-                        actAttacks.push(loc);
-                        baseList[b].actTargets.push(loc);
+                        if(canHit){
+                            actAttacks.push(loc);
+                            baseList[b].actTargets.push(loc);
+                        }
+                    }
+                    else{
+                        baseList[b].targets.splice(r,1);
+                        a--;
                     }
                 }
             }
@@ -1933,8 +2021,6 @@ function actionPhase(){
                         players[i].stats.energy = players[i].stats.energyMAX;
                 }else if(players[i].info.trapped>1 && (players[i].queue[0].type==="MOVE" || players[i].queue[0].type==="BLINK")){
                     players[i].battleLog.unshift({"type":"action", "msg": "You can't move while trapped."});
-                }else if((players[i].queue[0].type==="ATTACK" || players[i].queue[0].type==="CANNON" || players[i].queue[0].type==="RAILGUN")){ //Must be fighting near a shop or cheating
-                    players[i].battleLog.unshift({"type":"action", "msg": "You can't fight near a shop."});
                 }
 
                 players[i].queue.splice(0,1); //pop from queue
@@ -1995,15 +2081,21 @@ function actionPhase(){
             }
             baseList[b].actTargets = [];
             if(baseList[b].targets.length > 0 && phase < 3){
-                for(var a = 0; a < baseList[b].attacks[phase]; a++){
+                for(var a = 0; a < baseList[b].attacks[phase-1] && baseList[b].targets.length > 0; a++){
                     var r = parseInt(Math.random()*1000)%baseList[b].targets.length;
-                    var loc = [players[baseList[b].targets[r].id].loc[0], players[baseList[b].targets[r].id].loc[1]];
+                    if(players[baseList[b].targets[r].id].status!=="OFFLINE"){
+                        var loc = [players[baseList[b].targets[r].id].loc[0], players[baseList[b].targets[r].id].loc[1]];
 
-                    var canHit = attackDistance(baseList[b].loc, loc); //Check attack range
+                        var canHit = attackDistance(baseList[b].loc, loc); //Check attack range
 
-                    if(canHit){
-                        actAttacks.push(loc);
-                        baseList[b].actTargets.push(loc);
+                        if(canHit){
+                            actAttacks.push(loc);
+                            baseList[b].actTargets.push(loc);
+                        }
+                    }
+                    else{
+                        baseList[b].targets.splice(r,1);
+                        a--;
                     }
                 }
             }
@@ -2282,8 +2374,8 @@ function cannon(p, location){
     }
 
     for(var i in locs){
-        if(map[loc[0]][loc[1]].type!=="OPEN"){
-            hit(map[loc[0]][loc[1]], p);
+        if(map[locs[i][0]][locs[i][1]].type!=="OPEN"){
+            hit(map[locs[i][0]][locs[i][1]], p);
         }
     }
 }
@@ -2320,8 +2412,8 @@ function railgun(p, direction){
     }
 
     for(var i in locs){
-        if(map[loc[0]][loc[1]].type!=="OPEN"){
-            hit(map[loc[0]][loc[1]], p);
+        if(map[locs[i][0]][locs[i][1]].type!=="OPEN"){
+            hit(map[locs[i][0]][locs[i][1]], p);
         }
     }
 }
@@ -2445,7 +2537,7 @@ function scan(p){
             }
 
 
-            if(map[cX][cY].type==="PLAYER"){
+            if(map[cX][cY].type==="PLAYER" && !(cX==p.loc[0] && cY==p.loc[1])){
                 players[map[cX][cY].id].battleLog.unshift({"type":"combat", "msg": "Someone has scanned you."});
                 p.scanned.push({"id":map[cX][cY].id,"rounds":3+p.stats.scanner});
             }
@@ -2599,7 +2691,7 @@ function withinShop(location, teamID){
             if(cY >= mapSize) cY -= mapSize;
 
             if(map[cX][cY].type==="BASE"){
-                if(baseList[map[cX][cY].id].inCombat <= 0){
+                if(baseList[map[cX][cY].id].inCombat <= 0 || baseList[map[cX][cY].id].lvl > 3){
                     var own = baseList[map[cX][cY].id].owner;
                     if(own==teamID || own==-1) return baseList[map[cX][cY].id].lvl;
                 }
@@ -2940,7 +3032,7 @@ function canUseMod(p, mod){
         return 3-p.queue.length >= stealthActionUsage && p.stats.energy>=stealthEnergyUsage && p.info.uranium>=stealthUraniumUsage;
     else if(mod=="HIDE" && p.info.stealthTime>0)
         return !queuedDestealth(p);
-    else if(mod=="ATK+" || mod=="PWR+" || mod=="RDR+" || mod=="HP+" || mod=="DR")
+    else if(mod=="ATK+" || mod=="ENG+" || mod=="RDR+" || mod=="HP+" || mod=="DR")
         return true;
     return false;
 }
@@ -4274,11 +4366,11 @@ function death(p, killer){
             if(p.abilitySlots[1].type==="ATK+") p.abilitySlots[1] = {"type":"NONE","canUse":false};
 
         }
-        if(isEquipped(p,"PWR+")){
+        if(isEquipped(p,"ENG+")){
             p.stats.staticEng = false;
-            removeFromStorage(p,"PWR+");
-            if(p.abilitySlots[0].type==="PWR+") p.abilitySlots[0] = {"type":"NONE","canUse":false};
-            if(p.abilitySlots[1].type==="PWR+") p.abilitySlots[1] = {"type":"NONE","canUse":false};
+            removeFromStorage(p,"ENG+");
+            if(p.abilitySlots[0].type==="ENG+") p.abilitySlots[0] = {"type":"NONE","canUse":false};
+            if(p.abilitySlots[1].type==="ENG+") p.abilitySlots[1] = {"type":"NONE","canUse":false};
             p.stats.energyMAX = statData.energyStart+(statData.energyINC*(p.stats.energyUpgrades));
             if(p.stats.energy > p.stats.energyMAX) p.stats.energy = p.stats.energyMAX;
 

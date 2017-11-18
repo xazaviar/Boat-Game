@@ -2,8 +2,7 @@ var mX2, mY2;
 var hover = [-1,-1];
 var gameStart = true;
 var chatBlink = true;
-var tabs;
-var baseStore;
+var store;
 var statInfo = false;
 var saveOnStartup = false;
 
@@ -47,15 +46,15 @@ setTimeout(function() {
     $("#color-picker1").hexColorPicker({
         "container":"dialog",
 		"colorModel":"hsl",
-		"pickerWidth":200,
-		"size":6,
+		"pickerWidth":250,
+		"size":7,
 		"style":"hex"
     });
     $("#color-picker2").hexColorPicker({
         "container":"dialog",
 		"colorModel":"hsl",
-		"pickerWidth":200,
-		"size":6,
+		"pickerWidth":250,
+		"size":7,
 		"style":"hex"
     });
 
@@ -128,93 +127,93 @@ function newData(){
         if(curSettings==null && me.info.teamID>-1) curSettings = teamList[me.info.teamID].settings;
 
         //Update Tabs
-        baseStore = [
-            {
-                "pLabel":   "hpF",
-                "label":    "Full Ship Repair",
-                "canBuy":   shop.hpF.canBuy,
-                "price":{
-                    "gold":     shop.hpF.price.gold,
-                    "iron":     shop.hpF.price.iron,
-                    "uranium":  shop.hpF.price.uranium
+        store = [
+            [
+                {
+                    "pLabel":   "hpF",
+                    "label":    "Full Ship Repair",
+                    "canBuy":   shop.hpF.canBuy,
+                    "price":{
+                        "gold":     shop.hpF.price.gold,
+                        "iron":     shop.hpF.price.iron,
+                        "uranium":  shop.hpF.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
                 },
-                "level":    0,
-                "maxLvl":   0
-            },
-            {
-                "pLabel":   "hp5",
-                "label":    "Small Ship Repair",
-                "canBuy":   shop.hp5.canBuy,
-                "price":{
-                    "gold":     shop.hp5.price.gold,
-                    "iron":     shop.hp5.price.iron,
-                    "uranium":  shop.hp5.price.uranium
+                {
+                    "pLabel":   "hp5",
+                    "label":    "Small Ship Repair",
+                    "canBuy":   shop.hp5.canBuy,
+                    "price":{
+                        "gold":     shop.hp5.price.gold,
+                        "iron":     shop.hp5.price.iron,
+                        "uranium":  shop.hp5.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
                 },
-                "level":    0,
-                "maxLvl":   0
-            },
-            {
-                "pLabel":   "insurance",
-                "label":    "Purchase Insurance  [lv"+me.stats.insurance+"]",
-                "canBuy":   shop.insurance.canBuy,
-                "price":{
-                    "gold":     shop.insurance.price.gold,
-                    "iron":     shop.insurance.price.iron,
-                    "uranium":  shop.insurance.price.uranium
+                {
+                    "pLabel":   "insurance",
+                    "label":    "Purchase Insurance  [lv"+me.stats.insurance+"]",
+                    "canBuy":   shop.insurance.canBuy,
+                    "price":{
+                        "gold":     shop.insurance.price.gold,
+                        "iron":     shop.insurance.price.iron,
+                        "uranium":  shop.insurance.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
                 },
-                "level":    0,
-                "maxLvl":   0
-            },
-            {
-                "pLabel":   "hpU",
-                "label":    "Upgrade Health",
-                "canBuy":   shop.hpU.canBuy,
-                "price":{
-                    "gold":     shop.hpU.price.gold,
-                    "iron":     shop.hpU.price.iron,
-                    "uranium":  shop.hpU.price.uranium
+                {
+                    "pLabel":   "hpU",
+                    "label":    "Upgrade Health",
+                    "canBuy":   shop.hpU.canBuy,
+                    "price":{
+                        "gold":     shop.hpU.price.gold,
+                        "iron":     shop.hpU.price.iron,
+                        "uranium":  shop.hpU.price.uranium
+                    },
+                    "level":    me.stats.hpUpgrades,
+                    "maxLvl":   me.stats.hpUpgradesMAX
                 },
-                "level":    me.stats.hpUpgrades,
-                "maxLvl":   me.stats.hpUpgradesMAX
-            },
-            {
-                "pLabel":   "enU",
-                "label":    "Upgrade Energy",
-                "canBuy":   shop.enU.canBuy,
-                "price":{
-                    "gold":     shop.enU.price.gold,
-                    "iron":     shop.enU.price.iron,
-                    "uranium":  shop.enU.price.uranium
+                {
+                    "pLabel":   "enU",
+                    "label":    "Upgrade Energy",
+                    "canBuy":   shop.enU.canBuy,
+                    "price":{
+                        "gold":     shop.enU.price.gold,
+                        "iron":     shop.enU.price.iron,
+                        "uranium":  shop.enU.price.uranium
+                    },
+                    "level":    me.stats.energyUpgrades,
+                    "maxLvl":   me.stats.energyUpgradesMAX
                 },
-                "level":    me.stats.energyUpgrades,
-                "maxLvl":   me.stats.energyUpgradesMAX
-            },
-            {
-                "pLabel":   "atkU",
-                "label":    "Upgrade Attack",
-                "canBuy":   shop.atkU.canBuy,
-                "price":{
-                    "gold":     shop.atkU.price.gold,
-                    "iron":     shop.atkU.price.iron,
-                    "uranium":  shop.atkU.price.uranium
+                {
+                    "pLabel":   "atkU",
+                    "label":    "Upgrade Attack",
+                    "canBuy":   shop.atkU.canBuy,
+                    "price":{
+                        "gold":     shop.atkU.price.gold,
+                        "iron":     shop.atkU.price.iron,
+                        "uranium":  shop.atkU.price.uranium
+                    },
+                    "level":    me.stats.attackUpgrades,
+                    "maxLvl":   me.stats.attackUpgradesMAX
                 },
-                "level":    me.stats.attackUpgrades,
-                "maxLvl":   me.stats.attackUpgradesMAX
-            },
-            {
-                "pLabel":   "radU",
-                "label":    "Upgrade Radar",
-                "canBuy":   shop.radU.canBuy,
-                "price":{
-                    "gold":     shop.radU.price.gold,
-                    "iron":     shop.radU.price.iron,
-                    "uranium":  shop.radU.price.uranium
-                },
-                "level":    me.stats.radarUpgrades,
-                "maxLvl":   me.stats.radarUpgradesMAX
-            }
-        ];
-        tabs = [
+                {
+                    "pLabel":   "radU",
+                    "label":    "Upgrade Radar",
+                    "canBuy":   shop.radU.canBuy,
+                    "price":{
+                        "gold":     shop.radU.price.gold,
+                        "iron":     shop.radU.price.iron,
+                        "uranium":  shop.radU.price.uranium
+                    },
+                    "level":    me.stats.radarUpgrades,
+                    "maxLvl":   me.stats.radarUpgradesMAX
+                }
+            ],
             [
                 {
                     "pLabel":   "canU",
@@ -289,20 +288,6 @@ function newData(){
                     },
                     "level":    me.stats.stealthUpgrades,
                     "maxLvl":   me.stats.stealthUpgradesMAX
-                }
-            ],
-            [
-                {
-                    "pLabel":   "scanU",
-                    "label":    "Upgrade Scanner",
-                    "canBuy":   shop.scanU.canBuy,
-                    "price":{
-                        "gold":     shop.scanU.price.gold,
-                        "iron":     shop.scanU.price.iron,
-                        "uranium":  shop.scanU.price.uranium
-                    },
-                    "level":    me.stats.scannerUpgrades,
-                    "maxLvl":   me.stats.scannerUpgradesMAX
                 },
                 {
                     "pLabel":   "engModU",
@@ -403,6 +388,18 @@ function newData(){
                     },
                     "level":    me.stats.urCarryUpgrades,
                     "maxLvl":   me.stats.urCarryUpgradesMAX
+                },
+                {
+                    "pLabel":   "scanU",
+                    "label":    "Upgrade Scanner",
+                    "canBuy":   shop.scanU.canBuy,
+                    "price":{
+                        "gold":     shop.scanU.price.gold,
+                        "iron":     shop.scanU.price.iron,
+                        "uranium":  shop.scanU.price.uranium
+                    },
+                    "level":    me.stats.scannerUpgrades,
+                    "maxLvl":   me.stats.scannerUpgradesMAX
                 },
                 {
                     "pLabel":   "wallU",
@@ -519,6 +516,11 @@ function drawMonitor(ctx, width, height){
         ctx.fillStyle=colors.hudColor;
         ctx.font = "30px Courier";
         ctx.fillText("Enter Name: "+name,width/8+35,height/4+60);
+
+
+        if(openWindow==="settingsView"){
+            drawSettings(ctx, 0, 0, width, height);
+        }
     }
     else if(openWindow === "mapView"){
         drawMap(ctx, 0, 0, width, height, map, baseList, players, me);
@@ -565,6 +567,8 @@ function drawMonitor(ctx, width, height){
 
                     //ROCK HP
                     if(map[cX][cY].hp < map[cX][cY].hpMAX){
+                        ctx.fillStyle= "#000";
+                        ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3-1,y*tileSize+tileSize/2-6,tileSize*.6*(map[cX][cY].hp/map[cX][cY].hpMAX),10);
                         ctx.fillStyle=colors.hpColor;
                         ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2-5,tileSize*.6*(map[cX][cY].hp/map[cX][cY].hpMAX),10);
                     }
@@ -575,6 +579,8 @@ function drawMonitor(ctx, width, height){
 
                     //Wall HP
                     if(map[cX][cY].hp < map[cX][cY].hpMAX){
+                        ctx.fillStyle= "#000";
+                        ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3-1,y*tileSize+tileSize/2-6,tileSize*.6*(map[cX][cY].hp/map[cX][cY].hpMAX),10);
                         ctx.fillStyle=colors.hpColor;
                         ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2-5,tileSize*.6*(map[cX][cY].hp/map[cX][cY].hpMAX),10);
                     }
@@ -590,6 +596,8 @@ function drawMonitor(ctx, width, height){
 
                     //BASE HP
                     if( baseList[map[cX][cY].id].hp <  baseList[map[cX][cY].id].hpMAX){
+                        ctx.fillStyle= "#000";
+                        ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3-1,y*tileSize+tileSize/2-6,tileSize*.6*(baseList[map[cX][cY].id].hp/baseList[map[cX][cY].id].hpMAX),10);
                         ctx.fillStyle = colors.hpColor;
                         ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2-5,tileSize*.6*(baseList[map[cX][cY].id].hp/ baseList[map[cX][cY].id].hpMAX),10);
                     }
@@ -709,7 +717,7 @@ function drawMonitor(ctx, width, height){
             }else if(me.queue[i].type==="BLINK"){
                 actions.push({"type":"BLINK","loc":me.queue[i].location});
                 prevLoc = me.queue[i].location;
-            }else if(me.queue[i].type==="BLINK"){
+            }else if(me.queue[i].type==="WALL"){
                 actions.push({"type":"WALL","loc":me.queue[i].location});
             }else if(me.queue[i].type==="MOVE"){
                 var loc;
@@ -846,12 +854,12 @@ function drawMonitor(ctx, width, height){
         }
 
 
-        //Draw shop Screen
-        if(openWindow === "shopMode" && shop.withinShop==1){
-            drawShopMenu(ctx, 0, 0, width, height, baseStore, me);
+        //Draw Menu Screens
+        if(openWindow==="settingsView"){
+            drawSettings(ctx, 0, 0, width, height);
         }
-        else if(openWindow === "shopMode" && shop.withinShop>1){
-            drawSShopMenu(ctx, 0, 0, width, height, tabs, curShopTab, me);
+        else if(openWindow === "shopMode"){
+            drawShopMenu(ctx, 0, 0, width, height, store, shop.withinShop, me);
         }
         else if(openWindow === "joinTeamMenu"){
             drawJoinTeam(ctx, 0, 0, width, height);
@@ -922,9 +930,6 @@ function drawMonitor(ctx, width, height){
 
     }
 
-    if(openWindow==="settingsView"){
-        drawSettings(ctx, 0, 0, width, height);
-    }
 
     //Draw Version and Author info
     ctx.beginPath();
@@ -992,50 +997,74 @@ function drawSideBar(){
     //Queue Card
     //**************************************************************************
     for(var i = 0; i < me.queue.length; i++){
+        if(mX2 > 40 && mX2 < 260 &&
+           mY2 >i*45+70 && mY2 < i*45+105){
+            mouseHover = i;
+            ctx.globalAlpha = 1.0;
+        }
+        else{
+            ctx.globalAlpha = 0.7;
+        }
+
+
         var text;
         if(me.queue[i].type==="MOVE"){
             ctx.fillStyle = colors.moveColor;
             text = "MOVE "+me.queue[i].direction;
-        }else if(me.queue[i].type==="ATTACK"){
+        }
+        else if(me.queue[i].type==="ATTACK"){
             ctx.fillStyle = colors.attackColor;
             text = "ATTACK ("+me.queue[i].location[0]+", "+me.queue[i].location[1]+")";
-        }else if(me.queue[i].type==="SCAN"){
+        }
+        else if(me.queue[i].type==="SCAN"){
             ctx.fillStyle = colors.scanColor;
             text = "SCAN";
-        }else if(me.queue[i].type==="LOOT"){
+        }
+        else if(me.queue[i].type==="LOOT"){
             ctx.fillStyle = colors.lootColor;
             text = "LOOT";
-        }else if(me.queue[i].type==="HOLD"){
+        }
+        else if(me.queue[i].type==="HOLD"){
             ctx.fillStyle = colors.holdColor;
             text = "HOLD";
-        }else if(me.queue[i].type==="QUICKHEAL"){
+        }
+        else if(me.queue[i].type==="QUICKHEAL"){
             ctx.fillStyle = colors.abilityColor;
             text = "SHIP REPAIR";
-        }else if(me.queue[i].type==="BLINK"){
+        }
+        else if(me.queue[i].type==="BLINK"){
             ctx.fillStyle = colors.abilityColor;
             text = "BLINK ("+me.queue[i].location+")";
-        }else if(me.queue[i].type==="WALL"){
+        }
+        else if(me.queue[i].type==="WALL"){
             ctx.fillStyle = colors.cantBuyColor;
             text = "WALL ("+me.queue[i].location+")";
-        }else if(me.queue[i].type==="ENERGY"){
+        }
+        else if(me.queue[i].type==="ENERGY"){
             ctx.fillStyle = colors.abilityColor;
             text = "ENERGY REGEN";
-        }else if(me.queue[i].type==="STEALTH"){
+        }
+        else if(me.queue[i].type==="STEALTH"){
             ctx.fillStyle = colors.abilityColor;
             text = "STEALTH";
-        }else if(me.queue[i].type==="DESTEALTH"){
+        }
+        else if(me.queue[i].type==="DESTEALTH"){
             ctx.fillStyle = colors.abilityColor;
             text = "DESTEALTH";
-        }else if(me.queue[i].type==="CANNON"){
+        }
+        else if(me.queue[i].type==="CANNON"){
             ctx.fillStyle = colors.abilityColor;
             text = "CANNON "+me.queue[i].location;
-        }else if(me.queue[i].type==="RAILGUN"){
+        }
+        else if(me.queue[i].type==="RAILGUN"){
             ctx.fillStyle = colors.abilityColor;
             text = "RAILGUN "+me.queue[i].direction;
-        }else if(me.queue[i].type==="TRAP"){
+        }
+        else if(me.queue[i].type==="TRAP"){
             ctx.fillStyle = colors.abilityColor;
             text = "TRAP";
         }
+
         ctx.beginPath();
         ctx.fillRect(40,i*45+70,220,35);
         ctx.stroke();
@@ -1046,6 +1075,7 @@ function drawSideBar(){
         ctx.font = "20px Courier";
         ctx.fillText(text,43,i*45+95);
     }
+    ctx.globalAlpha = 1.0;
     for(var i = me.queue.length; i < 3; i++){
         ctx.strokeStyle = colors.hudColor;
         ctx.beginPath();
@@ -1140,27 +1170,51 @@ function drawSideBar(){
         ctx.fillText("IRON : "+me.info.iron+"i ("+me.info.totalIron+"i)",5,sCardHei+120);
         ctx.fillText("URAN : "+me.info.uranium+"u ("+me.info.totalUranium+"u)",5,sCardHei+140);
         ctx.fillText("POWER: "+me.info.powerLevel,5,sCardHei+160);
-        ctx.fillText("KILLS: "+me.info.kills+" | DEATHS  : "+me.info.deaths,5,sCardHei+180);
-        ctx.fillText("SCANS: "+me.info.scans+" | HAULS   : "+me.info.hauls,5,sCardHei+200);
-        ctx.fillText("TRAPS: "+me.info.traps+" | CAPTURES: "+me.info.captures,5,sCardHei+220);
-        ctx.fillText("SAVED: "+(cookie===me.token?"TRUE":"FALSE"),5,sCardHei+240);
+        ctx.fillText("KILLS: "+me.info.kills,5,sCardHei+180);
+        ctx.fillText("| DEATHS  : "+me.info.deaths,120,sCardHei+180);
+        ctx.fillText("SCANS: "+me.info.scans,5,sCardHei+200);
+        ctx.fillText("| HAULS   : "+me.info.hauls,120,sCardHei+200);
+        ctx.fillText("TRAPS: "+me.info.traps,5,sCardHei+220);
+        ctx.fillText("| CAPTURES: "+me.info.captures,120,sCardHei+220);
+        ctx.fillText("WALLS: "+me.info.walls,5,sCardHei+240);
+        ctx.fillText("| PLACED  : "+me.info.wallsPlaced,120,sCardHei+240);
+        // ctx.fillText("SAVED: "+(cookie===me.token?"TRUE":"FALSE"),5,sCardHei+240);
 
         //Toggle Save button
         ctx.font = "24px Courier";
         ctx.beginPath();
         sCardHei = 500;
-        ctx.fillStyle = colors.hudColor;
-        ctx.strokeStyle = colors.hudColor;
-        ctx.fillText("SAVE?",25,sCardHei);
-        ctx.strokeRect(15,sCardHei-25,92,35);
+        if(mX2 < 115 && mX2 > 15 &&
+           mY2 < sCardHei+10 && mY2 > sCardHei-25){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(15,sCardHei-25,100,35);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText((cookie===me.token?"UNSAVE":"SAVE"),25,sCardHei);
+            mouseHover = "SAVE";
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(15,sCardHei-25,100,35);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText((cookie===me.token?"UNSAVE":"SAVE"),25,sCardHei);
+        }
 
         //HUD button
         ctx.beginPath();
-        sCardHei = 500;
-        ctx.fillStyle = colors.hudColor;
-        ctx.strokeStyle = colors.hudColor;
-        ctx.fillText("HUD",220,sCardHei);
-        ctx.strokeRect(195,sCardHei-25,92,35);
+        if(mX2 < 287 && mX2 > 195 &&
+           mY2 < sCardHei+10 && mY2 > sCardHei-25){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(195,sCardHei-25,92,35);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("HUD",220,sCardHei);
+            mouseHover = "HUD";
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(195,sCardHei-25,92,35);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("HUD",220,sCardHei);
+        }
 
     }
     else{
@@ -1229,7 +1283,12 @@ function drawSideBar(){
         if(me.abilitySlots[0].canUse && game.phase==0){
             ctx.fillStyle = colors.hudColor;
             ctx.strokeStyle = colors.hudColor;
-        }else{
+        }
+        else if(!me.abilitySlots[0].canUse && me.abilitySlots[0].type!=="NONE"){
+            ctx.fillStyle = colors.needMoreColor;
+            ctx.strokeStyle = colors.needMoreColor;
+        }
+        else{
             ctx.fillStyle = colors.cantBuyColor;
             ctx.strokeStyle = colors.cantBuyColor;
         }
@@ -1240,9 +1299,13 @@ function drawSideBar(){
         if(me.abilitySlots[0].type!=="NONE") ctx.fillText(me.abilitySlots[0].type,22,sCardHei+50);
 
         //Ability 2
-        if(me.abilitySlots[1].canUse){
+        if(me.abilitySlots[1].canUse && game.phase==0){
             ctx.fillStyle = colors.hudColor;
             ctx.strokeStyle = colors.hudColor;
+        }
+        else if(!me.abilitySlots[1].canUse && me.abilitySlots[0].type!=="NONE"){
+            ctx.fillStyle = colors.needMoreColor;
+            ctx.strokeStyle = colors.needMoreColor;
         }
         else{
             ctx.fillStyle = colors.cantBuyColor;
@@ -1265,9 +1328,13 @@ function drawSideBar(){
         if(me.abilitySlots[1].type!=="NONE") ctx.fillText(me.abilitySlots[1].type,122,sCardHei+50);
 
         //Walls
-        if(me.info.walls>0){
+        if(me.info.walls>0 && game.phase==0){
             ctx.fillStyle = colors.hudColor;
             ctx.strokeStyle = colors.hudColor;
+        }
+        else if(me.info.walls<=0 && me.stats.wall>0){
+            ctx.fillStyle = colors.needMoreColor;
+            ctx.strokeStyle = colors.needMoreColor;
         }
         else{
             ctx.fillStyle = colors.cantBuyColor;
@@ -1317,10 +1384,20 @@ function drawSideBar(){
         //Info button
         ctx.beginPath();
         sCardHei = 500;
-        ctx.fillStyle = colors.hudColor;
-        ctx.strokeStyle = colors.hudColor;
-        ctx.fillText("STATS",205,sCardHei);
-        ctx.strokeRect(195,sCardHei-25,92,35);
+        if(mX2 < 287 && mX2 > 195 &&
+           mY2 < sCardHei+10 && mY2 > sCardHei-25){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(195,sCardHei-25,92,35);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("STATS",205,sCardHei);
+            mouseHover = "STATS";
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(195,sCardHei-25,92,35);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("STATS",205,sCardHei);
+        }
 
     }
 
@@ -1418,6 +1495,7 @@ function handleKeydown(e){
     }
     else if (keyCode == 27 && openWindow==="settingsView"){ //Open Menu (esc)
         openWindow = "";
+        $(".modal").toggle(false);
         drawScreen();
     }
     else if(gameStart){
@@ -1515,39 +1593,13 @@ function handleKeydown(e){
         if(keyCode == 79){  //O or escape
             openWindow = "";
         }
-        if(shop.withinShop==1){
-            for(var i = 0; i < baseStore.length; i++){
-                if(keyCode == 49+i){
-                    makePurchase(me.token,me.id,baseStore[i].pLabel);
-                    break;
+        else if(shop.withinShop>1 && typeof mouseHover.load !== "undefined"){
+            if(mouseHover.load < me.storage.length){
+                if(keyCode == 81){        //Q
+                    changeLoadout(me.token,me.id,0,me.storage[mouseHover.load].name);
+                }else if(keyCode == 69){  //E
+                    changeLoadout(me.token,me.id,1,me.storage[mouseHover.load].name);
                 }
-            }
-        }
-        else if(shop.withinShop>1){
-            if(curShopTab > -1 && curShopTab < 5) //In shop
-                for(var i = 0; i < tabs[curShopTab].length; i++){
-                    if(keyCode == 49+i){
-                        makePurchase(me.token,me.id,tabs[curShopTab][i].pLabel);
-                        break;
-                    }
-                }
-            else{ //In load out
-                var c = document.getElementById("monitor");
-                var startX = c.width/8;
-                var startY = c.height/4;
-                var i;
-                for(i = 0; i < me.storage.length; i++){
-                    if(mX > startX+170+70*(i%6) && mX < startX+170+70*(i%6) + 60 &&
-                       mY > startY+130+70*parseInt(i/6) && mY < startY+130+70*parseInt(i/6)+60){
-                           break;
-                       }
-                }
-                if(i < me.storage.length)
-                    if(keyCode == 81){        //Q
-                        changeLoadout(me.token,me.id,0,me.storage[i].name);
-                    }else if(keyCode == 69){  //E
-                        changeLoadout(me.token,me.id,1,me.storage[i].name);
-                    }
             }
         }
     }
@@ -1561,37 +1613,24 @@ function handleKeydown(e){
 
 function handleMousedown(e){
     var c = document.getElementById("monitor");
+    //Check for return to default click
     if(openWindow === "settingsView"){
+        if (mouseHover === "DEFAULT"){
+            colors = JSON.parse(JSON.stringify(colorsDefault));
+            $("body").css("background-color",colors.hudBackColor);
+            saveColorScheme(colors);
+        }
 
        //Check for color click
-       var i = 1;
-       var hudStart = c.width/6;
-       for(var property in colors){
-           if(colors.hasOwnProperty(property)){
-               if(property!=="timerGradient"){
-                   if(mX >= hudStart+350 && mX <= hudStart+365 && mY >= c.height/8+60+20*i && mY <= (c.height/8+60+20*i+15)){
-                       displayModal(colors[property], function(color){
-                           colors[property] = color.toHexString();
-                           $("body").css("background-color",colors.hudBackColor);
-                           saveColorScheme(colors);
-                           $(".modal").toggle(false);
-                           drawScreen();
-                       });
-                       break;
-                   }
-                   i++;
-               }
-           }
+       else if(mouseHover!=-1){
+           displayModal(colors[mouseHover], function(color){
+               colors[mouseHover] = color.toHexString();
+               $("body").css("background-color",colors.hudBackColor);
+               saveColorScheme(colors);
+               $(".modal").toggle(false);
+               drawScreen();
+           });
        }
-
-       //Check for return to default click
-       i++;
-       if(mX >= hudStart+255 && mX <= hudStart+370 && mY >= c.height/8+60+20*i && mY <= (c.height/8+60+20*i+40)){
-           colors = JSON.parse(JSON.stringify(colorsDefault));
-           $("body").css("background-color",colors.hudBackColor);
-           saveColorScheme(colors);
-       }
-       //    ctx.strokeRect(c.width/4+255,c.height/8+60+20*i+20,115,40);
     }
     else if(confirmDialog>-1){
         if(confirmDialog==0){
@@ -1800,23 +1839,15 @@ function handleMousedown(e){
                 confirmDialog = 8;
             }
     }
-    else if(openWindow === "shopMode" && shop.withinShop>1){
-       //Change tabs
-       var startX = c.width/8;
-       var startY = c.height/4;
-
-       if(mX > c.width-startX && mX < c.width-startX+25){
-           var tHei = 60;
-           for(var i = 0; i < tabs.length+1; i++){
-               if(mY > startY+tHei*i && mY < startY+tHei*i+tHei){
-                   curShopTab = i;
-                   break;
-               }
-           }
+    else if(openWindow === "shopMode"){
+       if(typeof mouseHover.tab !== "undefined"){
+           curShopTab = mouseHover.tab;
        }
-
+       else if(typeof mouseHover.item !== "undefined"){
+           makePurchase(me.token,me.id,mouseHover.item);
+       }
     }
-    else if(openWindow === ""){
+    else if(openWindow === "" && !gameStart){
         var mid = parseInt(me.stats.radar/2);
         var cX = me.loc[0] - (mid-hover[0]);
         var cY = me.loc[1] - (mid-hover[1]);
@@ -1855,7 +1886,7 @@ function handleMousemove(e){
     e.stopPropagation();
     mX = parseInt(e.clientX - offsetX);
     mY = parseInt(e.clientY - offsetY);
-    if(openWindow === "mapView"){
+    if(openWindow !== "mapView"){
         drawScreen();
     }
 }
@@ -1881,17 +1912,6 @@ function handleMouseout2(e){
 }
 
 function handleMousedown2(e){
-    var cX = parseInt(e.clientX - offsetX2);
-    var cY = parseInt(e.clientY - offsetY2);
-
-    for(var i = 0; i < 3; i++){
-        if(cX>=40 && cX<=260 &&
-           cY>=i*45+70 && cY<=i*45+105){
-               removeFromQueue(me.token, me.id, i);
-               console.log(i);
-           }
-    }
-
     if(me.invites.length > 0){
         if(mouseHover==0){
             valueLock = me.invites[0].id;
@@ -1919,21 +1939,17 @@ function handleMousedown2(e){
             declineInvite(me.token, me.id, me.invites[0].id);
         }
     }
-    else if(statInfo){
-        //Save button
-        if(cX > 15 && cX < 107 && cY > 475 && cY < 510){
-            toggleSaving(me.token);
-        }
-        //HUD button
-        if(cX > 195 && cX < 287 && cY > 475 && cY < 510){
-            statInfo = false;
-        }
+    else if(mouseHover > -1){ //Remove from Queu
+        removeFromQueue(me.token, me.id, mouseHover);
     }
-    else{
-        //STAT button
-        if(cX > 195 && cX < 287 && cY > 475 && cY < 510){
-            statInfo = true;
-        }
+    else if(mouseHover === "SAVE"){
+        toggleSaving(me.token);
+    }
+    else if(mouseHover === "STATS"){
+        statInfo = true;
+    }
+    else if(mouseHover === "HUD"){
+        statInfo = false;
     }
 
     autoDCCount = 0;
