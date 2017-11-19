@@ -41,11 +41,12 @@ function requestRespawn(token,id){
     });
 }
 
-function sendChatMsg(token, id, msg){
+function sendChatMsg(token, id, msg, type){
     var dat = {
         "token": token,
         "id": id,
-        "msg": msg
+        "msg": msg,
+        "type": type
     };
 
     $.ajax({
@@ -61,7 +62,7 @@ function sendChatMsg(token, id, msg){
         },
         error: function(xhr, status, error){
             chatMsg = '';
-            chatMode = false;
+            // chatMode = false;
         }
     });
 }

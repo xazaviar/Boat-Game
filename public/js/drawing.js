@@ -44,6 +44,7 @@ var colorsDefault = {
     "timerGradient": false
 };
 var blink = false;
+var chatBlink = true;
 
 //Radar Globals
 var changeRadarAngle = false;
@@ -68,7 +69,10 @@ var teamScroll = 0;
 var curTeamTab = 0;
 var curSettings;
 
+var blScroll = 0
+
 var errorMsg = '';
+var chatMessageType = "ALL";
 
 //PlayerList
 var playerListScroll = 0
@@ -79,6 +83,12 @@ setInterval(function(){
 setInterval(function(){
     changeRadarAngle = true;
 }, 40);
+setInterval(function(){
+    if(chatMode)
+        chatBlink=!chatBlink;
+    else chatBlink = true;
+},200);
+
 
 //*****************************************************************************
 //  Main Drawing functions
@@ -115,6 +125,7 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
 
     for(var x = 0; x < map.length; x++){
         for(var y = 0; y < map.length; y++){
+
             if(map[x][y].baseID > -1){
                 var owner = baseList[map[x][y].baseID].owner;
                 if(typeof mouseHover.baseID!=="undefined"){
@@ -137,7 +148,18 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
                 ctx.stroke();
             }
 
+            //Draw trap area
+            if(map[x][y].trap > -1){
+                ctx.beginPath();
+                ctx.globalAlpha = 0.3;
+                if(me.info.teamID == map[x][y].trap) ctx.fillStyle = colors.hudColor;
+                else ctx.fillStyle = colors.trapColor;
+
+                ctx.fillRect(sX+x*tileSize,sY+y*tileSize,tileSize,tileSize);
+                ctx.stroke();
+            }
             ctx.globalAlpha = 1.0;
+
             if(map[x][y].type==="ROCK"){ //Rocks
                 ctx.beginPath();
                 ctx.fillStyle= colors.rockColor;
@@ -330,6 +352,8 @@ function drawWall(ctx, startX, startY, tileSize, lvl, color){
     ctx.stroke();
 }
 
+
+
 //*****************************************************************************
 //  Action Drawing functions
 //*****************************************************************************
@@ -362,6 +386,7 @@ function drawRadarScan(ctx, startX, startY, width, height){
     }
     ctx.globalAlpha = 1.0;
 }
+
 
 
 //*****************************************************************************
@@ -613,130 +638,6 @@ function drawShopMenu(ctx, startX, startY, width, height, store, lvl, me){
         }
     }
 
-}
-
-function drawSShopMenu(ctx, startX, startY, width, height, tabs, curShopTab, me){
-    var sX = startX+width/8;
-    var sY = startY+height/4;
-    var wid = width-(sX-startX)*2;
-    var hei = height-(sY-startY)*2;
-
-
-    ctx.beginPath();
-    ctx.strokeStyle=colors.hudColor;
-    ctx.fillStyle=colors.hudBackColor;
-    ctx.globalAlpha = 1.0;
-    ctx.strokeRect(sX,sY,wid,hei);
-    ctx.fillRect(sX,sY,wid,hei);
-    ctx.stroke();
-
-
-    //Tab contents
-    //0 - combat
-    //1 - util
-    //3 - static
-    //4 - other
-    //5 - loadout
-
-    ctx.strokeStyle=colors.hudColor;
-    ctx.fillStyle=colors.hudBackColor;
-    ctx.font = "18px Courier";
-    for(var i = 0; i < tabs.length+1; i++){
-        ctx.beginPath();
-        var tHei = 60;//(height/2)/(tabs.length+1);
-        if(i==curShopTab) ctx.fillStyle=colors.hudColor;
-        else ctx.fillStyle=colors.hudBackColor;
-        ctx.strokeRect(sX+wid-1,sY+tHei*i,25,tHei);
-        ctx.fillRect(sX+wid-1,sY+tHei*i,25,tHei);
-
-        if(i==curShopTab) ctx.fillStyle=colors.hudBackColor;
-        else ctx.fillStyle=colors.hudColor;
-        ctx.fillText((i==tabs.length?"LO":"T"+(i+1)),sX+wid-3,sY+35+tHei*i);
-        ctx.stroke();
-    }
-
-    //Draw Shop Tab Contents
-    if(curShopTab < 5 && curShopTab > -1){
-        //Store Labels
-        ctx.fillStyle=colors.hudColor;
-        ctx.font = "40px Courier";
-        ctx.fillText("Special Store",sX+5,sY+45);
-
-        ctx.font = "18px Courier";
-        ctx.fillText("Press the key to do the following",sX+5,sY+85);
-
-        for(var i = 0; i < tabs[curShopTab].length; i++){
-            ctx.beginPath();
-            if(tabs[curShopTab][i].canBuy && !canPurchase(tabs[curShopTab][i].price, {"gold":me.info.gold,"iron":me.info.iron,"uranium":me.info.uranium}) && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[curShopTab][i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
-            else ctx.fillStyle=colors.cantBuyColor;
-            ctx.fillText(" "+(i+1)+": "+tabs[curShopTab][i].label,sX+5,sY+110+i*25);
-            if(tabs[curShopTab][i].canBuy && me.info.gold < tabs[curShopTab][i].price.gold && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[curShopTab][i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
-            ctx.fillText(tabs[curShopTab][i].price.gold+"g",sX+wid-140,sY+110+i*25);
-            if(tabs[curShopTab][i].canBuy && me.info.iron < tabs[curShopTab][i].price.iron && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[curShopTab][i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
-            ctx.fillText(tabs[curShopTab][i].price.iron+"i",sX+wid-68,sY+110+i*25);
-            if(tabs[curShopTab][i].canBuy && me.info.uranium < tabs[curShopTab][i].price.uranium && me.stats.hp > 0) ctx.fillStyle=colors.needMoreColor;
-            else if(tabs[curShopTab][i].canBuy && me.stats.hp > 0) ctx.fillStyle=colors.canBuyColor;
-            ctx.fillText(tabs[curShopTab][i].price.uranium+"u",sX+wid-30,sY+110+i*25);
-
-            //upgrade bars
-            for(var u = 0; u < tabs[curShopTab][i].maxLvl; u++){
-                if(u < tabs[curShopTab][i].level) ctx.fillStyle = colors.upgradeColor;
-                else ctx.fillStyle = colors.voidUpgradeColor;
-                ctx.fillRect(sX+wid-200+u*10,sY+95+i*25,5,20);
-            }
-        }
-    }
-    else if(curShopTab > -1){
-        //Edit Loadout Labels
-        ctx.beginPath();
-        ctx.fillStyle=colors.hudColor;
-        ctx.strokeStyle=colors.hudColor;
-        ctx.font = "40px Courier";
-        ctx.fillText("Loadout",sX+5,sY+45);
-
-        ctx.font = "18px Courier";
-        ctx.fillText("Hover over option and press Q or E to equip item.",sX+5,sY+85);
-
-        //Selection Boxes
-        ctx.font = "22px Courier";
-        ctx.fillText("SLOTS",sX+45,sY+185);
-        ctx.strokeRect(sX+15,sY*2+20,50,50);
-        ctx.strokeRect(sX+90,sY*2+20,50,50);
-        //If not unlocked
-        if(me.stats.loadoutSize < 2){
-            ctx.beginPath();
-            ctx.moveTo(sX+90,sY*2+20);
-            ctx.lineTo(sX+140,sY*2+70);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(sX+140,sY*2+20);
-            ctx.lineTo(sX+90,sY*2+70);
-            ctx.stroke();
-        }
-        ctx.fillText("Q",sX+35,sY*2+90);
-        ctx.fillText("E",sX+107,sY*2+90);
-        ctx.font = "18px Courier";
-        if(me.abilitySlots[0].type!=="NONE") ctx.fillText(me.abilitySlots[0].type,sX+17,sY*2+50);
-        if(me.abilitySlots[1].type!=="NONE") ctx.fillText(me.abilitySlots[1].type,sX+92,sY*2+50);
-
-        ctx.stroke();
-
-        //line
-        ctx.beginPath();
-        ctx.moveTo(sX+150,sY+120);
-        ctx.lineTo(sX+150,sY+height/2);
-        ctx.stroke();
-
-        //Options
-        ctx.font = "22px Courier";
-        for(var i = 0; i < me.storage.length; i++){
-            ctx.strokeRect(sX+170+70*(i%6),sY+130+70*parseInt(i/6),60,60);
-            ctx.fillText(me.storage[i].name,sX+170+70*(i%6)+3,sY+130+70*parseInt(i/6)+35);
-        }
-    }
 }
 
 function drawJoinTeam(ctx, startX, startY, width, height){
@@ -1923,6 +1824,508 @@ function drawConfirmDialog(ctx, startX, startY, width, height){
     }
 
 }
+
+function drawActionQueue(ctx, startX, startY, width, height, me){
+    //Calculate Drawing Area
+    var sX = startX;
+    var sY = startY;
+    var wid = width;
+    var hei = height;
+
+    ctx.beginPath();
+    ctx.fillStyle=colors.hudColor;
+    ctx.font = "30px Courier";
+    ctx.fillText("Action Queue",40,45);
+
+    //Queue Card
+    //**************************************************************************
+    for(var i = 0; i < me.queue.length; i++){
+        if(mX2 > 40 && mX2 < 260 &&
+           mY2 >i*45+70 && mY2 < i*45+105){
+            mouseHover = i;
+            ctx.globalAlpha = 1.0;
+        }
+        else{
+            ctx.globalAlpha = 0.7;
+        }
+
+
+        var text;
+        if(me.queue[i].type==="MOVE"){
+            ctx.fillStyle = colors.moveColor;
+            text = "MOVE "+me.queue[i].direction;
+        }
+        else if(me.queue[i].type==="ATTACK"){
+            ctx.fillStyle = colors.attackColor;
+            text = "ATTACK ("+me.queue[i].location[0]+", "+me.queue[i].location[1]+")";
+        }
+        else if(me.queue[i].type==="SCAN"){
+            ctx.fillStyle = colors.scanColor;
+            text = "SCAN";
+        }
+        else if(me.queue[i].type==="LOOT"){
+            ctx.fillStyle = colors.lootColor;
+            text = "LOOT";
+        }
+        else if(me.queue[i].type==="HOLD"){
+            ctx.fillStyle = colors.holdColor;
+            text = "HOLD";
+        }
+        else if(me.queue[i].type==="QUICKHEAL"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "SHIP REPAIR";
+        }
+        else if(me.queue[i].type==="BLINK"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "BLINK ("+me.queue[i].location+")";
+        }
+        else if(me.queue[i].type==="WALL"){
+            ctx.fillStyle = colors.cantBuyColor;
+            text = "WALL ("+me.queue[i].location+")";
+        }
+        else if(me.queue[i].type==="ENERGY"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "ENERGY REGEN";
+        }
+        else if(me.queue[i].type==="STEALTH"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "STEALTH";
+        }
+        else if(me.queue[i].type==="DESTEALTH"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "DESTEALTH";
+        }
+        else if(me.queue[i].type==="CANNON"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "CANNON "+me.queue[i].location;
+        }
+        else if(me.queue[i].type==="RAILGUN"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "RAILGUN "+me.queue[i].direction;
+        }
+        else if(me.queue[i].type==="TRAP"){
+            ctx.fillStyle = colors.abilityColor;
+            text = "TRAP";
+        }
+
+        ctx.beginPath();
+        ctx.fillRect(40,i*45+70,220,35);
+        ctx.stroke();
+
+        //Queue Action
+        ctx.beginPath();
+        ctx.fillStyle = colors.actionTextColor;
+        ctx.font = "20px Courier";
+        ctx.fillText(text,43,i*45+95);
+    }
+    ctx.globalAlpha = 1.0;
+    for(var i = me.queue.length; i < 3; i++){
+        ctx.strokeStyle = colors.hudColor;
+        ctx.beginPath();
+        ctx.strokeRect(40,i*45+70,220,35);
+        ctx.stroke();
+    }
+
+}
+
+function drawStatsCard(ctx, startX, startY, width, height, me){
+    //Calculate Drawing Area
+    var sX = startX;
+    var sY = startY;
+    var wid = width;
+    var hei = height;
+
+
+    ctx.strokeStyle = colors.hudColor;
+    ctx.beginPath();
+    ctx.strokeRect(0,sY,wid,hei);
+    ctx.stroke();
+    if(me.invites.length > 0){
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText(players[me.invites[0].invID].name,25,sY+25);
+        ctx.fillText("has invited you to join",25,sY+45);
+        ctx.fillText(teamList[me.invites[0].id].name+".",25,sY+65);
+        ctx.beginPath();
+        ctx.globalAlpha = 1.0;
+        ctx.font = "20px Courier";
+
+        //Accept
+        if(mX2 < 125 && mX2 > 25 &&
+           mY2 < sY+130 && mY2 > sY+100){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(25,sY+100,100,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("ACCEPT",30,sY+120);
+            mouseHover = 0;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(25,sY+100,100,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("ACCEPT",30,sY+120);
+        }
+
+        //Decline
+        if(mX2 < wid-25 && mX2 > wid-125 &&
+           mY2 < sY+130 && mY2 > sY+100){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(wid-125,sY+100,100,30);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("DECLINE",wid-120,sY+120);
+            mouseHover = 1;
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(wid-125,sY+100,100,30);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("DECLINE",wid-120,sY+120);
+        }
+    }
+    else if(openWindow==="shopMode"){
+        //Named Stats
+        ctx.beginPath();
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "40px Courier";
+        ctx.fillText("GOLD: ",5,sY+40);
+        ctx.fillStyle = colors.goldColor;
+        ctx.fillText(me.info.gold+"g",25,sY+85);
+        ctx.fillStyle = colors.hudColor;
+        ctx.fillText("IRON: ",5,sY+130);
+        ctx.fillStyle = colors.ironColor;
+        ctx.fillText(+me.info.iron+"i",25,sY+175);
+        ctx.fillStyle = colors.hudColor;
+        ctx.fillText("URANIUM: ",5,sY+220);
+        ctx.fillStyle = colors.uraniumColor;
+        ctx.fillText(me.info.uranium+"u/"+me.stats.urCarry+"u",25,sY+265);
+    }
+    else if(statInfo){
+        var cookie = getCookie("token");
+        //Named Stats
+        ctx.beginPath();
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "18px Courier";
+        ctx.fillText("NAME : "+me.info.name,5,sY+20);
+        if(me.info.teamID>-1){
+            ctx.fillText("TEAM : "+teamList[me.info.teamID].name,5,sY+40);
+            ctx.fillText("ROLE : "+me.info.teamRole,5,sY+60);
+        }
+        else{
+            ctx.fillText("TEAM : N/A",5,sY+40);
+            ctx.fillText("ROLE : N/A",5,sY+60);
+        }
+        ctx.fillText("LOC  : ("+me.loc[0]+", "+me.loc[1]+")",5,sY+80);
+        ctx.fillText("GOLD : "+me.info.gold+"g ("+me.info.totalGold+"g)",5,sY+100);
+        ctx.fillText("IRON : "+me.info.iron+"i ("+me.info.totalIron+"i)",5,sY+120);
+        ctx.fillText("URAN : "+me.info.uranium+"u ("+me.info.totalUranium+"u)",5,sY+140);
+        ctx.fillText("POWER: "+me.info.powerLevel,5,sY+160);
+        ctx.fillText("KILLS: "+me.info.kills,5,sY+180);
+        ctx.fillText("| DEATHS  : "+me.info.deaths,120,sY+180);
+        ctx.fillText("SCANS: "+me.info.scans,5,sY+200);
+        ctx.fillText("| HAULS   : "+me.info.hauls,120,sY+200);
+        ctx.fillText("TRAPS: "+me.info.traps,5,sY+220);
+        ctx.fillText("| CAPTURES: "+me.info.captures,120,sY+220);
+        ctx.fillText("WALLS: "+me.info.walls,5,sY+240);
+        ctx.fillText("| PLACED  : "+me.info.wallsPlaced,120,sY+240);
+        // ctx.fillText("SAVED: "+(cookie===me.token?"TRUE":"FALSE"),5,sY+240);
+
+        //Toggle Save button
+        ctx.font = "24px Courier";
+        ctx.beginPath();
+        sY += 280;
+        if(mX2 < 115 && mX2 > 15 &&
+           mY2 < sY+10 && mY2 > sY-25){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(15,sY-25,100,35);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText((cookie===me.token?"UNSAVE":"SAVE"),25,sY);
+            mouseHover = "SAVE";
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(15,sY-25,100,35);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText((cookie===me.token?"UNSAVE":"SAVE"),25,sY);
+        }
+
+        //HUD button
+        ctx.beginPath();
+        if(mX2 < 287 && mX2 > 195 &&
+           mY2 < sY+10 && mY2 > sY-25){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(195,sY-25,92,35);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("HUD",220,sY);
+            mouseHover = "HUD";
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(195,sY-25,92,35);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("HUD",220,sY);
+        }
+
+    }
+    else{
+        //Named Stats
+        ctx.beginPath();
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "20px Courier";
+        ctx.fillText("LOC : ("+me.loc[0]+", "+me.loc[1]+")",5,sY+30);
+
+        //insured tag
+        ctx.font = "18px Courier";
+        ctx.beginPath();
+        sY = 249;
+        if(me.info.hasInsurance){
+            ctx.fillStyle = colors.hudColor;
+            ctx.strokeStyle = colors.hudColor;
+            ctx.fillText("INSURED",195,sY);
+        }
+        else{
+            ctx.fillStyle = colors.needMoreColor;
+            ctx.strokeStyle = colors.needMoreColor;
+            ctx.fillText("UNINSURED",185,sY);
+        }
+        ctx.strokeRect(180,sY-17,107,25);
+
+        //Upgradable Stats
+        ctx.font = "20px Courier";
+        ctx.fillStyle = colors.hudColor;
+        ctx.strokeStyle = colors.hudColor;
+        sY = 120;
+        //HP and PWR
+        ctx.beginPath();
+        ctx.fillText("HP  ",5,sY+162);
+        ctx.fillText("ENG ",5,sY+202);
+        ctx.fillText("UR  ",5,sY+242);
+        ctx.fillStyle = colors.hpColor;
+        ctx.fillRect(60,sY+145,220*(me.stats.hp/me.stats.hpMAX),20);
+        for(var i = 0; i < me.stats.hpUpgradesMAX; i++){
+            if(i < me.stats.hpUpgrades) ctx.fillStyle = colors.upgradeColor;
+            else ctx.fillStyle = colors.voidUpgradeColor;
+            ctx.fillRect(60+i*(220/me.stats.hpUpgradesMAX),sY+167,(220/me.stats.hpUpgradesMAX)-5,5);
+        }
+        ctx.fillStyle = colors.energyColor;
+        ctx.fillRect(60,sY+185,220*(me.stats.energy/me.stats.energyMAX),20);
+        for(var i = 0; i < me.stats.energyUpgradesMAX; i++){
+            if(i < me.stats.energyUpgrades) ctx.fillStyle = colors.upgradeColor;
+            else ctx.fillStyle = colors.voidUpgradeColor;
+            ctx.fillRect(60+i*45,sY+207,40,5);
+        }
+        for(var i = 0; i < me.stats.urCarry; i++){
+            if(i < me.info.uranium) ctx.fillStyle = colors.uraniumColor;
+            else ctx.fillStyle = "#070707";
+            ctx.fillRect(60+i*(220/me.stats.urCarry),sY+225,(220/me.stats.urCarry)-3,20);
+        }
+        ctx.fillStyle = colors.uraniumColor;
+        for(var i = 0; i < me.stats.urCarryUpgradesMAX; i++){
+            if(i < me.stats.urCarryUpgrades) ctx.fillStyle = colors.upgradeColor;
+            else ctx.fillStyle = colors.voidUpgradeColor;
+            ctx.fillRect(60+i*(220/me.stats.urCarryUpgradesMAX),sY+247,(220/me.stats.urCarryUpgradesMAX)-3,5);
+        }
+
+        //Ability Boxes
+        //Ability 1
+        ctx.beginPath();
+        sY = 370;
+
+        if(game.phase != 0 || noUseMod(me.abilitySlots[0].type)){
+            ctx.fillStyle = colors.cantBuyColor;
+            ctx.strokeStyle = colors.cantBuyColor;
+        }
+        else if(me.abilitySlots[0].canUse){
+            ctx.fillStyle = colors.hudColor;
+            ctx.strokeStyle = colors.hudColor;
+        }
+        else{
+            ctx.fillStyle = colors.needMoreColor;
+            ctx.strokeStyle = colors.needMoreColor;
+        }
+        ctx.strokeRect(20,sY+20,50,50);
+        ctx.font = "22px Courier";
+        ctx.fillText("Q",39,sY+90);
+        ctx.font = "18px Courier";
+        if(me.abilitySlots[0].type!=="NONE") ctx.fillText(me.abilitySlots[0].type,22,sY+50);
+
+        //Ability 2
+        if(game.phase != 0 || noUseMod(me.abilitySlots[1].type)){
+            ctx.fillStyle = colors.cantBuyColor;
+            ctx.strokeStyle = colors.cantBuyColor;
+        }
+        else if(me.abilitySlots[1].canUse){
+            ctx.fillStyle = colors.hudColor;
+            ctx.strokeStyle = colors.hudColor;
+        }
+        else{
+            ctx.fillStyle = colors.needMoreColor;
+            ctx.strokeStyle = colors.needMoreColor;
+        }
+        ctx.strokeRect(120,sY+20,50,50);
+        if(me.stats.loadoutSize < 2){//If not unlocked
+            ctx.beginPath();
+            ctx.moveTo(120,sY+20);
+            ctx.lineTo(170,sY+70);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(170,sY+20);
+            ctx.lineTo(120,sY+70);
+            ctx.stroke();
+        }
+        ctx.font = "22px Courier";
+        ctx.fillText("E",139,sY+90);
+        ctx.font = "18px Courier";
+        if(me.abilitySlots[1].type!=="NONE") ctx.fillText(me.abilitySlots[1].type,122,sY+50);
+
+        //Walls
+        if(game.phase != 0 || me.stats.wall<1){
+            ctx.fillStyle = colors.cantBuyColor;
+            ctx.strokeStyle = colors.cantBuyColor;
+        }
+        else if(me.info.walls>0){
+            ctx.fillStyle = colors.hudColor;
+            ctx.strokeStyle = colors.hudColor;
+        }
+        else{
+            ctx.fillStyle = colors.needMoreColor;
+            ctx.strokeStyle = colors.needMoreColor;
+        }
+        ctx.strokeRect(220,sY+20,50,50);
+        ctx.font = "18px Courier";
+        ctx.fillText("WALL",222,sY+40);
+        ctx.fillText(me.info.walls,235,sY+60);
+        if(me.stats.wall < 1){//If not unlocked
+            ctx.beginPath();
+            ctx.moveTo(220,sY+20);
+            ctx.lineTo(270,sY+70);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(270,sY+20);
+            ctx.lineTo(220,sY+70);
+            ctx.stroke();
+        }
+        ctx.font = "22px Courier";
+        ctx.fillText("R",239,sY+90);
+
+        //Mode
+        sY = 500;
+        ctx.beginPath();
+        ctx.font = "24px Courier";
+        if(me.info.trapped>0){ //Trapped
+            ctx.fillStyle=colors.trapColor;
+            ctx.fillText("TRAPPED",5,sY);
+
+        }
+        else if(me.info.stealthTime>0){ //stealthed
+            ctx.fillStyle=colors.hudColor;
+            ctx.fillText("STEALTHED",5,sY);
+
+        }
+        else if(me.info.inCombat>0){ //Combat
+            ctx.fillStyle=colors.enemyColor;
+            ctx.fillText("IN COMBAT",5,sY);
+
+        }
+        else{ //Exploring
+            ctx.fillStyle=colors.uraniumColor;
+            ctx.fillText("EXPLORING",5,sY);
+        }
+
+        //Info button
+        ctx.beginPath();
+        sY = 500;
+        if(mX2 < 287 && mX2 > 195 &&
+           mY2 < sY+10 && mY2 > sY-25){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(195,sY-25,92,35);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("STATS",205,sY);
+            mouseHover = "STATS";
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(195,sY-25,92,35);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("STATS",205,sY);
+        }
+
+    }
+
+
+}
+
+function drawChatLog(ctx, startX, startY, width, height, me){
+    //Calculate Drawing Area
+    var sX = startX;
+    var sY = startY;
+    var wid = width;
+    var hei = height;
+
+    ctx.strokeStyle = colors.hudColor;
+    ctx.beginPath();
+    ctx.strokeRect(0,sY,wid,hei);
+    ctx.stroke();
+
+    if(mX2 < wid && mX2 > 0 &&
+       mY2 < sY+hei && mY2 > sY){
+        mouseHover = {"overBattlelog": true};
+    }
+
+    ctx.beginPath();
+    ctx.fillStyle = colors.hudColor;
+
+    var adjLog = adjustedBattleLog(battleLog, 8.9, wid-5); //11pt ~= 15px
+
+    //Draw Scrollbar
+    var listSize = 26;
+    if(blScroll > adjLog.length || adjLog.length <= listSize) blScroll = 0;
+    else if(blScroll > adjLog.length-listSize && adjLog.length > listSize) blScroll = adjLog.length-listSize;
+
+    if(adjLog.length > listSize){
+        ctx.beginPath();
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = colors.hudColor;
+        var maxHei = hei-565;
+        ctx.fillRect(sX+wid-6,sY+15, 3, maxHei);
+        ctx.globalAlpha = 1.0;
+        var barsize = (listSize/adjLog.length)*(maxHei);
+        ctx.fillRect(sX+wid-7,sY+15+(maxHei-barsize)-blScroll*(maxHei-barsize)/(adjLog.length-listSize),5,barsize);
+    }
+
+
+    sY = 540;
+    ctx.font = "11pt Courier";
+
+    var drawAmount = Math.min(adjLog.length, listSize);
+    for(var i = blScroll, yAdj = 0; yAdj < drawAmount && i < adjLog.length; i++, yAdj++){
+        if(adjLog[i].type==="combat")        ctx.fillStyle = colors.enemyColor;
+        else if(adjLog[i].type==="server")   ctx.fillStyle = "#FFa500";
+        else if(adjLog[i].type==="chat")     ctx.fillStyle = colors.hudColor;
+        else if(adjLog[i].type==="tchat")    ctx.fillStyle = "#AA00FF";
+        else if(adjLog[i].type==="loot")     ctx.fillStyle = "#FFFF00";
+        else if(adjLog[i].type==="action")   ctx.fillStyle = colors.cantBuyColor;
+        else if(adjLog[i].type==="purchase") ctx.fillStyle = "#FFFF00";
+        else if(adjLog[i].type==="team")     ctx.fillStyle = "#900090";
+
+        ctx.fillText(adjLog[i].msg, 3, hei-30-yAdj*15);
+    }
+
+
+    //User chat input
+    var chat = "[ALL]: ";
+    if(chatMessageType==="TEAM"){
+        ctx.fillStyle = "#BB00EE";
+        chat = "[TEAM]: ";
+    }
+    else ctx.fillStyle = colors.hudColor
+    ctx.strokeRect(0,hei-25,wid,hei);
+    var start = (chatMsg.length>24?chatMsg.length-24:0);
+    var fullMsg = chat+chatMsg.substring(start,start+Math.min(chatMsg.length,26));
+    ctx.fillText(fullMsg,3,hei-10);
+    if(chatBlink)
+        ctx.fillRect(Math.min((fullMsg.length)*8.8+4,286),hei-20,2,15);
+}
+
 
 
 //*****************************************************************************

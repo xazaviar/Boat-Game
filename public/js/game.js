@@ -1,7 +1,6 @@
 var mX2, mY2;
 var hover = [-1,-1];
 var gameStart = true;
-var chatBlink = true;
 var store;
 var statInfo = false;
 var saveOnStartup = false;
@@ -41,7 +40,6 @@ setTimeout(function() {
     else colors = colorsDefault;
     $("body").css("background-color",colors.hudBackColor);
 
-    setInterval(function(){if(chatMode){chatBlink=!chatBlink;} },200);
 
     $("#color-picker1").hexColorPicker({
         "container":"dialog",
@@ -448,6 +446,30 @@ function newData(){
                     },
                     "level":    0,
                     "maxLvl":   0
+                },
+                {
+                    "pLabel":   "wall5",
+                    "label":    "Purchase 5 Walls.",
+                    "canBuy":   shop.wall5.canBuy,
+                    "price":{
+                        "gold":     shop.wall5.price.gold,
+                        "iron":     shop.wall5.price.iron,
+                        "uranium":  shop.wall5.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
+                },
+                {
+                    "pLabel":   "wall10",
+                    "label":    "Purchase 10 Walls.",
+                    "canBuy":   shop.wall10.canBuy,
+                    "price":{
+                        "gold":     shop.wall10.price.gold,
+                        "iron":     shop.wall10.price.iron,
+                        "uranium":  shop.wall10.price.uranium
+                    },
+                    "level":    0,
+                    "maxLvl":   0
                 }
             ]
         ];
@@ -544,6 +566,7 @@ function drawMonitor(ctx, width, height){
                 if(cX >= map.length) cX -= map.length;
                 if(cY >= map.length) cY -= map.length;
 
+                //Draw base area
                 if(map[cX][cY].baseID > -1){
                     var owner = baseList[map[cX][cY].baseID].owner;
                     ctx.globalAlpha = 0.3;
@@ -554,6 +577,18 @@ function drawMonitor(ctx, width, height){
                     }else{
                         ctx.fillStyle = "#666";
                     }
+                    ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1.0;
+
+                //Draw trap area
+                if(map[cX][cY].trap > -1){
+                    ctx.beginPath();
+                    ctx.globalAlpha = 0.3;
+                    if(me.info.teamID == map[cX][cY].trap) ctx.fillStyle = colors.hudColor;
+                    else ctx.fillStyle = colors.trapColor;
+
                     ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
                     ctx.stroke();
                 }
@@ -610,6 +645,7 @@ function drawMonitor(ctx, width, height){
 
                 }
                 else if(map[cX][cY].type==="PLAYER" && !(me.loc[0]==cX && me.loc[1]==cY)){ //Players
+                    ctx.beginPath();
                     var pid = map[cX][cY].id;
                     if(players[pid].team==me.info.teamID){
                         ctx.fillStyle=colors.hudColor;
@@ -662,28 +698,26 @@ function drawMonitor(ctx, width, height){
         }
 
         //Draw Known Traps
-        for(var tr in me.knownTraps){
-            var range = me.stats.radar;
-            var t = parseInt(range/2);
-            var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
-            var cX = (me.knownTraps[tr].loc[0] + xAdj)%map.length, cY = (me.knownTraps[tr].loc[1] + yAdj)%map.length;
-
-            // if(cX<0)cX+=map.length;
-            // if(cY<0)cY+=map.length;
-
-            //Draw Zone
-            ctx.beginPath();
-            ctx.globalAlpha = 0.3;
-            if(me.knownTraps[tr].owned) ctx.fillStyle = colors.hudColor;
-            else ctx.fillStyle = colors.trapColor;
-
-            if(me.knownTraps[tr].lvl==1)
-                ctx.fillRect(cX*tileSize, cY*tileSize, 2*tileSize, 2*tileSize);
-            else
-                ctx.fillRect(cX*tileSize-tileSize, cY*tileSize-tileSize, 3*tileSize, 3*tileSize);
-            ctx.fill();
-            ctx.globalAlpha = 1.0;
-        }
+        // for(var tr in me.knownTraps){
+        //     var range = me.stats.radar;
+        //     var t = parseInt(range/2);
+        //     var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
+        //     var cX = (me.knownTraps[tr].loc[0] + xAdj)%map.length, cY = (me.knownTraps[tr].loc[1] + yAdj)%map.length;
+        //
+        //     // if(cX<0)cX+=map.length;
+        //     // if(cY<0)cY+=map.length;
+        //
+        //     //Draw Zone
+        //     ctx.beginPath();
+        //     ctx.globalAlpha = 0.3;
+        //
+        //     if(me.knownTraps[tr].lvl==1)
+        //         ctx.fillRect(cX*tileSize, cY*tileSize, 2*tileSize, 2*tileSize);
+        //     else
+        //         ctx.fillRect(cX*tileSize-tileSize, cY*tileSize-tileSize, 3*tileSize, 3*tileSize);
+        //     ctx.fill();
+        //     ctx.globalAlpha = 1.0;
+        // }
 
         //Draw enemy Attacks
         ctx.fillStyle = colors.attackColor;
@@ -989,471 +1023,17 @@ function drawSideBar(){
     ctx.strokeRect(0,0,c.width,c.height);
 
     //Queue
-    ctx.beginPath();
-    ctx.fillStyle=colors.hudColor;
-    ctx.font = "30px Courier";
-    ctx.fillText("Action Queue",40,45);
-
-    //Queue Card
     //**************************************************************************
-    for(var i = 0; i < me.queue.length; i++){
-        if(mX2 > 40 && mX2 < 260 &&
-           mY2 >i*45+70 && mY2 < i*45+105){
-            mouseHover = i;
-            ctx.globalAlpha = 1.0;
-        }
-        else{
-            ctx.globalAlpha = 0.7;
-        }
-
-
-        var text;
-        if(me.queue[i].type==="MOVE"){
-            ctx.fillStyle = colors.moveColor;
-            text = "MOVE "+me.queue[i].direction;
-        }
-        else if(me.queue[i].type==="ATTACK"){
-            ctx.fillStyle = colors.attackColor;
-            text = "ATTACK ("+me.queue[i].location[0]+", "+me.queue[i].location[1]+")";
-        }
-        else if(me.queue[i].type==="SCAN"){
-            ctx.fillStyle = colors.scanColor;
-            text = "SCAN";
-        }
-        else if(me.queue[i].type==="LOOT"){
-            ctx.fillStyle = colors.lootColor;
-            text = "LOOT";
-        }
-        else if(me.queue[i].type==="HOLD"){
-            ctx.fillStyle = colors.holdColor;
-            text = "HOLD";
-        }
-        else if(me.queue[i].type==="QUICKHEAL"){
-            ctx.fillStyle = colors.abilityColor;
-            text = "SHIP REPAIR";
-        }
-        else if(me.queue[i].type==="BLINK"){
-            ctx.fillStyle = colors.abilityColor;
-            text = "BLINK ("+me.queue[i].location+")";
-        }
-        else if(me.queue[i].type==="WALL"){
-            ctx.fillStyle = colors.cantBuyColor;
-            text = "WALL ("+me.queue[i].location+")";
-        }
-        else if(me.queue[i].type==="ENERGY"){
-            ctx.fillStyle = colors.abilityColor;
-            text = "ENERGY REGEN";
-        }
-        else if(me.queue[i].type==="STEALTH"){
-            ctx.fillStyle = colors.abilityColor;
-            text = "STEALTH";
-        }
-        else if(me.queue[i].type==="DESTEALTH"){
-            ctx.fillStyle = colors.abilityColor;
-            text = "DESTEALTH";
-        }
-        else if(me.queue[i].type==="CANNON"){
-            ctx.fillStyle = colors.abilityColor;
-            text = "CANNON "+me.queue[i].location;
-        }
-        else if(me.queue[i].type==="RAILGUN"){
-            ctx.fillStyle = colors.abilityColor;
-            text = "RAILGUN "+me.queue[i].direction;
-        }
-        else if(me.queue[i].type==="TRAP"){
-            ctx.fillStyle = colors.abilityColor;
-            text = "TRAP";
-        }
-
-        ctx.beginPath();
-        ctx.fillRect(40,i*45+70,220,35);
-        ctx.stroke();
-
-        //Queue Action
-        ctx.beginPath();
-        ctx.fillStyle = colors.actionTextColor;
-        ctx.font = "20px Courier";
-        ctx.fillText(text,43,i*45+95);
-    }
-    ctx.globalAlpha = 1.0;
-    for(var i = me.queue.length; i < 3; i++){
-        ctx.strokeStyle = colors.hudColor;
-        ctx.beginPath();
-        ctx.strokeRect(40,i*45+70,220,35);
-        ctx.stroke();
-    }
-
+    drawActionQueue(ctx, 0, 0, c.width, c.height, me)
 
     //Stats Card
     //**************************************************************************
-    var sCardHei = 220;
-    ctx.strokeStyle = colors.hudColor;
-    ctx.beginPath();
-    ctx.strokeRect(0,sCardHei,c.width,c.height);
-    ctx.stroke();
-    if(me.invites.length > 0){
-        ctx.fillStyle = colors.hudColor;
-        ctx.font = "18px Courier";
-        ctx.fillText(players[me.invites[0].invID].name,25,sCardHei+25);
-        ctx.fillText("has invited you to join",25,sCardHei+45);
-        ctx.fillText(teamList[me.invites[0].id].name+".",25,sCardHei+65);
-        ctx.beginPath();
-        ctx.globalAlpha = 1.0;
-        ctx.font = "20px Courier";
-
-        //Accept
-        if(mX2 < 125 && mX2 > 25 &&
-           mY2 < sCardHei+130 && mY2 > sCardHei+100){
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillRect(25,sCardHei+100,100,30);
-            ctx.fillStyle = colors.hudBackColor;
-            ctx.fillText("ACCEPT",30,sCardHei+120);
-            mouseHover = 0;
-        }
-        else{
-            ctx.strokeStyle = colors.hudColor;
-            ctx.strokeRect(25,sCardHei+100,100,30);
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillText("ACCEPT",30,sCardHei+120);
-        }
-
-        //Decline
-        if(mX2 < c.width-25 && mX2 > c.width-125 &&
-           mY2 < sCardHei+130 && mY2 > sCardHei+100){
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillRect(c.width-125,sCardHei+100,100,30);
-            ctx.fillStyle = colors.hudBackColor;
-            ctx.fillText("DECLINE",c.width-120,sCardHei+120);
-            mouseHover = 1;
-        }
-        else{
-            ctx.strokeStyle = colors.hudColor;
-            ctx.strokeRect(c.width-125,sCardHei+100,100,30);
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillText("DECLINE",c.width-120,sCardHei+120);
-        }
-    }
-    else if(openWindow==="shopMode"){
-        //Named Stats
-        ctx.beginPath();
-        ctx.fillStyle = colors.hudColor;
-        ctx.font = "40px Courier";
-        ctx.fillText("GOLD: ",5,sCardHei+40);
-        ctx.fillStyle = colors.goldColor;
-        ctx.fillText(me.info.gold+"g",25,sCardHei+85);
-        ctx.fillStyle = colors.hudColor;
-        ctx.fillText("IRON: ",5,sCardHei+130);
-        ctx.fillStyle = colors.ironColor;
-        ctx.fillText(+me.info.iron+"i",25,sCardHei+175);
-        ctx.fillStyle = colors.hudColor;
-        ctx.fillText("URANIUM: ",5,sCardHei+220);
-        ctx.fillStyle = colors.uraniumColor;
-        ctx.fillText(me.info.uranium+"u/"+me.stats.urCarry+"u",25,sCardHei+265);
-    }
-    else if(statInfo){
-        var cookie = getCookie("token");
-        //Named Stats
-        ctx.beginPath();
-        ctx.fillStyle = colors.hudColor;
-        ctx.font = "18px Courier";
-        ctx.fillText("NAME : "+me.info.name,5,sCardHei+20);
-        if(me.info.teamID>-1){
-            ctx.fillText("TEAM : "+teamList[me.info.teamID].name,5,sCardHei+40);
-            ctx.fillText("ROLE : "+me.info.teamRole,5,sCardHei+60);
-        }
-        else{
-            ctx.fillText("TEAM : N/A",5,sCardHei+40);
-            ctx.fillText("ROLE : N/A",5,sCardHei+60);
-        }
-        ctx.fillText("LOC  : ("+me.loc[0]+", "+me.loc[1]+")",5,sCardHei+80);
-        ctx.fillText("GOLD : "+me.info.gold+"g ("+me.info.totalGold+"g)",5,sCardHei+100);
-        ctx.fillText("IRON : "+me.info.iron+"i ("+me.info.totalIron+"i)",5,sCardHei+120);
-        ctx.fillText("URAN : "+me.info.uranium+"u ("+me.info.totalUranium+"u)",5,sCardHei+140);
-        ctx.fillText("POWER: "+me.info.powerLevel,5,sCardHei+160);
-        ctx.fillText("KILLS: "+me.info.kills,5,sCardHei+180);
-        ctx.fillText("| DEATHS  : "+me.info.deaths,120,sCardHei+180);
-        ctx.fillText("SCANS: "+me.info.scans,5,sCardHei+200);
-        ctx.fillText("| HAULS   : "+me.info.hauls,120,sCardHei+200);
-        ctx.fillText("TRAPS: "+me.info.traps,5,sCardHei+220);
-        ctx.fillText("| CAPTURES: "+me.info.captures,120,sCardHei+220);
-        ctx.fillText("WALLS: "+me.info.walls,5,sCardHei+240);
-        ctx.fillText("| PLACED  : "+me.info.wallsPlaced,120,sCardHei+240);
-        // ctx.fillText("SAVED: "+(cookie===me.token?"TRUE":"FALSE"),5,sCardHei+240);
-
-        //Toggle Save button
-        ctx.font = "24px Courier";
-        ctx.beginPath();
-        sCardHei = 500;
-        if(mX2 < 115 && mX2 > 15 &&
-           mY2 < sCardHei+10 && mY2 > sCardHei-25){
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillRect(15,sCardHei-25,100,35);
-            ctx.fillStyle = colors.hudBackColor;
-            ctx.fillText((cookie===me.token?"UNSAVE":"SAVE"),25,sCardHei);
-            mouseHover = "SAVE";
-        }
-        else{
-            ctx.strokeStyle = colors.hudColor;
-            ctx.strokeRect(15,sCardHei-25,100,35);
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillText((cookie===me.token?"UNSAVE":"SAVE"),25,sCardHei);
-        }
-
-        //HUD button
-        ctx.beginPath();
-        if(mX2 < 287 && mX2 > 195 &&
-           mY2 < sCardHei+10 && mY2 > sCardHei-25){
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillRect(195,sCardHei-25,92,35);
-            ctx.fillStyle = colors.hudBackColor;
-            ctx.fillText("HUD",220,sCardHei);
-            mouseHover = "HUD";
-        }
-        else{
-            ctx.strokeStyle = colors.hudColor;
-            ctx.strokeRect(195,sCardHei-25,92,35);
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillText("HUD",220,sCardHei);
-        }
-
-    }
-    else{
-        //Named Stats
-        ctx.beginPath();
-        ctx.fillStyle = colors.hudColor;
-        ctx.font = "20px Courier";
-        ctx.fillText("LOC : ("+me.loc[0]+", "+me.loc[1]+")",5,sCardHei+30);
-
-        //insured tag
-        ctx.font = "18px Courier";
-        ctx.beginPath();
-        sCardHei = 249;
-        if(me.info.hasInsurance){
-            ctx.fillStyle = colors.hudColor;
-            ctx.strokeStyle = colors.hudColor;
-            ctx.fillText("INSURED",195,sCardHei);
-        }
-        else{
-            ctx.fillStyle = colors.needMoreColor;
-            ctx.strokeStyle = colors.needMoreColor;
-            ctx.fillText("UNINSURED",185,sCardHei);
-        }
-        ctx.strokeRect(180,sCardHei-17,107,25);
-
-        //Upgradable Stats
-        ctx.font = "20px Courier";
-        ctx.fillStyle = colors.hudColor;
-        ctx.strokeStyle = colors.hudColor;
-        sCardHei = 120;
-        //HP and PWR
-        ctx.beginPath();
-        ctx.fillText("HP  ",5,sCardHei+162);
-        ctx.fillText("ENG ",5,sCardHei+202);
-        ctx.fillText("UR  ",5,sCardHei+242);
-        ctx.fillStyle = colors.hpColor;
-        ctx.fillRect(60,sCardHei+145,220*(me.stats.hp/me.stats.hpMAX),20);
-        for(var i = 0; i < me.stats.hpUpgradesMAX; i++){
-            if(i < me.stats.hpUpgrades) ctx.fillStyle = colors.upgradeColor;
-            else ctx.fillStyle = colors.voidUpgradeColor;
-            ctx.fillRect(60+i*(220/me.stats.hpUpgradesMAX),sCardHei+167,(220/me.stats.hpUpgradesMAX)-5,5);
-        }
-        ctx.fillStyle = colors.energyColor;
-        ctx.fillRect(60,sCardHei+185,220*(me.stats.energy/me.stats.energyMAX),20);
-        for(var i = 0; i < me.stats.energyUpgradesMAX; i++){
-            if(i < me.stats.energyUpgrades) ctx.fillStyle = colors.upgradeColor;
-            else ctx.fillStyle = colors.voidUpgradeColor;
-            ctx.fillRect(60+i*45,sCardHei+207,40,5);
-        }
-        for(var i = 0; i < me.stats.urCarry; i++){
-            if(i < me.info.uranium) ctx.fillStyle = colors.uraniumColor;
-            else ctx.fillStyle = "#070707";
-            ctx.fillRect(60+i*(220/me.stats.urCarry),sCardHei+225,(220/me.stats.urCarry)-3,20);
-        }
-        ctx.fillStyle = colors.uraniumColor;
-        for(var i = 0; i < me.stats.urCarryUpgradesMAX; i++){
-            if(i < me.stats.urCarryUpgrades) ctx.fillStyle = colors.upgradeColor;
-            else ctx.fillStyle = colors.voidUpgradeColor;
-            ctx.fillRect(60+i*(220/me.stats.urCarryUpgradesMAX),sCardHei+247,(220/me.stats.urCarryUpgradesMAX)-3,5);
-        }
-
-        //Ability Boxes
-        //Ability 1
-        ctx.beginPath();
-        sCardHei = 370;
-        if(me.abilitySlots[0].canUse && game.phase==0){
-            ctx.fillStyle = colors.hudColor;
-            ctx.strokeStyle = colors.hudColor;
-        }
-        else if(!me.abilitySlots[0].canUse && me.abilitySlots[0].type!=="NONE"){
-            ctx.fillStyle = colors.needMoreColor;
-            ctx.strokeStyle = colors.needMoreColor;
-        }
-        else{
-            ctx.fillStyle = colors.cantBuyColor;
-            ctx.strokeStyle = colors.cantBuyColor;
-        }
-        ctx.strokeRect(20,sCardHei+20,50,50);
-        ctx.font = "22px Courier";
-        ctx.fillText("Q",39,sCardHei+90);
-        ctx.font = "18px Courier";
-        if(me.abilitySlots[0].type!=="NONE") ctx.fillText(me.abilitySlots[0].type,22,sCardHei+50);
-
-        //Ability 2
-        if(me.abilitySlots[1].canUse && game.phase==0){
-            ctx.fillStyle = colors.hudColor;
-            ctx.strokeStyle = colors.hudColor;
-        }
-        else if(!me.abilitySlots[1].canUse && me.abilitySlots[0].type!=="NONE"){
-            ctx.fillStyle = colors.needMoreColor;
-            ctx.strokeStyle = colors.needMoreColor;
-        }
-        else{
-            ctx.fillStyle = colors.cantBuyColor;
-            ctx.strokeStyle = colors.cantBuyColor;
-        }
-        ctx.strokeRect(120,sCardHei+20,50,50);
-        if(me.stats.loadoutSize < 2){//If not unlocked
-            ctx.beginPath();
-            ctx.moveTo(120,sCardHei+20);
-            ctx.lineTo(170,sCardHei+70);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(170,sCardHei+20);
-            ctx.lineTo(120,sCardHei+70);
-            ctx.stroke();
-        }
-        ctx.font = "22px Courier";
-        ctx.fillText("E",139,sCardHei+90);
-        ctx.font = "18px Courier";
-        if(me.abilitySlots[1].type!=="NONE") ctx.fillText(me.abilitySlots[1].type,122,sCardHei+50);
-
-        //Walls
-        if(me.info.walls>0 && game.phase==0){
-            ctx.fillStyle = colors.hudColor;
-            ctx.strokeStyle = colors.hudColor;
-        }
-        else if(me.info.walls<=0 && me.stats.wall>0){
-            ctx.fillStyle = colors.needMoreColor;
-            ctx.strokeStyle = colors.needMoreColor;
-        }
-        else{
-            ctx.fillStyle = colors.cantBuyColor;
-            ctx.strokeStyle = colors.cantBuyColor;
-        }
-        ctx.strokeRect(220,sCardHei+20,50,50);
-        ctx.font = "18px Courier";
-        ctx.fillText("WALL",222,sCardHei+40);
-        ctx.fillText(me.info.walls,235,sCardHei+60);
-        if(me.stats.wall < 1){//If not unlocked
-            ctx.beginPath();
-            ctx.moveTo(220,sCardHei+20);
-            ctx.lineTo(270,sCardHei+70);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(270,sCardHei+20);
-            ctx.lineTo(220,sCardHei+70);
-            ctx.stroke();
-        }
-        ctx.font = "22px Courier";
-        ctx.fillText("R",239,sCardHei+90);
-
-        //Mode
-        sCardHei = 500;
-        ctx.beginPath();
-        ctx.font = "24px Courier";
-        if(me.info.trapped>0){ //Trapped
-            ctx.fillStyle=colors.trapColor;
-            ctx.fillText("TRAPPED",5,sCardHei);
-
-        }
-        else if(me.info.stealthTime>0){ //stealthed
-            ctx.fillStyle=colors.hudColor;
-            ctx.fillText("STEALTHED",5,sCardHei);
-
-        }
-        else if(me.info.inCombat>0){ //Combat
-            ctx.fillStyle=colors.enemyColor;
-            ctx.fillText("IN COMBAT",5,sCardHei);
-
-        }
-        else{ //Exploring
-            ctx.fillStyle=colors.uraniumColor;
-            ctx.fillText("EXPLORING",5,sCardHei);
-        }
-
-        //Info button
-        ctx.beginPath();
-        sCardHei = 500;
-        if(mX2 < 287 && mX2 > 195 &&
-           mY2 < sCardHei+10 && mY2 > sCardHei-25){
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillRect(195,sCardHei-25,92,35);
-            ctx.fillStyle = colors.hudBackColor;
-            ctx.fillText("STATS",205,sCardHei);
-            mouseHover = "STATS";
-        }
-        else{
-            ctx.strokeStyle = colors.hudColor;
-            ctx.strokeRect(195,sCardHei-25,92,35);
-            ctx.fillStyle = colors.hudColor;
-            ctx.fillText("STATS",205,sCardHei);
-        }
-
-    }
+    drawStatsCard(ctx, 0, 220, c.width, c.height, me);
 
 
     //Battle Log
     //**************************************************************************
-    var bCardHei = 520;
-    ctx.strokeStyle = colors.hudColor;
-    ctx.beginPath();
-    ctx.strokeRect(0,bCardHei,c.width,c.height);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.fillStyle = colors.hudColor;
-    // ctx.font = "25px Courier";
-    // ctx.fillText("Battle Log",0,bCardHei+30);
-    bCardHei = 540;
-    ctx.font = "14px Courier";
-    var multi = 0;
-    for(var i = 0; i+multi < Math.min(battleLog.length+multi,27); i++){
-        var name = '';
-        if(battleLog[i].type==="combat"){
-            ctx.fillStyle = colors.enemyColor;
-        }else if(battleLog[i].type==="server"){
-            ctx.fillStyle = "#FFa500";
-        }else if(battleLog[i].type==="chat"){
-            ctx.fillStyle = colors.hudColor;
-            name = "["+battleLog[i].user+"]: ";
-        }else if(battleLog[i].type==="loot"){
-            ctx.fillStyle = "#FFFF00";
-        }else if(battleLog[i].type==="action"){
-            ctx.fillStyle = colors.cantBuyColor;
-        }else if(battleLog[i].type==="purchase"){
-            ctx.fillStyle = "#FFFF00";
-        }else if(battleLog[i].type==="team"){
-            ctx.fillStyle = "#FF00FF";
-        }
-
-        var msg = name+battleLog[i].msg;
-
-        var temp = [];
-        for(var l = 0; l < parseInt(msg.length/36)+1; l++){
-            temp.push(msg.substring(l*35,l*35+Math.min(35,msg.length-l*35)));
-            if(l > 0) multi++;
-        }
-        // console.log(temp);
-        for(var l = 0; l < temp.length; l++){
-            ctx.fillText(temp[l],3,c.height-30-(i+(multi-l))*15);
-        }
-    }
-    ctx.fillStyle = colors.hudColor;
-    ctx.strokeRect(0,c.height-25,c.width,c.height);
-    var start = (chatMsg.length>26?chatMsg.length-26:0);
-    ctx.fillText("[CHAT]: "+chatMsg.substring(start,start+Math.min(chatMsg.length,26)),3,c.height-10);
-    if(chatBlink)
-        ctx.fillRect(Math.min((chatMsg.length+8)*8.6,290),c.height-20,2,15);
+    drawChatLog(ctx, 0, 520, c.width, c.height, me);
 }
 
 
@@ -1509,8 +1089,9 @@ function handleKeydown(e){
     else if(chatMode){
         if(keyCode == 13){
             chatMode = false;
-            sendChatMsg(me.token, me.id, chatMsg);
-        }else if(keyCode == 8){ //backspace
+            sendChatMsg(me.token, me.id, chatMsg, chatMessageType);
+        }
+        else if(keyCode == 8){ //backspace
             chatMsg = chatMsg.substring(0,chatMsg.length-1);
             drawScreen();
         }
@@ -1554,11 +1135,20 @@ function handleKeydown(e){
     else if(keyCode == 73){  //i
         statInfo = !statInfo;
     }
-    else if(keyCode == 13){
+    else if(keyCode == 13){ //Enter
         chatMode = true;
     }
     else if(keyCode == 77 ){  //M
         if(openWindow !== "mapView") openWindow = "mapView";
+        else openWindow = "";
+    }
+
+    else if(keyCode == 17){  //CTRL
+        if(chatMessageType === "ALL") chatMessageType = "TEAM";
+        else chatMessageType = "ALL";
+    }
+    else if(keyCode == 79 && shop.withinShop>-1){  //O
+        if(openWindow === "") openWindow = "shopMode";
         else openWindow = "";
     }
     else if(openWindow === "" && game.phase==0){
@@ -1578,9 +1168,6 @@ function handleKeydown(e){
             updateQueue(me.token,me.id,{"type":"HOLD"});
         }else if(keyCode == 89 && me.stats.hp == 0){  //Y
             requestRespawn(me.token,me.id);
-        }else if(keyCode == 79 && shop.withinShop>-1){  //O
-            if(openWindow !== "shopMode") openWindow = "shopMode";
-            else openWindow = "";
         }else if(keyCode == 81){          //Q
             doSpecialAction(0);
         }else if(keyCode == 69){          //E
@@ -1602,10 +1189,6 @@ function handleKeydown(e){
                 }
             }
         }
-    }
-    else if(keyCode == 79 && shop.withinShop>-1){  //O
-        if(openWindow === "") openWindow = "shopMode";
-        else openWindow = "";
     }
 
     autoDCCount = 0;
@@ -1956,8 +1539,15 @@ function handleMousedown2(e){
 }
 
 function handleMouseWheel(e){
-    if(openWindow === "joinTeamMenu"){
-        if(e.deltaY<0 && joinTeamScroll > 0){
+    if(typeof mouseHover.overBattlelog !== "undefined"){
+        if(e.deltaY < 0 && blScroll > 0){
+            blScroll--;
+        }else if(e.deltaY > 0){
+            blScroll++;
+        }
+    }
+    else if(openWindow === "joinTeamMenu"){
+        if(e.deltaY < 0 && joinTeamScroll > 0){
             joinTeamScroll--;
         }else if(e.deltaY > 0 && joinTeamScroll < teamList.length-22 && teamList.length > 22){
             joinTeamScroll++;
@@ -1972,8 +1562,8 @@ function handleMouseWheel(e){
 
         if(teamScroll < 0) teamScroll = 0;
     }
-    if(openWindow === "playerListMenu"){
-        if(e.deltaY<0 && playerListScroll > 0){
+    else if(openWindow === "playerListMenu"){
+        if(e.deltaY < 0 && playerListScroll > 0){
             playerListScroll--;
         }else if(e.deltaY > 0 ){
             playerListScroll++;

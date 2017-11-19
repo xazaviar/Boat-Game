@@ -94,7 +94,6 @@ var shopData;
 var shopList = [];
 var trapList = [];
 var teamData;
-var trapCounter = 0;
 
 init();
 
@@ -421,9 +420,15 @@ function startServer(){
                             "iron": p.stats.scanner > 1 && map[x][y].loot.iron > 0,
                             "uranium": p.stats.scanner > 2 && map[x][y].loot.uranium > 0
                         },
-                        "id": map[x][y].id
+                        "id": map[x][y].id,
+                        "trap": map[x][y].trap
                     };
                     if(!isKnown(p.knownLocs,x,y)) delete sendMap[x][y].loot;
+                    if(sendMap[x][y].trap>-1){
+                        if(!isKnownTrap(p,sendMap[x][y].trap)) sendMap[x][y].trap = -1;
+                        else sendMap[x][y].trap = players[trapList[map[x][y].trap].owner].info.teamID;
+                    }
+
 
                     if(sendMap[x][y].type==="PLAYER" && sendMap[x][y].id!=p.id){
                         var pid = sendMap[x][y].id;
@@ -608,11 +613,12 @@ function startServer(){
                         inUse = inUse - statData.energyReg;
                     }
                     else if(p.queue[a].type=="BLINK"){
-                        inUse = inUse + blinkEnergyUsage;
+                        inUse = inUse + (blinkEnergyUsage-2*p.stats.blink);
                         inUseUR = inUseUR + blinkUraniumUsage;
                     }
                     else if(p.queue[a].type=="ENERGY"){
                         inUseUR = inUseUR + energyModUraniumUsage;
+                        inUse = inUse - p.stats.engMod*5;
                     }
                     else if(p.queue[a].type=="CANNON"){
                         inUse = inUse + cannonEnergyUsage;
@@ -911,6 +917,36 @@ function startServer(){
                     p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
                 }
                 else if(req.body.item==="wall" && !shop.wall.canBuy){
+                    messagedUser = true;
+                    p.battleLog.unshift({"type":"action", "msg": "You can't carry anymore walls."});
+                }
+
+                else if(req.body.item==="wall5" && canPurchase(shop.wall5.price,inventory) && shop.wall5.canBuy){
+                    makePurchase(shop.wall5.price,p);
+                    messagedUser = true;
+                    p.info.walls+=5;
+                    p.battleLog.unshift({"type":"purchase", "msg": "You purchased 5 walls."});
+                }
+                else if(req.body.item==="wall5" && !canPurchase(shop.wall5.price,inventory)){
+                    messagedUser = true;
+                    p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
+                }
+                else if(req.body.item==="wall5" && !shop.wall5.canBuy){
+                    messagedUser = true;
+                    p.battleLog.unshift({"type":"action", "msg": "You can't carry anymore walls."});
+                }
+
+                else if(req.body.item==="wall10" && canPurchase(shop.wall10.price,inventory) && shop.wall10.canBuy){
+                    makePurchase(shop.wall10.price,p);
+                    messagedUser = true;
+                    p.info.walls+=10;
+                    p.battleLog.unshift({"type":"purchase", "msg": "You purchased 10 walls."});
+                }
+                else if(req.body.item==="wall10" && !canPurchase(shop.wall10.price,inventory)){
+                    messagedUser = true;
+                    p.battleLog.unshift({"type":"action", "msg": "You need more resources."});
+                }
+                else if(req.body.item==="wall10" && !shop.wall10.canBuy){
                     messagedUser = true;
                     p.battleLog.unshift({"type":"action", "msg": "You can't carry anymore walls."});
                 }
@@ -1304,9 +1340,10 @@ function startServer(){
         res.send('');
     });
     app.post('/postChatMsg', function(req, res){
-        var msg = req.body.msg;
         var token = req.body.token;
         var id = req.body.id;
+        var msg = req.body.msg;
+        var type = req.body.type;
 
         if(msg!==""){
             var p;
@@ -1315,7 +1352,10 @@ function startServer(){
                     p = players[id];
 
             if(p!=null){
-                messageGroup(players,msg,"","chat",p);
+                if(type==="TEAM")
+                    messageGroup(teamData[p.info.teamID].members,msg,"","tchat",p);
+                else
+                    messageGroup(players,msg,"","chat",p);
             }
         }
         res.send('');
@@ -1439,7 +1479,7 @@ function startServer(){
             }
 
             if((setting==="OPEN" || hasInvite) && teamID!=p.info.teamID){
-                if(type==="MERGE"){ //Merge Teams together
+                if(type==="MERGE" || (p.info.teamRole==="LEADER" && type==="none")){ //Merge Teams together
                     mergeTeams(p.info.teamID,teamID,p);
                 }
                 else {
@@ -1519,6 +1559,7 @@ function startServer(){
         if(p!=null){
             if(p.info.teamRole==='LEADER'){
                 teamData[p.info.teamID].settings = req.body.settings;
+                messageGroup(teamData[p.info.teamID].members,"Team settings were changed","","team",null);
             }
         }
 
@@ -1766,8 +1807,8 @@ function startServer(){
         if(p!=null){
             if(teamData[p.info.teamID].objective!=baseID){
                 if(p.info.teamRole==="LEADER" ||
-                   p.info.teamRole==="ADMIN" && teamData[p.info.teamID].ping!=="LEADER" ||
-                   p.info.teamRole==="MEMBER" && teamData[p.info.teamID].ping==="TEAM"){
+                   p.info.teamRole==="ADMIN" && teamData[p.info.teamID].settings.ping!=="LEADER" ||
+                   p.info.teamRole==="MEMBER" && teamData[p.info.teamID].settings.ping==="TEAM"){
                     teamData[p.info.teamID].objective = baseID;
                     var msg;
                     if(baseID>-1){
@@ -2219,10 +2260,10 @@ function roundCleanup(){
                 baseList[b].upgrading = false;
 
                 //Decide hp
-                if(lvl==1) baseList[b].hpMAX = 20;
-                else if(lvl==2) baseList[b].hpMAX = 50;
-                else if(lvl==3) baseList[b].hpMAX = 100;
-                else hpMAX = 10000;
+                if(baseList[b].lvl==1) baseList[b].hpMAX = 20;
+                else if(baseList[b].lvl==2) baseList[b].hpMAX = 50;
+                else if(baseList[b].lvl==3) baseList[b].hpMAX = 100;
+                else baseList[b].hpMAX = 10000;
                 baseList[b].hp = baseList[b].hpMAX;
 
                 messageGroup(teamData[baseList[b].owner].members,
@@ -2445,7 +2486,7 @@ function loot(p){
                 uranDrop = p.info.uranium + treasure.loot.uranium - p.stats.urCarry;
                 p.info.uranium = p.stats.urCarry;
                 p.info.totalUranium += treasure.loot.uranium-uranDrop;
-                p.battleLog.unshift({"type":"loot", "msg": "You found "+treasure.loot.uranium-uranDrop+" uranium!"});
+                p.battleLog.unshift({"type":"loot", "msg": "You found "+(treasure.loot.uranium-uranDrop)+" uranium!"});
                 p.battleLog.unshift({"type":"loot", "msg": "You had to leave a little uranium behind."});
             }
             else{
@@ -2463,7 +2504,7 @@ function loot(p){
             p.info.hauls++;
 
             map[p.loc[0]][p.loc[1]].loot = {"gold":0,"iron":0,"uranium":uranDrop};
-            lootSpawns.push([p.loc[0],p.loc[1]]);
+            // lootSpawns.push([p.loc[0],p.loc[1]]);
             lootCount--;
 
             // //Alert local people of looting
@@ -2530,10 +2571,10 @@ function scan(p){
                 p.knownLocs.push([cX,cY]);
             }
 
-            var tr = withinTrap([cX,cY]);
+            var tr = map[cX][cY].trap;
             if(tr>-1){
                 if(!isKnownTrap(p,trapList[tr]))
-                    p.knownTraps.push({"loc":trapList[tr].loc,"lvl":0+trapList[tr].lvl,"id":0+trapList[tr].id,"owned":false});
+                    p.knownTraps.push({"id":trapList[tr].id,"owner":trapList[tr].owner});
             }
 
 
@@ -2619,12 +2660,86 @@ function trap(p){
     p.stats.energy -= trapEnergyUsage;
 
     p.info.traps++;
-    trapCounter++;
+    var id = trapList.length;
 
     p.battleLog.unshift({"type":"combat", "msg": "You placed trap "+p.info.traps+"."});
 
-    trapList.push({"loc":[p.loc[0],p.loc[1]],"lvl":0+p.stats.trap,"id":0+trapCounter, "num":0+p.info.traps, "owner":p.token});
-    p.knownTraps.push({"loc":[p.loc[0],p.loc[1]],"lvl":0+p.stats.trap,"id":0+trapCounter,"owned":true});
+    var spread = [];
+    var x = p.loc[0],
+        lx = p.loc[0]-1,
+        rx = (p.loc[0]+1)%mapSize,
+        y = p.loc[1],
+        uy = p.loc[1]-1,
+        dy = (p.loc[1]+1)%mapSize;
+    if(lx < 0) lx += mapSize;
+    if(uy < 0) uy += mapSize;
+
+    if(p.stats.trap > 1){ //3x3
+        if(map[x][y].trap < 0){
+            spread.push([x,y]);
+            map[x][y].trap = id;
+        }
+        if(map[rx][y].trap < 0){
+            spread.push([rx,y]);
+            map[rx][y].trap = id;
+        }
+        if(map[x][dy].trap < 0){
+            spread.push([x,dy]);
+            map[x][dy].trap = id;
+        }
+        if(map[rx][dy].trap < 0){
+            spread.push([rx,dy]);
+            map[rx][dy].trap = id;
+        }
+        if(map[lx][uy].trap < 0){
+            spread.push([lx,uy]);
+            map[lx][uy].trap = id;
+        }
+        if(map[x][uy].trap < 0){
+            spread.push([x,uy]);
+            map[x][uy].trap = id;
+        }
+        if(map[rx][uy].trap < 0){
+            spread.push([rx,uy]);
+            map[rx][uy].trap = id;
+        }
+        if(map[lx][y].trap < 0){
+            spread.push([lx,y]);
+            map[lx][y].trap = id;
+        }
+        if(map[lx][dy].trap < 0){
+            spread.push([lx,dy]);
+            map[lx][dy].trap = id;
+        }
+    }
+    else{ //2x2
+        if(map[x][y].trap < 0){
+            spread.push([x,y]);
+            map[x][y].trap = id;
+        }
+        if(map[rx][y].trap < 0){
+            spread.push([rx,y]);
+            map[rx][y].trap = id;
+        }
+        if(map[x][dy].trap < 0){
+            spread.push([x,dy]);
+            map[x][dy].trap = id;
+        }
+        if(map[rx][dy].trap < 0){
+            spread.push([rx,dy]);
+            map[rx][dy].trap = id;
+        }
+    }
+
+    trapList[id] = {
+        "id":id,
+        "locs": spread,
+        "lvl":0+p.stats.trap,
+        "num":0+p.info.traps,
+        "owner":p.id
+    };
+
+    p.knownTraps.push({"id":id, "owner":p.id});
 }
 
 function placeWall(p, loc){
@@ -2677,28 +2792,24 @@ function baseAttack(loc, dmg, baseID){
 //******************************************************************************
 
 //Store Functions
-function withinShop(location, teamID){
-    //TODO: use map's baseid to determine if near shop
+function withinShop(loc, teamID){
+    var baseID = map[loc[0]][loc[1]].baseID;
 
-    for(var x = 0; x < 5; x++){
-        for(var y = 0; y < 5; y++){
-            var cX = location[0] - (2-x);
-            var cY = location[1] - (2-y);
+    if(baseID > -1){
+        var range = 5;
+        var t = parseInt(range/2);
+        var xAdj = t-baseList[baseID].loc[0], yAdj = t-baseList[baseID].loc[1];
+        var cX = (loc[0] + xAdj)%mapSize, cY = (loc[1] + yAdj)%mapSize;
 
-            if(cX < 0) cX += mapSize;
-            if(cY < 0) cY += mapSize;
-            if(cX >= mapSize) cX -= mapSize;
-            if(cY >= mapSize) cY -= mapSize;
+        if(cX<0)cX+=mapSize;
+        if(cY<0)cY+=mapSize;
 
-            if(map[cX][cY].type==="BASE"){
-                if(baseList[map[cX][cY].id].inCombat <= 0 || baseList[map[cX][cY].id].lvl > 3){
-                    var own = baseList[map[cX][cY].id].owner;
-                    if(own==teamID || own==-1) return baseList[map[cX][cY].id].lvl;
-                }
-            }
+        var own = baseList[baseID].owner;
+        if(baseList[baseID].inCombat <= 0 || baseList[baseID].lvl > 3){
+            if(cX < range && cY < range && (own==teamID || own==-1))
+                return baseList[baseID].lvl;
         }
     }
-
     return -1;
 }
 
@@ -2803,6 +2914,14 @@ function buildStore(p){
         "wall":{
             "price":calculatePrices(shopData.wall, 1),
             "canBuy":p.info.walls < (p.stats.wall<5?p.stats.wall*20:99)
+        },
+        "wall5":{
+            "price":calculatePrices(shopData.wall5, 1),
+            "canBuy":p.info.walls+5 < (p.stats.wall<5?p.stats.wall*20:99)
+        },
+        "wall10":{
+            "price":calculatePrices(shopData.wall10, 1),
+            "canBuy":p.info.walls+10 < (p.stats.wall<5?p.stats.wall*20:99)
         },
         "loadout":{
             "price":calculatePrices(shopData.loadoutUpgrades,0),
@@ -3043,6 +3162,8 @@ function canUseMod(p, mod){
 function teamValidation(base, area, name){
     if(base === area)
         return "Base and area need to be different colors";
+    if(name<4)
+        return "Need a longer Team Name";
 
     var hex = area.replace('#','');
     var ar = parseInt(hex.substring(0,2), 16);
@@ -3056,7 +3177,7 @@ function teamValidation(base, area, name){
     var bg = parseInt(hex.substring(2,4), 16);
     var bb = parseInt(hex.substring(4,6), 16);
 
-    if(Math.abs(ar-br)<50 && Math.abs(ag-bg)<50 && Math.abs(ab-bb)<50)
+    if(Math.abs(ar-br)<60 && Math.abs(ag-bg)<60 && Math.abs(ab-bb)<60)
         return "Base color is too similar to Area color";
 
     for(var b in teamData){
@@ -3070,8 +3191,8 @@ function teamValidation(base, area, name){
             var ag2 = parseInt(hex.substring(2,4), 16);
             var ab2 = parseInt(hex.substring(4,6), 16);
 
-            if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
-               Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
+            if(Math.abs(br2-br)<30 && Math.abs(bg2-bg)<30 && Math.abs(bb2-bb)<30 &&
+               Math.abs(ar2-ar)<60 && Math.abs(ag2-ag)<60 && Math.abs(ab2-ab)<60){
                 return "Color combo has been taken";
             }
 
@@ -3600,53 +3721,27 @@ function dispurseProfit(teamID){
 
 
 //Traps
-function withinTrap(location){
-    for(var tr in trapList){
-        var range = (trapList[tr].lvl>1?3:2);
-        if(range>2){
-            var t = parseInt(range/2);
-            var xAdj = t-trapList[tr].loc[0], yAdj = t-trapList[tr].loc[1];
-            var cX = (location[0] + xAdj)%mapSize, cY = (location[1] + yAdj)%mapSize;
-
-            if(cX<0)cX+=mapSize;
-            if(cY<0)cY+=mapSize;
-
-            if(cX<range && cY<range) return tr;
-        }else{
-            if(location[0]==trapList[tr].loc[0]   && location[1]==trapList[tr].loc[1]) return tr;
-            if(location[0]==(trapList[tr].loc[0]+1)%mapSize && location[1]==trapList[tr].loc[1]) return tr;
-            if(location[0]==trapList[tr].loc[0]   && location[1]==(trapList[tr].loc[1]+1)%mapSize) return tr;
-            if(location[0]==(trapList[tr].loc[0]+1)%mapSize && location[1]==(trapList[tr].loc[1]+1)%mapSize) return tr;
-        }
-    }
-
-    return -1;
-}
-
 function triggeredTrap(p){
-    var tr = withinTrap(p.loc);
+    var tr = map[p.loc[0]][p.loc[1]].trap;
     if(tr>-1){
-        if(trapList[tr].owner!==p.token){
+        if(players[trapList[tr].owner].info.teamID != p.info.teamID){
             p.info.trapped = trapDuration+1;
             p.battleLog.unshift({"type":"combat", "msg": "You've been trapped!"});
-            for(var pp in players){
-                for(var t in players[pp].knownTraps){
-                    if(players[pp].knownTraps[t].id==trapList[tr].id){
-                        players[pp].knownTraps.splice(t,1);
-                        if(trapList[tr].owner===players[pp].token)
-                            players[pp].battleLog.unshift({"type":"combat", "msg": "Your trap "+trapList[tr].num+" has triggered."});
-                        break;
-                    }
-                }
+
+            players[trapList[tr].owner].battleLog.unshift({"type":"combat", "msg": "Your trap "+trapList[tr].num+" has triggered."});
+
+            for(var l in trapList[tr].locs){
+                map[trapList[tr].locs[l][0]][trapList[tr].locs[l][1]].trap = -1;
             }
-            trapList.splice(tr,1);
+
+            trapList[tr] = {"id":trapList[tr].id};
         }
     }
 }
 
-function isKnownTrap(p,trap){
+function isKnownTrap(p, trap){
     for(var t in p.knownTraps){
-        if(p.knownTraps[t].id==trap.id) return true;
+        if(p.knownTraps[t].id==trap) return true;
     }
     return false;
 }
@@ -3784,7 +3879,8 @@ function buildMap(){
                     "zone": zone,
                     "id": rockList.length-1,
                     "baseID": -1,
-                    "loot": {"gold":0,"iron":0,"uranium":0}
+                    "loot": {"gold":0,"iron":0,"uranium":0},
+                    "trap": -1
                 }
                 if(zone==0)
                     spawnList.splice(spawnList.length-1,1);
@@ -3795,7 +3891,8 @@ function buildMap(){
                     "zone": zone,
                     "id": -1,
                     "baseID": -1,
-                    "loot": {"gold":0,"iron":0,"uranium":0}
+                    "loot": {"gold":0,"iron":0,"uranium":0},
+                    "trap": -1
                 }
             }
 
@@ -4107,7 +4204,7 @@ function spawnLoot(){
             map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.iron += loot.iron;
             map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.uranium += loot.uranium;
             lootCount++;
-            lootSpawns.splice(r,1);
+            // lootSpawns.splice(r,1);
         }
         for(var i = 0; i < lootSpawnRate; i++){
             var r = parseInt((Math.random()*100000)%lootSpawns.length);
@@ -4116,7 +4213,7 @@ function spawnLoot(){
             map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.iron += loot.iron;
             map[lootSpawns[r].loc[0]][lootSpawns[r].loc[1]].loot.uranium += loot.uranium;
             lootCount++;
-            lootSpawns.splice(r,1);
+            // lootSpawns.splice(r,1);
         }
     }
 }
@@ -4205,10 +4302,12 @@ function hit(location, p){
         }
 
         if(hit.hp <= 0){
-            p.info.captures++;
-
             var oldID = hit.owner;
             hit.owner = p.info.teamID;
+
+            if(oldID != hit.owner)
+                p.info.captures++;
+
             hit.hp = parseInt(hit.hpMAX/2);
             hit.attacks = [0,0,0];
             hit.targets = [];
@@ -4483,6 +4582,13 @@ function messageGroup(group, msg, msgS, type, source){
             }
         }
     }
+    else if(type==="tchat"){
+        for(var i = 0; i < group.length; i++){
+            if(group[i].online){
+                players[group[i].id].battleLog.unshift({"type":type, "msg":msg, "user":source.info.name});
+            }
+        }
+    }
     else if(type==="chat"){
         for(var i = 0; i < players.length; i++){
             if(players[i].status!=="OFFLINE")
@@ -4513,7 +4619,7 @@ function messageGroup(group, msg, msgS, type, source){
 function calculateIndividualPower(p){
     var upgradeVal = 10, haulVal = 2, killVal = 3, capVal = 5, wallPVal = 1;
 
-    return p.info.shipMass*upgradeVal + p.info.hauls*haulVal + p.info.kills*killVal + p.info.captures*capVal + p.info.wallsPlaced*wallPVal;
+    return p.info.shipMass*upgradeVal + Math.min(p.info.hauls,100)*haulVal + p.info.kills*killVal + Math.min(p.info.captures,100)*capVal + Math.min(p.info.wallsPlaced,200)*wallPVal;
 }
 
 function giveLoot(p, gold, iron, uranium){

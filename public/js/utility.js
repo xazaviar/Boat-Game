@@ -27,7 +27,7 @@ function teamValidation(base, area, name, teamList){
         return "Base and/or area color missing";
     if(base === area)
         return "Base and area need to be different colors";
-    if(tName.length<4)
+    if(name<4)
         return "Need a longer Team Name";
 
     var hex = area.replace('#','');
@@ -42,7 +42,7 @@ function teamValidation(base, area, name, teamList){
     var bg = parseInt(hex.substring(2,4), 16);
     var bb = parseInt(hex.substring(4,6), 16);
 
-    if(Math.abs(ar-br)<50 && Math.abs(ag-bg)<50 && Math.abs(ab-bb)<50)
+    if(Math.abs(ar-br)<60 && Math.abs(ag-bg)<60 && Math.abs(ab-bb)<60)
         return "Base color is too similar to Area color";
 
     for(var b in teamList){
@@ -56,8 +56,8 @@ function teamValidation(base, area, name, teamList){
             var ag2 = parseInt(hex.substring(2,4), 16);
             var ab2 = parseInt(hex.substring(4,6), 16);
 
-            if(Math.abs(br2-br)<20 && Math.abs(bg2-bg)<20 && Math.abs(bb2-bb)<20 &&
-               Math.abs(ar2-ar)<30 && Math.abs(ag2-ag)<30 && Math.abs(ab2-ab)<30){
+            if(Math.abs(br2-br)<30 && Math.abs(bg2-bg)<30 && Math.abs(bb2-bb)<30 &&
+               Math.abs(ar2-ar)<60 && Math.abs(ag2-ag)<60 && Math.abs(ab2-ab)<60){
                 return "Color combo has been  taken";
             }
 
@@ -125,4 +125,65 @@ function filterPlayerList(list){
 
 function saveColorScheme(color){
     localStorage.setItem('savedColors', JSON.stringify(colors));
+}
+
+function adjustedBattleLog(log, charWid, maxWid){
+    var charsPerLine = parseInt(maxWid/charWid);
+    var adjLog = [];
+
+    for(var l in log){
+        var name = '';
+        if(log[l].type==="chat" || log[l].type==="tchat"){
+            name = "["+log[l].user+"]: ";
+        }
+        var line = name+log[l].msg;
+
+        if(line.length>charsPerLine){
+            var multi = splitLine(line, charsPerLine);
+            for(var m = multi.length-1; m > -1; m--){
+                adjLog.push({"type":log[l].type,"msg":multi[m]});
+            }
+        }
+        else{
+            adjLog.push({"type":log[l].type,"msg":line});
+        }
+    }
+
+
+    return adjLog;
+}
+
+function splitLine(line, maxLen){
+    var lines = [];
+    var count = 0;
+
+    while(line.length > maxLen && count < 10){
+        var cut = maxLen;
+        var foundCut = false;
+        for(; cut > -1; cut--){
+            if(line.substring(cut,cut+1)===" "){
+                foundCut = true;
+                cut++;
+                break;
+            }
+        }
+
+        if(!foundCut) cut = maxLen;
+
+        lines.push(line.substring(0,cut));
+        line = line.substring(cut,line.length);
+        count++;
+    }
+    lines.push(line);
+
+    return lines;
+}
+
+function noUseMod(mod){
+    return mod=="ATK+" ||
+           mod=="ENG+" ||
+           mod=="RDR+" ||
+           mod=="HP+" ||
+           mod=="DR" ||
+           mod=="NONE";
 }
