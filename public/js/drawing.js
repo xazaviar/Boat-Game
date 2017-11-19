@@ -113,7 +113,7 @@ function drawGridLines(ctx, width, height){
 
 }
 
-function drawMap(ctx, startX, startY, width, height, map, baseList, players, me){
+function drawMap(ctx, startX, startY, width, height, map, baseList, players, me, dead){
     //Calculate Drawing Area
     var sX = startX;
     var sY = startY;
@@ -128,14 +128,16 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
 
             if(map[x][y].baseID > -1){
                 var owner = baseList[map[x][y].baseID].owner;
-                if(typeof mouseHover.baseID!=="undefined"){
+                if(typeof mouseHover.baseID!=="undefined" && !dead){
                     if(map[x][y].baseID==mouseHover.baseID) ctx.globalAlpha = 0.7;
                     else ctx.globalAlpha = 0.3;
                 }else ctx.globalAlpha = 0.3;
 
-                if(teamList[me.info.teamID].objective > -1 && blink)
+                if(teamList[me.info.teamID].objective > -1 && blink && !dead)
                     if(map[x][y].baseID == teamList[me.info.teamID].objective) ctx.globalAlpha = 0.7;
 
+                if(dead && baseList[map[x][y].baseID].owner == me.info.teamID && baseList[map[x][y].baseID].special==="S" && blink)
+                    ctx.globalAlpha = 0.7;
 
                 ctx.beginPath();
                 if(owner > -1){
@@ -146,10 +148,29 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
                 }
                 ctx.fillRect(sX+x*tileSize,sY+y*tileSize,tileSize,tileSize);
                 ctx.stroke();
+
+                if(mX > sX+x*tileSize && mX < sX+x*tileSize+tileSize &&
+                   mY > sY+y*tileSize && mY < sY+y*tileSize+tileSize && dead){
+                    if(map[x][y].spawn) mouseHover = {"spawnID": -1};
+                    mouseHover = {"spawnID": map[x][y].baseID};
+                }
+            }
+
+            if(dead && map[x][y].spawn && blink){
+                ctx.beginPath();
+                ctx.fillStyle = "#666";
+                ctx.globalAlpha = 0.7;
+                ctx.fillRect(sX+x*tileSize,sY+y*tileSize,tileSize,tileSize);
+                ctx.stroke();
+
+                if(mX > sX+x*tileSize && mX < sX+x*tileSize+tileSize &&
+                   mY > sY+y*tileSize && mY < sY+y*tileSize+tileSize){
+                    mouseHover = {"spawnID": -1};
+                }
             }
 
             //Draw trap area
-            if(map[x][y].trap > -1){
+            if(map[x][y].trap > -1 && !dead){
                 ctx.beginPath();
                 ctx.globalAlpha = 0.3;
                 if(me.info.teamID == map[x][y].trap) ctx.fillStyle = colors.hudColor;
@@ -192,7 +213,7 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
                 ctx.arc(sX+x*tileSize+tileSize/2,sY+y*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
                 ctx.fill();
             }
-            else if(typeof map[x][y].loot!=="undefined"){ //Loot
+            else if(typeof map[x][y].loot!=="undefined" && !dead){ //Loot
                 if(map[x][y].loot.uranium) ctx.fillStyle=colors.uraniumColor;
                 else if(map[x][y].loot.iron) ctx.fillStyle=colors.ironColor;
                 else if(map[x][y].loot.gold) ctx.fillStyle=colors.goldColor;
@@ -210,7 +231,7 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me)
             }
 
             //Draw me
-            if(me.loc[0]==x && me.loc[1]==y && me.stats.hp>0 && blink){
+            if(me.loc[0]==x && me.loc[1]==y && me.stats.hp>0 && blink && !dead){
                 ctx.fillStyle = colors.hudColor;
                 // ctx.strokeStyle = colors.hudColor;
                 ctx.beginPath();
@@ -665,6 +686,8 @@ function drawJoinTeam(ctx, startX, startY, width, height){
     ctx.fillStyle = colors.hudColor;
     ctx.font = "22px Courier";
     ctx.fillText("Recommended Teams",sX+5,sY+25);
+    ctx.font = "bold 11pt Courier";
+    ctx.fillText("Join Tokens: "+me.info.joinTokens,sX+5,sY+40);
 
     if(teamRec.length == 0){
         var opts = [];
@@ -756,7 +779,8 @@ function drawJoinTeam(ctx, startX, startY, width, height){
         if(teamList[i].joinStatus==="OPEN"){
             if(mX < sX+wid-50 && mX > sX+6 &&
                mY < sY+37+20*yAdj+17 && mY > sY+37+20*yAdj){
-                ctx.fillStyle = colors.hudColor;
+                if(me.info.joinTokens<=0) ctx.fillStyle = colors.cantBuyColor
+                else ctx.fillStyle = colors.hudColor;
                 ctx.globalAlpha = 0.3;
                 ctx.fillRect(sX+6,sY+37+20*yAdj,wid-50,17);
                 mouseHover = i;
@@ -769,7 +793,8 @@ function drawJoinTeam(ctx, startX, startY, width, height){
             drawBase(ctx,sX+263,sY+37+20*yAdj, 17, teamList[i].colors.baseShape, 3, teamList[i].colors.baseColor);
 
 
-            ctx.fillStyle = colors.hudColor;
+            if(me.info.joinTokens<=0) ctx.fillStyle = colors.cantBuyColor
+            else ctx.fillStyle = colors.hudColor;
             ctx.globalAlpha = 1.0;
 
             ctx.fillText(teamList[i].name,sX+8,sY+50+20*yAdj);
@@ -1020,7 +1045,7 @@ function drawTeamMenu(ctx, startX, startY, width, height){
         }
 
         ctx.strokeRect(sX, sY+hei-5*wid/8, 5*wid/8, 5*wid/8);
-        drawMap(ctx, sX, sY+hei-5*wid/8, 5*wid/8, 5*wid/8, map, baseList, players, me);
+        drawMap(ctx, sX, sY+hei-5*wid/8, 5*wid/8, 5*wid/8, map, baseList, players, me, false);
 
 
         //Draw Base Info

@@ -544,8 +544,55 @@ function drawMonitor(ctx, width, height){
             drawSettings(ctx, 0, 0, width, height);
         }
     }
+    else if(me.stats.hp <= 0){
+        drawMap(ctx, 0, 0, width, height, map, baseList, players, me, true);
+
+        ctx.font = "bold 20pt Courier";
+        if(me.info.respawnCount<=0){
+            ctx.fillStyle = "#000";
+            ctx.fillText("Click a glowing spot to respawn there.", 52, 32);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("Click a glowing spot to respawn there.", 50, 30);
+        }
+        else{
+            ctx.fillStyle = "#000";
+            ctx.fillText("Wait a moment to respawn.", 52, 32);
+            ctx.fillStyle = colors.enemyColor;
+            ctx.fillText("Wait a moment to respawn.", 50, 30);
+        }
+
+
+        //Draw Menu Screens
+        if(openWindow==="settingsView"){
+            drawSettings(ctx, 0, 0, width, height);
+        }
+        else if(openWindow === "shopMode"){
+            drawShopMenu(ctx, 0, 0, width, height, store, shop.withinShop, me);
+        }
+        else if(openWindow === "joinTeamMenu"){
+            drawJoinTeam(ctx, 0, 0, width, height);
+        }
+        else if(openWindow === "createTeamMenu"){
+            drawCreateTeam(ctx, 0, 0, width, height);
+        }
+        else if(openWindow === "teamMenu"){
+            drawTeamMenu(ctx, 0, 0, width, height);
+        }
+        else if(openWindow === "playerListMenu"){
+            drawPlayerList(ctx, 0, 0, width, height)
+        }
+
+        if(openWindow !== "createTeamMenu"){
+            $(".input1").toggle(false);
+            $(".input2").toggle(false);
+        }
+
+        if(confirmDialog > -1){
+            drawConfirmDialog(ctx,0,0,width,height);
+        }
+    }
     else if(openWindow === "mapView"){
-        drawMap(ctx, 0, 0, width, height, map, baseList, players, me);
+        drawMap(ctx, 0, 0, width, height, map, baseList, players, me, false);
 
         if(confirmDialog > -1){
             drawConfirmDialog(ctx,0,0,width,height);
@@ -696,28 +743,6 @@ function drawMonitor(ctx, width, height){
 
             }
         }
-
-        //Draw Known Traps
-        // for(var tr in me.knownTraps){
-        //     var range = me.stats.radar;
-        //     var t = parseInt(range/2);
-        //     var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
-        //     var cX = (me.knownTraps[tr].loc[0] + xAdj)%map.length, cY = (me.knownTraps[tr].loc[1] + yAdj)%map.length;
-        //
-        //     // if(cX<0)cX+=map.length;
-        //     // if(cY<0)cY+=map.length;
-        //
-        //     //Draw Zone
-        //     ctx.beginPath();
-        //     ctx.globalAlpha = 0.3;
-        //
-        //     if(me.knownTraps[tr].lvl==1)
-        //         ctx.fillRect(cX*tileSize, cY*tileSize, 2*tileSize, 2*tileSize);
-        //     else
-        //         ctx.fillRect(cX*tileSize-tileSize, cY*tileSize-tileSize, 3*tileSize, 3*tileSize);
-        //     ctx.fill();
-        //     ctx.globalAlpha = 1.0;
-        // }
 
         //Draw enemy Attacks
         ctx.fillStyle = colors.attackColor;
@@ -1166,9 +1191,11 @@ function handleKeydown(e){
             updateQueue(me.token,me.id,{"type":"LOOT"});
         }else if(keyCode == 51){  //3
             updateQueue(me.token,me.id,{"type":"HOLD"});
-        }else if(keyCode == 89 && me.stats.hp == 0){  //Y
-            requestRespawn(me.token,me.id);
-        }else if(keyCode == 81){          //Q
+        }
+        // else if(keyCode == 89 && me.stats.hp == 0){  //Y
+        //     requestRespawn(me.token,me.id);
+        // }
+        else if(keyCode == 81){          //Q
             doSpecialAction(0);
         }else if(keyCode == 69){          //E
             doSpecialAction(1);
@@ -1195,27 +1222,7 @@ function handleKeydown(e){
 }
 
 function handleMousedown(e){
-    var c = document.getElementById("monitor");
-    //Check for return to default click
-    if(openWindow === "settingsView"){
-        if (mouseHover === "DEFAULT"){
-            colors = JSON.parse(JSON.stringify(colorsDefault));
-            $("body").css("background-color",colors.hudBackColor);
-            saveColorScheme(colors);
-        }
-
-       //Check for color click
-       else if(mouseHover!=-1){
-           displayModal(colors[mouseHover], function(color){
-               colors[mouseHover] = color.toHexString();
-               $("body").css("background-color",colors.hudBackColor);
-               saveColorScheme(colors);
-               $(".modal").toggle(false);
-               drawScreen();
-           });
-       }
-    }
-    else if(confirmDialog>-1){
+    if(confirmDialog>-1){
         if(confirmDialog==0){
             if(mouseHover==0){ //join
                 var type = "none";
@@ -1327,7 +1334,24 @@ function handleMousedown(e){
                 valueLock = -1;
             }
         }
+    }
+    else if(openWindow === "settingsView"){
+        if (mouseHover === "DEFAULT"){
+            colors = JSON.parse(JSON.stringify(colorsDefault));
+            $("body").css("background-color",colors.hudBackColor);
+            saveColorScheme(colors);
+        }
 
+       //Check for color click
+       else if(mouseHover!=-1){
+           displayModal(colors[mouseHover], function(color){
+               colors[mouseHover] = color.toHexString();
+               $("body").css("background-color",colors.hudBackColor);
+               saveColorScheme(colors);
+               $(".modal").toggle(false);
+               drawScreen();
+           });
+       }
     }
     else if(openWindow === "joinTeamMenu"){
         if(mouseHover==="CREATE"){
@@ -1429,6 +1453,11 @@ function handleMousedown(e){
        else if(typeof mouseHover.item !== "undefined"){
            makePurchase(me.token,me.id,mouseHover.item);
        }
+    }
+    else if(me.stats.hp == 0){  //Dead
+        if(typeof mouseHover.spawnID != "undefined"){
+            requestRespawn(me.token,me.id,mouseHover.spawnID);
+        }
     }
     else if(openWindow === "" && !gameStart){
         var mid = parseInt(me.stats.radar/2);

@@ -19,10 +19,11 @@ var chatMsg = '';
 //*****************************************************************************
 //Other functions
 //*****************************************************************************
-function requestRespawn(token,id){
+function requestRespawn(token,id, baseID){
     var dat = {
         "token": token,
-        "id": id
+        "id": id,
+        "baseID": baseID
     };
 
     $.ajax({

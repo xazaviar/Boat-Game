@@ -42,11 +42,15 @@ var combatCooldown = 4; //Number of rounds
 var dcCountdown = 2; //d/c cooldown
 var profitCountdown = 0;
 var profitCountdownMax = 5;
+var respawnCountdown = 3;
 
 //Saving
 var saveCountdown = 0;
 var saveRound = 3;
 var canDelete = true;
+
+var maxJoinTokens = 2;
+var roundsTillJoinToken = 700;
 
 //Stat Data
 var statData;
@@ -197,7 +201,7 @@ function startServer(){
                 var name = ""
                 players[id].battleLog = [];
                 if(players[id].stats.hp <=0) players[id].stats.hp = players[id].stats.hpMAX;
-                players[id].loc = spawn();
+                players[id].loc = spawn(-1);
                 players[id].knownLocs =  [];
                 players[id].scanned =  [];
                 players[id].knownTraps =  [];
@@ -240,7 +244,7 @@ function startServer(){
         var name = req.params.name;
         if(name==="") name = "random";
         var token =  generateToken();
-        var sp = spawn();
+        var sp = spawn(-1);
         var id = playerSize;
         playerSize++;
 
@@ -255,9 +259,9 @@ function startServer(){
                 "name": name,
                 "teamID": -1,
                 "teamRole": "NONE",
-                "gold": 1000000,
+                "gold": 0,
                 "totalGold":0,
-                "iron": 5000,
+                "iron": 0,
                 "totalIron":0,
                 "uranium": 0,
                 "totalUranium":0,
@@ -277,7 +281,10 @@ function startServer(){
                 "shipMass": 0,
                 "powerLevel": 0,
                 "captures": 0,
-                "ping": 20
+                "ping": 20,
+                "joinTokens": 2,
+                "roundsPlayed": 0,
+                "respawnCount": 0
             },
             "loc": sp,
             "queue": [],
@@ -421,7 +428,8 @@ function startServer(){
                             "uranium": p.stats.scanner > 2 && map[x][y].loot.uranium > 0
                         },
                         "id": map[x][y].id,
-                        "trap": map[x][y].trap
+                        "trap": map[x][y].trap,
+                        "spawn": map[x][y].zone == 0
                     };
                     if(!isKnown(p.knownLocs,x,y)) delete sendMap[x][y].loot;
                     if(sendMap[x][y].trap>-1){
@@ -751,20 +759,51 @@ function startServer(){
         //Get token
         var token = req.body.token;
         var id = req.body.id;
+        var baseID = req.body.baseID;
 
         var p;
         if(players[id].status!=="OFFLINE")
             if(players[id].token===token)
                 p = players[id];
 
-        if(p!=null && p.stats.hp <= 0){
-            p.loc = spawn();
-            map[p.loc[0]][p.loc[1]].type = "PLAYER";
-            map[p.loc[0]][p.loc[1]].id = id;
-            p.stats.hp = p.stats.hpMAX;
-            p.stats.energy = p.stats.energyMAX;
-            p.knownLocs = [];
-            p.battleLog.unshift({"type":"action", "msg": "You have respawned."});
+        if(p!=null){
+            if(p.stats.hp <= 0 && p.info.respawnCount <= 0){
+                if(baseID > 0){
+                    var owner = baseList[baseID].owner;
+                    if(owner == p.info.teamID && baseList[baseID].special==="S"){
+                        p.loc = spawn(baseID);
+                        map[p.loc[0]][p.loc[1]].type = "PLAYER";
+                        map[p.loc[0]][p.loc[1]].id = id;
+                        p.stats.hp = p.stats.hpMAX;
+                        p.stats.energy = p.stats.energyMAX;
+                        p.knownLocs = [];
+                        p.battleLog.unshift({"type":"action", "msg": "You have respawned."});
+                    }
+                    else{
+                        var msg = {"type":"action", "msg": "You can't spawn there."};
+                        p.battleLog.unshift(msg);
+                    }
+                }
+                else{
+                    //Respawn at spawn
+                    p.loc = spawn(-1);
+                    map[p.loc[0]][p.loc[1]].type = "PLAYER";
+                    map[p.loc[0]][p.loc[1]].id = id;
+                    p.stats.hp = p.stats.hpMAX;
+                    p.stats.energy = p.stats.energyMAX;
+                    p.knownLocs = [];
+                    p.battleLog.unshift({"type":"action", "msg": "You have respawned."});
+                }
+
+            }
+            else if(p.stats.hp > 0){
+                var msg = {"type":"action", "msg": "You need to be dead to respawn."};
+                p.battleLog.unshift(msg);
+            }
+            else if(p.info.respawnCount > 0){
+                var msg = {"type":"action", "msg": "You still have to wait to respawn."};
+                p.battleLog.unshift(msg);
+            }
         }
 
         res.send('');
@@ -1454,8 +1493,6 @@ function startServer(){
         res.send('');
     });
     app.post('/joinTeam', function(req, res){
-        //TODO: CAN ONLY Join every ~200 Rounds
-
         var token = req.body.token;
         var id = req.body.id;
         var teamID = req.body.tid;
@@ -1478,7 +1515,7 @@ function startServer(){
                 }
             }
 
-            if((setting==="OPEN" || hasInvite) && teamID!=p.info.teamID){
+            if((setting==="OPEN" || hasInvite) && teamID!=p.info.teamID && p.info.joinTokens > 0){
                 if(type==="MERGE" || (p.info.teamRole==="LEADER" && type==="none")){ //Merge Teams together
                     mergeTeams(p.info.teamID,teamID,p);
                 }
@@ -1512,6 +1549,7 @@ function startServer(){
                     //Move to new team
                     p.info.teamID = teamID;
                     p.info.teamRole = "MEMBER";
+                    p.info.joinTokens--;
                     teamData[teamID].members.push({
                         "token": p.token,
                         "id": p.id,
@@ -1535,14 +1573,18 @@ function startServer(){
                     }
                 }
             }
-        }
-        else if(teamID!=p.info.teamID){
-            var msg = {"type":"action", "msg": "You are already apart of that team."};
-            p.battleLog.unshift(msg);
-        }
-        else{
-            var msg = {"type":"action", "msg": "You can't join this team without an invite."};
-            p.battleLog.unshift(msg);
+            else if(teamID == p.info.teamID){
+                var msg = {"type":"action", "msg": "You are already apart of that team."};
+                p.battleLog.unshift(msg);
+            }
+            else if(setting!=="OPEN" && !hasInvite){
+                var msg = {"type":"action", "msg": "You can't join this team without an invite."};
+                p.battleLog.unshift(msg);
+            }
+            else if(p.info.joinTokens <= 0){
+                var msg = {"type":"action", "msg": "You have joined to many teams recently. You will have to wait to join. You can still create your own team though."};
+                p.battleLog.unshift(msg);
+            }
         }
 
         res.send('');
@@ -1744,13 +1786,17 @@ function startServer(){
             var setting = teamData[p.info.teamID].settings.membership;
             if((p.info.teamRole!=="MEMBER" || (p.info.teamRole==="MEMBER" && setting!=="AD INV")) && p.info.teamID>-1){
                 if(players[target].status!=="OFFLINE"){
-                    if(players[target].info.teamID != p.info.teamID){
+                    if(players[target].info.teamID != p.info.teamID && players[target].info.joinTokens>0){
                         players[target].invites.push({
                             "id": p.info.teamID,
                             "invID": p.id
                         });
 
                         var msg = {"type":"action", "msg": "You invited "+players[target].info.name+" to join the team."};
+                        p.battleLog.unshift(msg);
+                    }
+                    else if(players[target].info.joinTokens <= 0){
+                        var msg = {"type":"action", "msg": "That person has join too many teams recently and can't be invited."};
                         p.battleLog.unshift(msg);
                     }
                     else{
@@ -2122,7 +2168,7 @@ function actionPhase(){
             }
             baseList[b].actTargets = [];
             if(baseList[b].targets.length > 0 && phase < 3){
-                for(var a = 0; a < baseList[b].attacks[phase-1] && baseList[b].targets.length > 0; a++){
+                for(var a = 0; a < baseList[b].attacks[phase] && baseList[b].targets.length > 0; a++){
                     var r = parseInt(Math.random()*1000)%baseList[b].targets.length;
                     if(players[baseList[b].targets[r].id].status!=="OFFLINE"){
                         var loc = [players[baseList[b].targets[r].id].loc[0], players[baseList[b].targets[r].id].loc[1]];
@@ -2135,6 +2181,7 @@ function actionPhase(){
                         }
                     }
                     else{
+
                         baseList[b].targets.splice(r,1);
                         a--;
                     }
@@ -2220,6 +2267,12 @@ function roundCleanup(){
                 players[i].info.inCombat--;
                 players[i].info.stealthTime--;
                 players[i].info.trapped--;
+                players[i].info.roundsPlayed++;
+                players[i].info.respawnCount--;
+
+                if(players[i].info.roundsPlayed%roundsTillJoinToken==0 && players[i].info.joinTokens < maxJoinTokens)
+                    players[i].info.joinTokens++;
+
                 if(players[i].info.stealthTime==0)
                     players[i].info.stealthed = false;
 
@@ -2387,7 +2440,7 @@ function attack(p, loc){
     p.info.inCombat = combatCooldown;
 
     if(map[loc[0]][loc[1]].type!=="OPEN"){
-        hit(map[loc[0]][loc[1]], p);
+        hit(map[loc[0]][loc[1]], p, "hit");
     }
 
 }
@@ -2416,7 +2469,7 @@ function cannon(p, location){
 
     for(var i in locs){
         if(map[locs[i][0]][locs[i][1]].type!=="OPEN"){
-            hit(map[locs[i][0]][locs[i][1]], p);
+            hit(map[locs[i][0]][locs[i][1]], p, "blasted");
         }
     }
 }
@@ -2448,13 +2501,13 @@ function railgun(p, direction){
         for(var i = 1; i <= railgunRange; i++){
             var newX = p.loc[0]-i;
             if(newX < 0) newX += mapSize;
-            locs.push([newY,p.loc[1]]);
+            locs.push([newX,p.loc[1]]);
         }
     }
 
     for(var i in locs){
         if(map[locs[i][0]][locs[i][1]].type!=="OPEN"){
-            hit(map[locs[i][0]][locs[i][1]], p);
+            hit(map[locs[i][0]][locs[i][1]], p, "railed");
         }
     }
 }
@@ -3807,12 +3860,21 @@ function saveGameData(){
 
 
 //Map Related
-function spawn(){
+function spawn(baseID){
     while(true){
-        var r = parseInt((Math.random()*100)%spawnList.length);
+        if(baseID > 0){
+            var r = parseInt(Math.random()*baseList[baseID].tiles.length);
 
-        if(!spotOccupied(spawnList[r])){
-            return spawnList[r];
+            if(!spotOccupied(baseList[baseID].tiles[r])){
+                return baseList[baseID].tiles[r];
+            }
+        }
+        else{
+            var r = parseInt(Math.random()*spawnList.length);
+
+            if(!spotOccupied(spawnList[r])){
+                return spawnList[r];
+            }
         }
     }
 }
@@ -4259,8 +4321,14 @@ function hasLoot(loc){
 
 
 //Combat
-function hit(location, p){
-    var dmg = p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0);
+function hit(location, p, type){
+    var dmg;
+    if(type==="hit")
+        dmg = p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0);
+    if(type==="blasted")
+        dmg = (p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0))*(p.stats.cannon>2?1.5:1);
+    if(type==="railed")
+        dmg = (p.stats.attack + (isEquipped(p,"ATK+")?statData.attackINC:0))*(p.stats.railgun+1);
 
     if(location.type==="PLAYER"){
         var hit = players[location.id];
@@ -4268,7 +4336,7 @@ function hit(location, p){
         if(dmg>0){
             hit.stats.hp -= dmg;
             hit.info.inCombat = combatCooldown;
-            hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has hit you for "+dmg+" damage."});
+            hit.battleLog.unshift({"type":"combat", "msg": ""+p.info.name+" has "+type+" you for "+dmg+" damage."});
 
             if(hit.stats.hp <= 0){
                 death(hit, p);
@@ -4277,6 +4345,7 @@ function hit(location, p){
     }
     else if(location.type==="BASE"){
         var hit = baseList[location.id];
+        if(type==="railed") dmg /= 2;
         hit.hp -= dmg;
 
         if(hit.canTarget){
@@ -4341,6 +4410,8 @@ function hit(location, p){
             messageGroup(teamData[base.owner].members,
                          "Base "+hit.id+"'s walls are under attack!", "", "team", null);
         }
+
+        if(type==="railed") dmg /= 2;
         hit.hp -= dmg;
 
         if(base.canTarget){
@@ -4369,6 +4440,7 @@ function hit(location, p){
 function death(p, killer){
     p.stats.hp = 0;
     p.info.deaths = p.info.deaths + 1;
+    p.info.respawnCount = respawnCountdown+1;
     p.queue = [];
     p.battleLog.unshift({"type":"combat", "msg": "You died."});
     if(killer!=null)
