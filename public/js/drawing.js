@@ -373,6 +373,44 @@ function drawWall(ctx, startX, startY, tileSize, lvl, color){
     ctx.stroke();
 }
 
+function drawMapSimple(ctx, startX, startY, width, height, map){
+    //Calculate Drawing Area
+    var sX = startX;
+    var sY = startY;
+    var wid = width;
+    var hei = height;
+
+    var tileSize = width/map.length;
+
+    for(var x = 0; x < map.length; x++){
+        for(var y = 0; y < map.length; y++){
+            ctx.globalAlpha = 1.0;
+            if(map[x][y].baseID > -1){
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.fillStyle = map[x][y].colors.areaColor;
+                ctx.fillRect(sX+x*tileSize,sY+y*tileSize,tileSize,tileSize);
+                ctx.stroke();
+            }
+
+            if(map[x][y].type==="ROCK"){ //Rocks
+                ctx.beginPath();
+                ctx.fillStyle= colors.rockColor;
+                ctx.fillRect(sX+x*tileSize+tileSize/2-tileSize*.4,sY+y*tileSize+tileSize/2-tileSize*.4,tileSize*.8,tileSize*.8);
+                ctx.stroke();
+            }
+            else if(map[x][y].type==="WALL"){ //Walls
+                drawWall(ctx, sX+x*tileSize, sY+y*tileSize, tileSize, map[x][y].lvl, map[x][y].colors.baseColor);
+            }
+            else if(map[x][y].type==="BASE"){ //Bases
+                drawBase(ctx, sX+x*tileSize, sY+y*tileSize, tileSize, map[x][y].colors.baseShape, map[x][y].lvl, map[x][y].colors.baseColor);
+            }
+        }
+    }
+
+    ctx.globalAlpha = 1.0;
+}
+
 
 
 //*****************************************************************************

@@ -1,5 +1,5 @@
 var jsonfile = require('jsonfile');
-var changelog;
+var feedback;
 var version = "Alpha v1.2";
 
 //Globals
@@ -110,6 +110,13 @@ function init(){
         }
         statData = obj;
     });
+    jsonfile.readFile("data/feedback.json", function(err, obj) {
+        if(err){
+            console.log(err);
+            process.exit(1);
+        }
+        feedback = obj;
+    });
     jsonfile.readFile("data/lootspawnvalues.json", function(err, obj) {
         if(err){
             console.log(err);
@@ -135,7 +142,11 @@ function init(){
         playerSize = obj.playerSize;
 
         for(var i = 0; i < playerSize; i++){
-            players[i] = {"id":i,"name":obj.nameList[i].name,"status":"OFFLINE","changes":obj.nameList[i].changes};
+            players[i] = {"id":i,"name":obj.nameList[i].name,
+                          "status":"OFFLINE",
+                          "power":obj.power,
+                          "changes":obj.nameList[i].changes
+                         };
         }
 
         jsonfile.readFile("data/teamdata.json", function(err, obj) {
@@ -1877,7 +1888,7 @@ function startServer(){
         res.send('');
     });
     app.post('/upgradeBase', function(req,res){
-        var token = req.body.token;
+        var token = ;
         var id = req.body.id;
         var baseID = req.body.baseID;
 
@@ -1913,6 +1924,46 @@ function startServer(){
     });
 
 
+    app.get('/map',function(req, res){
+        var sendMap = [];
+        for(var x = 0; x < mapSize; x++){
+            sendMap[x] = [];
+            for(var y = 0; y < mapSize; y++){
+                var colors = null;
+                if(map[x][y].baseID > -1){
+                    if(baseList[map[x][y].baseID].owner>-1){
+                        colors = teamData[baseList[map[x][y].baseID].owner].colors;
+                    }
+                    else{
+                        colors = {
+                            "baseColor": "#666",
+                            "areaColor": "#666",
+                            "baseShape": "DIAMOND"
+                        };
+                    }
+                }
+
+                sendMap[x][y] = {
+                    "type": map[x][y].type,
+                    "baseID": map[x][y].baseID,
+                    "colors": colors
+                };
+
+                if(sendMap[x][y].type==="WALL"){
+                    sendMap[x][y]["lvl"] = wallList[sendMap[x][y].id].lvl;
+                }
+                else if(sendMap[x][y].type==="BASE"){
+                    sendMap[x][y]["lvl"] = baseList[sendMap[x][y].id].lvl;
+                }
+
+            }
+        }
+
+        res.send(sendMap);
+    });
+    app.get('/leaderboard',function(req, res){
+        res.send(rankPlayers());
+    });
     app.get('/changelog', function (req, res) {
         jsonfile.readFile("data/changelog.json", function(err, obj) {
             if(err){
@@ -1921,6 +1972,20 @@ function startServer(){
             }
             res.send(obj);
         });
+    });
+    app.get('/wikiInfo',function(req, res){
+        jsonfile.readFile("data/wiki.json", function(err, obj) {
+            if(err){
+                console.log(err);
+                res.send({"error": "Unable to get Changelog"});
+            }
+            res.send(obj);
+        });
+    });
+    app.post('/userFeedback',function (req, res){
+        feedback.push(req.body.feedback);
+
+        res.send('');
     });
 
     //**************************************************************************
@@ -1949,6 +2014,9 @@ function startServer(){
     app.get('/*', function (req, res) {
         //console.log("Got a GET request to get rick rolled");
         res.sendFile( __dirname + "/public/roll.html" );
+    });
+    app.get('*', function (req, res) {
+        res.sendFile( __dirname + "/public/home.html" );
     });
 
 
@@ -3817,7 +3885,7 @@ function savePlayer(p, del){
             map[p.loc[0]][p.loc[1]].type = "OPEN";
             map[p.loc[0]][p.loc[1]].id = -1;
 
-            players[p.id] = {"id":p.id,"name":p.info.name,"status":"OFFLINE","changes":null};
+            players[p.id] = {"id":p.id,"name":p.info.name,"status":"OFFLINE","power":p.info.powerLevel,"changes":null};
 
         }
     });
@@ -3835,11 +3903,13 @@ function saveGameData(){
         if(players[p].status==="OFFLINE"){
             nameList[p] = {
                 "name":players[p].name,
+                "power":players[p].power,
                 "changes": players[p].changes
             };
         }else{
             nameList[p] = {
                 "name": players[p].info.name,
+                "power":players[p].info.powerLevel,
                 "changes": null
             };
         }
@@ -3851,6 +3921,12 @@ function saveGameData(){
     };
 
     jsonfile.writeFile('data/gamedata.json', data, {spaces: 4},function(err){
+        if(err){
+            console.log(err);
+        }
+    });
+
+    jsonfile.writeFile('data/feedback.json', feedback, {spaces: 4},function(err){
         if(err){
             console.log(err);
         }
@@ -4710,4 +4786,23 @@ function giveLoot(p, gold, iron, uranium){
             p.info.totalUranium += uranium;
         }
     }
+}
+
+function rankPlayers(){
+    var leaderBoard = [];
+
+    for(var p in players){
+        if(players[p].status!=="OFFLINE")
+            leaderBoard.push({"name":players[p].id,"power":players[p].info.powerLevel,"online":true});
+        else
+            leaderBoard.push({"name":players[p].id,"power":players[p].power,"online":false});
+    }
+
+    leaderBoard.sort(function(a,b){
+        if(a.power > b.power) return -1;
+        if(a.power < b.power) return 1;
+        return 0;
+    });
+
+    return leaderBoard;
 }

@@ -1,0 +1,92 @@
+[
+    {
+        "title": "Welcome to [NAME PENDING]!",
+        "content": "In this game, you command a private ship. There is treasure to be found
+        and you can find it. Scan the area and loot your treasure. Send your
+        gold on ship upgrades and Special actions. Fight your enemies and be wary
+        of pirates. Dying could me losing a lot more than just your loot!",
+        "sidebarLabel": "Introduction",
+        "subSections": []
+    },
+    {
+        "title": "The Basics",
+        "content": "",
+        "sidebarLabel": "Introduction",
+        "subSections": [
+            {
+                "title": "Controls",
+                "content": "<table style='width:40%'>
+                    <tr>
+                        <th>Action</th>
+                        <th>Button</th>
+                    </tr>
+                    <tr>
+                        <td>Attack</td>
+                        <td>Left Mouse Click</td>
+                    </tr>
+                    <tr>
+                        <td>Move</td>
+                        <td>WASD or <^>v </td>
+                    </tr>
+                    <tr>
+                        <td>Scan</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Loot</td>
+                        <td>2</td>
+                    </tr>
+                    <tr>
+                        <td>Hold</td>
+                        <td>3</td>
+                    </tr>
+                    <tr>
+                        <td>Special 1</td>
+                        <td>q</td>
+                    </tr>
+                    <tr>
+                        <td>Special 2</td>
+                        <td>e</td>
+                    </tr>
+                    <tr>
+                        <td>Map</td>
+                        <td>m</td>
+                    </tr>
+                    <tr>
+                        <td>Chat</td>
+                        <td>enter</td>
+                    </tr>
+                    <tr>
+                        <td>Open Shop</td>
+                        <td>o</td>
+                    </tr>
+                    <tr>
+                        <td>Respawn</td>
+                        <td>y</td>
+                    </tr>
+                    <tr>
+                        <td>Menu</td>
+                        <td>Esc Key</td>
+                    </tr>
+                    <tr>
+                        <td>Other Stats</td>
+                        <td>i</td>
+                    </tr>
+                    <tr>
+                        <td>Map</td>
+                        <td>m</td>
+                    </tr>
+                    <tr>
+                        <td>Remove Action</td>
+                        <td>Click the action</td>
+                    </tr></table>",
+                "sidebarLabel": "Controls"
+            },
+            {
+                "title": "Interface",
+                "content":"This is the screen that you see when you start the game. Enter a name to begin.",
+                "sidebarLabel": "Interface"
+            }
+        ]
+    }
+]
