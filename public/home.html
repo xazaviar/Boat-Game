@@ -3,22 +3,41 @@
 <head>
     <title>TESTING</title>
     <script src="js/jquery-3.1.1.min.js"></script>
-    <script src="js/jquery-ui.min.js"></script>
+	<script src="js/server_calls.js"></script>
+	<script src="js/drawing_simple.js"></script>
 	<script src="js/home.js"></script>
-	<script src="js/testing.js"></script>
-    <script src="js/jquery-hex-colorpicker.min.js"></script>
-    <link rel="stylesheet" href="css/jquery-ui.min.css" />
-    <link rel="stylesheet" href="css/jquery-hex-colorpicker.css">
+	<link rel="stylesheet" href="css/main.css"/>
+	<link rel="stylesheet" href="css/log.css"/>
 	<link rel="stylesheet" href="css/home.css"/>
 </head>
 
 <body>
-    <div class="header">
-        <form id="baseForm">
-            Base Color: <input type="text" id="color-picker1"></br>
-            Area Color: <input type="text" id="color-picker2">
-            <input type="submit" value="Make Base">
-        </form>
+    <div class="page">
+        <div class="header">
+            <div class="websiteTitle">[NAME PENDING]</div>
+            <div class="tab" id="wiki">Wiki</div>
+            <div class="tab" id="game">Game</div>
+            <div class="tab" id="ideas">Comments</div>
+        </div>
+        <div class="contentArea">
+            <div class="contentBox" id="changelog">
+                <div class="contentTitle"> Change Log </div>
+                <div id="logArea"></div>
+            </div>
+            <div class="contentBox" id="map">
+                <div class="contentTitle"> Current Map </div>
+                <canvas id="drawMap" width="500" height="500">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </div>
+            <div class="contentBox" id="leaderboard">
+                <div class="contentTitle"> Leaderboard </div>
+                <div id="switcher">
+                    <div class="button" id="user">Users</div>
+                    <div class="button" id="team">Teams</div>
+                </div>
+                <div id="table"></div>
+            </div>
+        </div>
     </div>
-    <div class="mainArea"></div>
 </body>

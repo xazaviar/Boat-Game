@@ -1,88 +1,9 @@
 {
-    "playerSize": 21,
+    "playerSize": 1,
     "nameList": [
         {
             "name": "test",
-            "changes": null
-        },
-        {
-            "name": "teste",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "test",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "test",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf_",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "sdfg",
-            "changes": null
-        },
-        {
-            "name": "sdfg",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "changes": null
-        },
-        {
-            "name": "asdf",
+            "power": 2,
             "changes": null
         }
     ]

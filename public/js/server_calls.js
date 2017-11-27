@@ -434,3 +434,58 @@ function invite(token, id, pid){
 //*****************************************************************************
 //Webiste functions
 //*****************************************************************************
+function getMap(_callback){
+    $.get("/map", function(data) {
+        _callback(data);
+    });
+}
+
+function getWikiInfo(_callback){
+    $.get("/wikiInfo", function(data) {
+        _callback(data);
+    });
+}
+
+function getLeaderboard(){
+    $.get("/leaderboard", function(data) {
+        return data;
+    });
+}
+
+function getTeamLeaderboard(){
+    $.get("/teamLeaderboard", function(data) {
+        return data;
+    });
+}
+
+function getChangelog(_callback){
+    $.get("/changelog", function(data){
+        _callback(data);
+    });
+}
+
+function sendFeedback(type, msg){
+    var dat = {
+        "feedback": {
+            "type": type,
+            "message": msg
+        }
+    };
+
+    $.ajax({
+        url: "/userFeedback",
+        type:'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(dat),
+        success: function(msg)
+        {
+            console.log('Sent');
+        },
+        error: function(xhr, status, error){
+            confirmDialog = -1;
+            valueLock = -1;
+        }
+    });
+}

@@ -142,9 +142,10 @@ function init(){
         playerSize = obj.playerSize;
 
         for(var i = 0; i < playerSize; i++){
-            players[i] = {"id":i,"name":obj.nameList[i].name,
+            players[i] = {"id": i,
+                          "name":obj.nameList[i].name,
                           "status":"OFFLINE",
-                          "power":obj.power,
+                          "power":obj.nameList[i].power,
                           "changes":obj.nameList[i].changes
                          };
         }
@@ -1888,7 +1889,7 @@ function startServer(){
         res.send('');
     });
     app.post('/upgradeBase', function(req,res){
-        var token = ;
+        var token = req.body.token;
         var id = req.body.id;
         var baseID = req.body.baseID;
 
@@ -1953,7 +1954,7 @@ function startServer(){
                     sendMap[x][y]["lvl"] = wallList[sendMap[x][y].id].lvl;
                 }
                 else if(sendMap[x][y].type==="BASE"){
-                    sendMap[x][y]["lvl"] = baseList[sendMap[x][y].id].lvl;
+                    sendMap[x][y]["lvl"] = baseList[sendMap[x][y].baseID].lvl;
                 }
 
             }
@@ -1963,6 +1964,22 @@ function startServer(){
     });
     app.get('/leaderboard',function(req, res){
         res.send(rankPlayers());
+    });
+    app.get('/teamLeaderboard',function(req, res){
+        var nameToPower = [];
+
+        for(var t in teamData){
+            if(teamData[t].status!=="DELETED")
+                nameToPower.push({"name":teamData[t].name, "power":teamData[t].power});
+        }
+
+        nameToPower.sort(function(a,b){
+            if(a.power > b.power) return -1;
+            if(a.power < b.power) return 1;
+            return 0;
+        });
+
+        res.send(nameToPower);
     });
     app.get('/changelog', function (req, res) {
         jsonfile.readFile("data/changelog.json", function(err, obj) {
@@ -1977,7 +1994,7 @@ function startServer(){
         jsonfile.readFile("data/wiki.json", function(err, obj) {
             if(err){
                 console.log(err);
-                res.send({"error": "Unable to get Changelog"});
+                res.send({"error": "Unable to get Wiki Info"});
             }
             res.send(obj);
         });
@@ -2006,6 +2023,10 @@ function startServer(){
     app.get('/admin', function (req, res) {
         // console.log("Got a GET request for the admin page");
         res.sendFile( __dirname + "/public/admin.html" );
+    });
+    app.get('/ideas', function (req, res) {
+        // console.log("Got a GET request for the Game page");
+        res.sendFile( __dirname + "/public/ideas.html" );
     });
     app.get('/log', function (req, res) {
         // console.log("Got a GET request for the Change Log page");
@@ -3501,7 +3522,8 @@ function rankTeams(){
     var idToPower = [];
 
     for(var t in teamData){
-        idToPower.push({"id":teamData[t].id,"power":teamData[t].power});
+        if(teamData[t].status!=="DELETED")
+            idToPower.push({"id":teamData[t].id,"power":teamData[t].power});
     }
 
     idToPower.sort(function(a,b){
@@ -4793,9 +4815,9 @@ function rankPlayers(){
 
     for(var p in players){
         if(players[p].status!=="OFFLINE")
-            leaderBoard.push({"name":players[p].id,"power":players[p].info.powerLevel,"online":true});
+            leaderBoard.push({"name":players[p].info.name,"power":players[p].info.powerLevel,"online":true});
         else
-            leaderBoard.push({"name":players[p].id,"power":players[p].power,"online":false});
+            leaderBoard.push({"name":players[p].name,"power":players[p].power,"online":false});
     }
 
     leaderBoard.sort(function(a,b){

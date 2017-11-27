@@ -1,18 +1,6 @@
-body {
-    background-color: black;
-    color: green;
-    font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
-}
-.logArea {
+#logArea {
     position: relative;
     width: 100%;
-}
-
-#pageTitle {
-    margin: auto;
-    text-align: center;
-    font-size: 50px;
-    margin-bottom: 40px;
 }
 
 .change {
