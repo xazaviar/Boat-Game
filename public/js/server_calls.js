@@ -446,15 +446,15 @@ function getWikiInfo(_callback){
     });
 }
 
-function getLeaderboard(){
+function getLeaderboard(_callback){
     $.get("/leaderboard", function(data) {
-        return data;
+        _callback(data);
     });
 }
 
-function getTeamLeaderboard(){
+function getTeamLeaderboard(_callback){
     $.get("/teamLeaderboard", function(data) {
-        return data;
+        _callback(data);
     });
 }
 
@@ -464,10 +464,17 @@ function getChangelog(_callback){
     });
 }
 
-function sendFeedback(type, msg){
+function getFeedback(_callback){
+    $.get("/feedback", function(data){
+        _callback(data);
+    });
+}
+
+function sendFeedback(type, title, msg){
     var dat = {
         "feedback": {
             "type": type,
+            "title": title,
             "message": msg
         }
     };

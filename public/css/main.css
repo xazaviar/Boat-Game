@@ -1,3 +1,57 @@
 body {
     font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
 }
+
+.page {
+    width: 80%;
+    max-width: 1400px;
+    margin: auto;
+}
+
+.header {
+    position: relative;
+    float: left;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100px;
+}
+
+.websiteTitle {
+    float: left;
+    height: 100%;
+    font-size: 50pt;
+    line-height: 100px;
+    margin-right: 25px;
+}
+
+.tab {
+    width: 180px;
+    height: 50px;
+    float: left;
+    text-align: center;
+    line-height: 50px;
+    font-size: 25pt;
+    margin-top: 48px;
+    cursor: pointer;
+}
+
+.contentArea {
+    position: relative;
+    float: left;
+    width: 100%;
+}
+
+.contentTitle {
+    margin: auto;
+    text-align: center;
+    font-size: 50px;
+    margin-bottom: 20px;
+}
+
+.contentBox {
+    width: 50%;
+    float: left;
+    position: relative;
+    margin-top: 25px;
+}

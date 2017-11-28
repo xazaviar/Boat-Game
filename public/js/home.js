@@ -1,19 +1,14 @@
 var users, teams;
 
 setTimeout(init,2);
-
 setInterval(updates,5000);
 
 function init(){
     //Set initial colors
     buildUI();
 
-
     //Map
     updateMap();
-
-    //Chat log
-
 
     //Leaderboard
     updateLeaderboard();
@@ -44,6 +39,22 @@ function buildUI(){
         "border": "2px solid "+colors.hudColor
     });
 
+    $(".websiteTitle").css({
+        "color": colors.hudColor+"DD"
+    });
+    $(".websiteTitle").hover(function(){
+        $(this).css({
+            "color": colors.hudColor
+        })}, function(){
+        $(this).css({
+            "color": colors.hudColor+"DD"
+        })}
+    );
+    $('.websiteTitle').on("click",function(){
+        window.location = ""+location.origin+"/home";
+    });
+
+
     $(".tab").css({
         "border": "2px solid "+colors.hudColor
     });
@@ -59,11 +70,16 @@ function buildUI(){
     );
     $('.tab').on("click",function(){
         var id = $(this).attr("id");
-        var win = window.open(""+location.origin+"/"+id);
-        if (win)
-            win.focus();
-        else
-            alert('Please allow popups for this website');
+        if(id==="game"){
+            var win = window.open(""+location.origin+"/"+id);
+            if (win)
+                win.focus();
+            else
+                alert('Please allow popups for this website');
+        }
+        else{
+            window.location = ""+location.origin+"/"+id;
+        }
     });
 
     //Leaderboards
@@ -121,8 +137,6 @@ function buildUI(){
         "color": colors.hudBackColor,
         "background-color": colors.hudColor
     });
-
-
 }
 
 function updateMap(){
@@ -136,19 +150,49 @@ function updateMap(){
 }
 
 function updateLeaderboard(){
-    users = getLeaderboard();
-    teams = getTeamLeaderboard();
+    getLeaderboard(function(data1){
+        users = data1;
+        getTeamLeaderboard(function(data2){
+            teams = data2;
+            displayLeaderboard();
+        });
+    });
 
-    displayLeaderboard();
+
 }
 
 function displayLeaderboard(){
     var leaderboard = [];
 
-    if($("#user").hasClass("selected")) leaderboard = users;
-    else leaderboard = teams;
+    $("#table").empty();
+    $("#table").append("<thead></thead><tbody></tbody>");
 
-    console.log(leaderboard, users.length, teams.length);
+    if($("#user").hasClass("selected")){
+        leaderboard = users;
+        $("#table tbody").append("<tr><th>Rank</th><th>Name</th><th>Power</th><th>Online</th></tr>");
+    }
+    else{
+        leaderboard = teams;
+        $("#table tbody").append("<tr><th>Rank</th><th>Name</th><th>Power</th></tr>");
+    }
+
+    $("th").css({
+        "border-bottom": "2px solid "+colors.hudColor
+    });
+
+    var rank = 1;
+    for(var i = 0; i < Math.min(leaderboard.length,10); i++){
+        if(i > 0){
+            if(leaderboard[i].power!=leaderboard[i-1].power) rank = i+1;
+        }
+        if($("#user").hasClass("selected")){
+
+            $("#table tbody").append("<tr><td>"+rank+"</td><td>"+leaderboard[i].name+"</td><td>"+leaderboard[i].power+"</td><td>"+leaderboard[i].online+"</td></tr>");
+        }
+        else{
+            $("#table tbody").append("<tr><td>"+rank+"</td><td>"+leaderboard[i].name+"</td><td>"+leaderboard[i].power+"</td></tr>");
+        }
+    }
 }
 
 function displayChangeLog(zone, data){

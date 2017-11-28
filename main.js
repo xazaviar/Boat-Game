@@ -780,7 +780,7 @@ function startServer(){
 
         if(p!=null){
             if(p.stats.hp <= 0 && p.info.respawnCount <= 0){
-                if(baseID > 0){
+                if(baseID > 0 && baseID!=baseList.length-1){
                     var owner = baseList[baseID].owner;
                     if(owner == p.info.teamID && baseList[baseID].special==="S"){
                         p.loc = spawn(baseID);
@@ -1999,9 +1999,11 @@ function startServer(){
             res.send(obj);
         });
     });
+    app.get('/feedback',function(req, res){
+        res.send(feedback);
+    });
     app.post('/userFeedback',function (req, res){
         feedback.push(req.body.feedback);
-
         res.send('');
     });
 
@@ -3532,8 +3534,12 @@ function rankTeams(){
         return 0;
     });
 
+    var rank = 1;
     for(var i = 0; i < idToPower.length; i++){
-        teamData[idToPower[i].id].rank = (i+1);
+        if(i > 0){
+            if(idToPower[i].power!=idToPower[i-1].power) rank = i+1;
+        }
+        teamData[idToPower[i].id].rank = rank;
     }
 }
 

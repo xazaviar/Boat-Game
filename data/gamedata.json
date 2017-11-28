@@ -1,9 +1,24 @@
 {
-    "playerSize": 1,
+    "playerSize": 4,
     "nameList": [
         {
             "name": "test",
             "power": 2,
+            "changes": null
+        },
+        {
+            "name": "test me",
+            "power": 7,
+            "changes": null
+        },
+        {
+            "name": "test",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "test",
+            "power": 0,
             "changes": null
         }
     ]

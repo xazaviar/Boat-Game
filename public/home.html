@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>TESTING</title>
+    <title>Home</title>
     <script src="js/jquery-3.1.1.min.js"></script>
 	<script src="js/server_calls.js"></script>
 	<script src="js/drawing_simple.js"></script>
@@ -15,8 +15,8 @@
     <div class="page">
         <div class="header">
             <div class="websiteTitle">[NAME PENDING]</div>
-            <div class="tab" id="wiki">Wiki</div>
             <div class="tab" id="game">Game</div>
+            <div class="tab" id="wiki">Wiki</div>
             <div class="tab" id="ideas">Comments</div>
         </div>
         <div class="contentArea">
@@ -24,20 +24,21 @@
                 <div class="contentTitle"> Change Log </div>
                 <div id="logArea"></div>
             </div>
-            <div class="contentBox" id="map">
-                <div class="contentTitle"> Current Map </div>
-                <canvas id="drawMap" width="500" height="500">
-                    Your browser does not support the HTML5 canvas tag.
-                </canvas>
-            </div>
             <div class="contentBox" id="leaderboard">
                 <div class="contentTitle"> Leaderboard </div>
                 <div id="switcher">
                     <div class="button" id="user">Users</div>
                     <div class="button" id="team">Teams</div>
                 </div>
-                <div id="table"></div>
+                <table id="table"></table>
             </div>
+            <div class="contentBox" id="map">
+                <div class="contentTitle"> Current Map </div>
+                <canvas id="drawMap" width="500" height="500">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </div>
+
         </div>
     </div>
 </body>

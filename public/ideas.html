@@ -1,1 +1,57 @@
-hi
+<html>
+
+<head>
+    <title>Feedback</title>
+    <script src="js/jquery-3.1.1.min.js"></script>
+	<script src="js/server_calls.js"></script>
+	<script src="js/drawing_simple.js"></script>
+	<script src="js/ideas.js"></script>
+	<link rel="stylesheet" href="css/main.css"/>
+	<link rel="stylesheet" href="css/ideas.css"/>
+</head>
+
+<body>
+    <div class="page">
+        <div class="header">
+            <div class="websiteTitle">[NAME PENDING]</div>
+            <div class="tab" id="game">Game</div>
+            <div class="tab" id="wiki">Wiki</div>
+            <div class="tab" id="ideas">Comments</div>
+        </div>
+        <div class="contentArea">
+            <div class="contentBox" style="width:100%">
+                <p id="description"> Feel free to report any bugs or request any features here. You can also check out the code repository here: </br></br><a href="https://github.com/xazaviar/Boat-Game">https://github.com/xazaviar/Boat-Game</a> </p>
+            </div>
+            <div class="contentBox" id="bugs">
+                <div class="contentTitle"> Known Bugs </div>
+                <div class="buttonBar">
+                    <div class="button" id="report">Report</div>
+                </div>
+                <div class="form" id="bugForm">
+                    <form>
+                        Title: <input type="text" name="titleb"> </br></br>
+                        Please describe the bug: </br>
+                        <textarea rows="4" cols="75" name="descb"></textarea></br></br>
+                        <div class="button" id="submitB">Submit</div>
+                    </form>
+                </div>
+                <div class="list" id="bugList"></div>
+            </div>
+            <div class="contentBox" id="features">
+                <div class="contentTitle"> Feature Requests </div>
+                <div class="buttonBar">
+                    <div class="button" id="request">Request</div>
+                </div>
+                <div class="form" id="featureForm">
+                    <form>
+                        Title: <input type="text" name="titlef"> </br></br>
+                        Please describe your feature idea: </br>
+                        <textarea rows="4" cols="75" name="descf"></textarea></br></br>
+                        <div class="button" id="submitF">Submit</div>
+                    </form>
+                </div>
+                <div class="list" id="featureList"></div>
+            </div>
+        </div>
+    </div>
+</body>
