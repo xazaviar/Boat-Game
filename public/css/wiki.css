@@ -1,26 +1,25 @@
 body {
-    background-color: black;
-    color: green;
     font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
 }
 
 .sidebar {
     position: fixed;
     float: left;
-    width: 200px;
-    height: 100%;
-    top: 0px;
-    border: 1px green solid;
-    left: 0px;
+    width: 180px;
+    height: 500px;
 }
 
-.page {
-    width: 60%;
-    margin: auto;
+.contentBox {
+    position: relative;
+    float: left;
+    width: 80%;
+    margin-left: 200px;
+    margin-bottom: 100px;
 }
+
 .title {
     font-size: 30pt;
-    margin-top: 50px;
+    margin-top: 25px;
 
 }
 .subtitle {
@@ -44,8 +43,8 @@ table {
 }
 
 td, th {
-    border: 1px solid green;
-    text-align: left;
+    /*border: 1px solid green;*/
+    text-align: center;
     padding: 8px;
 }
 
@@ -64,17 +63,14 @@ img {
 .contentLinkMain {
     font-size: 14pt;
     margin-left: 5px;
-    color: green;
 }
 
 .contentLinkSub {
     font-size: 12pt;
     margin-left: 15px;
-    color: green;
 }
 
 .contentLinkLab {
     font-size: 12pt;
     margin-left: 25px;
-    color: green;
 }

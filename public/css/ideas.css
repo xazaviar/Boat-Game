@@ -5,6 +5,7 @@
     margin: auto;
 }
 
+
 .contentBox {
     width: 48%;
 }
@@ -19,6 +20,7 @@
     text-align: center;
     margin: auto;
     width: 90%;
+    display: none;
 }
 
 .buttonBar{
@@ -30,7 +32,6 @@
 
 .button{
     display: inline-block;
-    /*float: right;*/
     margin-right: 5%;
     width: 130px;
     height: 40px;
@@ -39,4 +40,12 @@
     font-size: 20pt;
     margin-left: 10px;
     cursor: pointer;
+}
+
+.feedbackTitle {
+    font-size: 20pt;
+}
+
+.feedbackDesc {
+    margin-left: 25px;
 }

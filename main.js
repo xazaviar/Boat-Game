@@ -2003,7 +2003,15 @@ function startServer(){
         res.send(feedback);
     });
     app.post('/userFeedback',function (req, res){
-        feedback.push(req.body.feedback);
+        var id = feedback.length;
+        var newFeedback = {
+            "id": id,
+            "type": req.body.type,
+            "title":req.body.title,
+            "desc":req.body.desc
+        }
+
+        feedback.push(newFeedback);
         res.send('');
     });
 
@@ -2034,12 +2042,12 @@ function startServer(){
         // console.log("Got a GET request for the Change Log page");
         res.sendFile( __dirname + "/public/log.html" );
     });
+    app.get('', function (req, res) {
+        res.sendFile( __dirname + "/public/home.html" );
+    });
     app.get('/*', function (req, res) {
         //console.log("Got a GET request to get rick rolled");
         res.sendFile( __dirname + "/public/roll.html" );
-    });
-    app.get('*', function (req, res) {
-        res.sendFile( __dirname + "/public/home.html" );
     });
 
 

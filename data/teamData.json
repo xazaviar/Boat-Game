@@ -29,6 +29,20 @@
                 "name": "test",
                 "powerLevel": 0,
                 "online": false
+            },
+            {
+                "token": "qb2ubIPWNu91jXVV7NWOITF2k19LT1JTc2P4QK9vwPj2RzLXO109jrFJHX5gOUJoHPQuXd69AsGYeixXUEdrqbSmhbQNmxWFORqq4MGnm9fhlhUqKnmEsrA9hkTdjkGSSJN8DAKAVNbkdfSc2QnKbnw15vjBWjTQR3tNnHSaZqHd4szIMpuHrBClgpj1ADsJfFloYUop",
+                "id": 4,
+                "name": "test",
+                "powerLevel": 0,
+                "online": false
+            },
+            {
+                "token": "N9SAf9vfycafxKyfeJvYH2eXw93K4pIZyu3SMf7X7zmjDIMjTvr6aV1PVX76RP873x9rXdUFPAdVoB9tsDWzULeXKQ6HcyWNCxZvxGtpBt3hE24I6RKukDO8AUjcF4dI3xAcUliNcnMYMwukIQvqoQfvpbl9x55GOjHtG80SCEqWsrnCMD6qDHeOS6LqYzQEBRk71BVi",
+                "id": 5,
+                "name": "test",
+                "powerLevel": 0,
+                "online": false
             }
         ],
         "vault": {
@@ -44,7 +58,7 @@
             "uranium": 0
         },
         "rank": 1,
-        "power": 10,
+        "power": 20,
         "settings": {
             "building": "TEAM",
             "ping": "ADMIN",
@@ -118,7 +132,15 @@
             "online": false
         },
         "admins": [],
-        "members": [],
+        "members": [
+            {
+                "token": "S87td1BtoPH8wLL4tu8jpcLJ42ec2JwqQhnJIF8gQNNNbJwDXHMa6OLghYtsfmIiOjZqomvIkdi2HBhGwMVIUfGynVqSnW5v1RIgTfKxlNyYdn6bCcD7JAJOGf7vpHgQTnYf4sViVEfwDU1Ph46pTAnqCBTzoRBHYvVYaWcBcaHtVPM71V8Px97VzJQ3bx6AGmrv1HJh",
+                "id": 6,
+                "name": "Test player",
+                "powerLevel": 0,
+                "online": false
+            }
+        ],
         "vault": {
             "gold": 0,
             "credits": 0,
@@ -131,8 +153,8 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 7,
-        "power": 0,
+        "rank": 3,
+        "power": 5,
         "settings": {
             "building": "TEAM",
             "ping": "ADMIN",
@@ -317,7 +339,7 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 7,
+        "rank": 8,
         "power": 0,
         "Objective": -1,
         "settings": {
@@ -378,7 +400,7 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 1,
+        "rank": 2,
         "power": 10,
         "Objective": -1,
         "settings": {

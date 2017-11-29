@@ -69,6 +69,7 @@ function sendChatMsg(token, id, msg, type){
 }
 
 
+
 //*****************************************************************************
 //Shop/Base functions
 //*****************************************************************************
@@ -120,6 +121,7 @@ function changeLoadout(token, id, slot, item){
 }
 
 
+
 //*****************************************************************************
 //Queue functions
 //*****************************************************************************
@@ -168,6 +170,7 @@ function removeFromQueue(token, id, i){
         }
     });
 }
+
 
 
 //*****************************************************************************
@@ -303,6 +306,8 @@ function upgradeBase(token, id, baseID){
     });
 }
 
+
+
 //*****************************************************************************
 //Team Management functions
 //*****************************************************************************
@@ -431,6 +436,7 @@ function invite(token, id, pid){
 }
 
 
+
 //*****************************************************************************
 //Webiste functions
 //*****************************************************************************
@@ -470,29 +476,31 @@ function getFeedback(_callback){
     });
 }
 
-function sendFeedback(type, title, msg){
-    var dat = {
-        "feedback": {
+function sendFeedback(type, title, desc){
+    if(title!=="" && desc!==""){
+        var dat = {
             "type": type,
             "title": title,
-            "message": msg
-        }
-    };
+            "desc": desc
+        };
 
-    $.ajax({
-        url: "/userFeedback",
-        type:'POST',
-        dataType: 'json',
-        cache: false,
-        contentType: 'application/json',
-        data: JSON.stringify(dat),
-        success: function(msg)
-        {
-            console.log('Sent');
-        },
-        error: function(xhr, status, error){
-            confirmDialog = -1;
-            valueLock = -1;
-        }
-    });
+        $.ajax({
+            url: "/userFeedback",
+            type:'POST',
+            dataType: 'json',
+            cache: false,
+            contentType: 'application/json',
+            data: JSON.stringify(dat),
+            success: function(msg)
+            {
+                console.log('Sent');
+            },
+            error: function(xhr, status, error){
+                confirmDialog = -1;
+                valueLock = -1;
+            }
+        });
+        return true;
+    }
+    return false;
 }

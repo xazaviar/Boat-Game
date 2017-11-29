@@ -3,7 +3,7 @@ var hover = [-1,-1];
 var gameStart = true;
 var store;
 var statInfo = false;
-var saveOnStartup = false;
+var saveOnStartup = true;
 
 //Auto d/c
 var autoDCLimit = 120; //~10 minutes

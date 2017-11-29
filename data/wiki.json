@@ -1,91 +1,149 @@
 [
     {
         "title": "Welcome to [NAME PENDING]!",
-        "content": "In this game, you command a private ship. There is treasure to be found
-        and you can find it. Scan the area and loot your treasure. Send your
-        gold on ship upgrades and Special actions. Fight your enemies and be wary
-        of pirates. Dying could me losing a lot more than just your loot!",
+        "content": "In this game, you command a private ship. There is treasure to be found and you can find it. Scan the area and loot your treasure. Send your gold on ship upgrades and Special actions. Fight your enemies and be wary of pirates. Dying could me losing a lot more than just your loot!",
         "sidebarLabel": "Introduction",
         "subSections": []
     },
     {
         "title": "The Basics",
         "content": "",
-        "sidebarLabel": "Introduction",
+        "sidebarLabel": "The Basics",
+        "subSections": [
+                {
+                    "title": "Controls",
+                    "content": "<table style='width:40%'><tr><th>Action</th><th>Button</th></tr><tr><td>Attack</td><td>Left Mouse Click</td></tr><tr><td>Move</td><td>WASD or <^>v </td></tr><tr><td>Scan</td><td>1</td></tr><tr><td>Loot</td><td>2</td></tr><tr><td>Hold</td><td>3</td></tr><tr><td>Special 1</td><td>q</td></tr><tr><td>Special 2</td><td>e</td></tr><tr><td>Map</td><td>m</td></tr><tr><td>Chat</td><td>enter</td></tr><tr><td>Open Shop</td><td>o</td></tr><tr><td>Respawn</td><td>y</td></tr><tr><td>Menu</td><td>Esc Key</td></tr><tr><td>Other Stats</td><td>i</td></tr><tr><td>Map</td><td>m</td></tr><tr><td>Remove Action</td><td>Click the action</td></tr></table>",
+                    "sidebarLabel": "Controls",
+                    "subSections": []
+                },
+                {
+                    "title": "Interface",
+                    "content":"<p>This is the screen that you see when you start the game. Enter a name to begin.</p><img src='images/start_screen.png' id='startScreen'/><p>This is the main view screen. You are always in the center of the screen. Everything operates on a grid in semi-realtime. The top bar is the round counter, and this tells you how long you have left in a round to put in your actions. The action queue are the actions that will happen this round. If you scan the area, loot will appear. Grab loot to get gold. The battle log is where all messages and chat is shown.</p><img src='images/main_screen.png' id='mainScreen'/>",
+                    "sidebarLabel": "Interface",
+                    "subSections": []
+                },
+                {
+                    "title": "Rounds",
+                    "content":"<p>The game operates on a global round counter. Every player has three action points to spend each round and three seconds to select them. Once the time is up, all actions will occur in the queue order. Empty queue slots are filled with 'Hold' actions.</p>",
+                    "sidebarLabel": "Rounds",
+                    "subSections": []
+                },
+                {
+                    "title": "Death",
+                    "content":"<p> When you die, if you do not have insurance, you will drop all of your loot. In addition to this, all of your skills and items will decrease by a single level. You can respawn after 3 rounds by clicking one of the glowing respawn options. If you capture one of the special bases, you can respawn near that base.</p>",
+                    "sidebarLabel": "Death",
+                    "subSections": []
+                }
+
+        ]
+    },
+    {
+        "title": "Shops",
+        "content": "<p> Shops are where you can purchase upgrades, repair your ship, and modify your ship. Any base that is either neutral or owned by your team acts as a shop. Different base levels change the inventory of the shop with level 3+ bases selling all inventory. When near a shop you can press 'o' to open the shop menu.</p>",
+        "sidebarLabel": "Shops",
         "subSections": [
             {
-                "title": "Controls",
-                "content": "<table style='width:40%'>
-                    <tr>
-                        <th>Action</th>
-                        <th>Button</th>
-                    </tr>
-                    <tr>
-                        <td>Attack</td>
-                        <td>Left Mouse Click</td>
-                    </tr>
-                    <tr>
-                        <td>Move</td>
-                        <td>WASD or <^>v </td>
-                    </tr>
-                    <tr>
-                        <td>Scan</td>
-                        <td>1</td>
-                    </tr>
-                    <tr>
-                        <td>Loot</td>
-                        <td>2</td>
-                    </tr>
-                    <tr>
-                        <td>Hold</td>
-                        <td>3</td>
-                    </tr>
-                    <tr>
-                        <td>Special 1</td>
-                        <td>q</td>
-                    </tr>
-                    <tr>
-                        <td>Special 2</td>
-                        <td>e</td>
-                    </tr>
-                    <tr>
-                        <td>Map</td>
-                        <td>m</td>
-                    </tr>
-                    <tr>
-                        <td>Chat</td>
-                        <td>enter</td>
-                    </tr>
-                    <tr>
-                        <td>Open Shop</td>
-                        <td>o</td>
-                    </tr>
-                    <tr>
-                        <td>Respawn</td>
-                        <td>y</td>
-                    </tr>
-                    <tr>
-                        <td>Menu</td>
-                        <td>Esc Key</td>
-                    </tr>
-                    <tr>
-                        <td>Other Stats</td>
-                        <td>i</td>
-                    </tr>
-                    <tr>
-                        <td>Map</td>
-                        <td>m</td>
-                    </tr>
-                    <tr>
-                        <td>Remove Action</td>
-                        <td>Click the action</td>
-                    </tr></table>",
-                "sidebarLabel": "Controls"
+                "title": "Inventory",
+                "content": "<table><tr><th>Item</th><th>Description</th><th>Cost</th><th>Base Level</th>  </tr>  <tr><td>Attack Upgrade</td><td>Increases base attack damage.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>300</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>2</td>  <td>600</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>3</td>  <td>900</td>  <td>1</td>  <td>0</td> </tr> <tr>  <td>4</td>  <td>1200</td>  <td>1</td>  <td>0</td> </tr> </table></td><td>1 or 3+</td>  </tr>  <tr><td>Blink Module</td><td>Allows you click anywhere on screen and be transported to that location in just one action.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>1700</td>  <td>1</td>  <td>1</td> </tr> <tr>  <td>2</td>  <td>3400</td>  <td>2</td>  <td>2</td> </tr> <tr>  <td>3</td>  <td>5100</td>  <td>3</td>  <td>3</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Cannon</td><td>Deals damage to an area of impact on the map.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>1000</td>  <td>2</td>  <td>0</td> </tr> <tr>  <td>2</td>  <td>2000</td>  <td>4</td>  <td>0</td> </tr> <tr>  <td>3</td>  <td>3000</td>  <td>6</td>  <td>1</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Energy Module</td><td>Recharges the player's energy.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>1000</td>  <td>0</td>  <td>1</td> </tr> <tr>  <td>2</td>  <td>2000</td>  <td>0</td>  <td>2</td> </tr> <tr>  <td>3</td>  <td>3000</td>  <td>0</td>  <td>3</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Energy Upgrade</td><td>Increases base energy maximum.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>300</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>2</td>  <td>600</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>3</td>  <td>900</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>4</td>  <td>1200</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>5</td>  <td>1500</td>  <td>0</td>  <td>1</td> </tr> </table></td><td>1 or 3+</td>  </tr>  <tr><td>Full Ship Repair</td><td>Completely repairs your ship. Scales with damage taken.</td><td> <table> <tr>  <th>Healing</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>5</td>  <td>125</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>15</td>  <td>1125</td>  <td>1</td>  <td>0</td> </tr> <tr>  <td>25</td>  <td>3000</td>  <td>2</td>  <td>0</td> </tr> </table></td><td>1 or 3+</td>  </tr>  <tr><td>Health Upgrade</td><td>Increases base health maximum.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>200</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>2</td>  <td>400</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>3</td>  <td>600</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>4</td>  <td>800</td>  <td>1</td>  <td>0</td> </tr> <tr>  <td>5</td>  <td>1000</td>  <td>1</td>  <td>0</td> </tr> <tr>  <td>6</td>  <td>1200</td>  <td>1</td>  <td>0</td> </tr> <tr>  <td>7</td>  <td>1400</td>  <td>1</td>  <td>0</td> </tr> <tr>  <td>8</td>  <td>1600</td>  <td>2</td>  <td>1</td> </tr> <tr>  <td>9</td>  <td>1800</td>  <td>2</td>  <td>1</td> </tr> <tr>  <td>10</td>  <td>2000</td>  <td>2</td>  <td>1</td> </tr> </table></td><td>1 or 3+</td>  </tr>  <tr><td>Insurance</td><td>Prevents loss of upgrades upon death 1 time. Upgrades decrease loot loss as well.</td><td> <table> <tr>  <th>Upgrades</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>0</td>  <td>1000</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>5</td>  <td>1750</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>10</td>  <td>2500</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>15</td>  <td>3000</td>  <td>0</td>  <td>0</td> </tr> </table></td><td>1 or 3+</td>  </tr>  <tr><td>Insurance Upgrade</td><td>Decreases the amount of loot lost upon death when you have insurance.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th>  <th>Loot Loss</th> </tr> <tr>  <td>1</td>  <td>1000</td>  <td>0</td>  <td>0</td>  <th>80%</th> </tr> <tr>  <td>2</td>  <td>2000</td>  <td>0</td>  <td>0</td>  <th>60%</th> </tr> <tr>  <td>3</td>  <td>3000</td>  <td>0</td>  <td>0</td>  <th>40%</th> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Loadout Upgrade</td><td>Tncreases the number of mod slots you are allowed.</td><td> <table> <tr>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>3000</td>  <td>3</td>  <td>1</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Quick Heal</td><td>Fully repairs the ship without needing to go to a shop. Consumed on use.</td><td> <table> <tr>  <th>Health Max</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>10</td>  <td>1500</td>  <td>1</td>  <td>1</td> </tr> <tr>  <td>20</td>  <td>3000</td>  <td>2</td>  <td>2</td> </tr> <tr>  <td>30</td>  <td>3500</td>  <td>3</td>  <td>3</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Radar Upgrade</td><td>Increases the base radar range.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>400</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>2</td>  <td>800</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>3</td>  <td>1200</td>  <td>1</td>  <td>0</td> </tr> <tr>  <td>4</td>  <td>1600</td>  <td>1</td>  <td>1</td> </tr> <tr>  <td>5</td>  <td>2000</td>  <td>1</td>  <td>1</td> </tr> </table></td><td>1 or 3+</td>  </tr>  <tr><td>Railgun</td><td>Shoots in a straight line 10 units for high amounts of damage.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>1200</td>  <td>2</td>  <td>0</td> </tr> <tr>  <td>2</td>  <td>2400</td>  <td>4</td>  <td>1</td> </tr> <tr>  <td>3</td>  <td>3600</td>  <td>6</td>  <td>1</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Small Ship Repair</td><td>Repairs the ships health by 5 points.</td><td> <table> <tr>  <th>Health</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>5</td>  <td>400</td>  <td>0</td>  <td>0</td> </tr> </table></td><td>1 or 3+</td>  </tr>  <tr><td>Scanner Upgrade</td><td>Upgrades how long enemies will appear on screen once scanned and differentiates between more types of loot.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>500</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>2</td>  <td>1000</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>3</td>  <td>1500</td>  <td>0</td>  <td>0</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Static Attack Module</td><td>Uses a mod slot and increases base attack by 1.</td><td> <table> <tr>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>2500</td>  <td>0</td>  <td>1</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Damage Resistance Module</td><td>Uses a mod slot and decreases all damage by 1.</td><td> <table> <tr>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>3000</td>  <td>0</td>  <td>1</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Static Energy Module</td><td>Uses a mod slot and increases the energy maximum by 5.</td><td> <table> <tr>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>2000</td>  <td>0</td>  <td>1</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Static Health Module</td><td>Uses a mod slot and increases the health maximum by 5.</td><td> <table> <tr>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>2500</td>  <td>0</td>  <td>1</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Static Radar Module</td><td>Uses a mod slot and increases base radar range.</td><td> <table> <tr>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>3000</td>  <td>0</td>  <td>1</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Stealth Module</td><td>Allows the player to become invisible to other players for a duration.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>1200</td>  <td>0</td>  <td>1</td> </tr> <tr>  <td>2</td>  <td>2400</td>  <td>0</td>  <td>2</td> </tr> <tr>  <td>3</td>  <td>3600</td>  <td>0</td>  <td>3</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Trap Module</td><td>Allows you to lay down invisible traps that prevent enemy players from moving.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>1100</td>  <td>2</td>  <td>0</td> </tr> <tr>  <td>2</td>  <td>2200</td>  <td>4</td>  <td>1</td> </tr> <tr>  <td>3</td>  <td>3300</td>  <td>6</td>  <td>1</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Uranium Carry Upgrade</td><td>Increases the amount of uranium you are able to carry.</td><td> <table> <tr>  <th>Level</th>  <th>Gold</th>  <th>Iron</th>  <th>Uranium</th> </tr> <tr>  <td>1</td>  <td>400</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>2</td>  <td>800</td>  <td>0</td>  <td>0</td> </tr> <tr>  <td>3</td>  <td>1200</td>  <td>1</td>  <td>0</td> </tr> <tr>  <td>4</td>  <td>1600</td>  <td>1</td>  <td>0</td> </tr> <tr>  <td>5</td>  <td>2000</td>  <td>1</td>  <td>0</td> </tr> </table></td><td>2 or 3+</td>  </tr>  <tr><td>Uranium</td><td>Raw uranium resource.</td><td> 150 gold</td><td>2 or 3+</td>  </tr>  <tr><td>Wall</td><td>Wall resource used to protect bases.</td><td><table><tr><th>Amount</th><th>Gold</th><th>Iron</th><th>Uranium</th></tr><tr><td>1</td><td>0</td><td>5</td><td>0</td></tr><tr><td>5</td><td>0</td><td>25</td><td>0</td></tr><tr><td>10</td><td>0</td><td>50</td><td>0</td></tr></table></td><td>2 or 3+</td></tr><tr><td>Wall License</td><td>Allows the player to purchase and place walls. It also increases the effectiveness of walls.</td><td><table><tr><th>Level</th><th>Gold</th><th>Iron</th><th>Uranium</th><th>Carry Cap</th><th>Wall HP</th></tr><tr><td>1</td><td>2500</td><td>0</td><td>0</td><td>20</td><td>10</td></tr><tr><td>2</td><td>4000</td><td>0</td><td>0</td><td>40</td><td>20</td></tr><tr><td>3</td><td>5500</td><td>0</td><td>0</td><td>60</td><td>30</td></tr><tr><td>4</td><td>7000</td><td>0</td><td>0</td><td>80</td><td>40</td></tr><tr><td>5</td><td>8500</td><td>0</td><td>0</td><td>99</td><td>50</td></tr></table></td><td>2 or 3+</td></tr></table>",
+                "sidebarLabel": "Inventory",
+                "subSections": []
+            }
+        ]
+    },
+    {
+        "title": "Actions",
+        "content": "",
+        "sidebarLabel": "Actions",
+        "subSections": [
+            {
+                "title": "Basic Actions",
+                "content":"<p>These actions are the base actions that every player is equipped with. No matter what modifications are added or how many deaths a player has, they will always be able to do these basic actions.</p>",
+                "sidebarLabel": "Basic Actions",
+                "subSections": [
+                    {
+                        "title": "Attack",
+                        "content":"<p> Attacking is the standard way of dealing damage in this game. Simply click on the screen where you would like to attack to deal damage in that location. Careful: you can damage yourself if you move into the spot that you attacked. Go to the Basic Shop to purchase attack upgrades.</p><table><tr><th>Level</th><th>Action Slots</th><th>Energy Cost</th><th>Uranium Cost</th><th>Damage</th></tr><tr><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td></tr><tr><td>2</td><td>1</td><td>1</td><td>0</td><td>2</td></tr><tr><td>3</td><td>1</td><td>1</td><td>0</td><td>3</td></tr><tr><td>4</td><td>1</td><td>1</td><td>0</td><td>4</td></tr></table>",
+                        "sidebarLabel": "Attack"
+                    },
+                    {
+                        "title": "Hold",
+                        "content":"<p> When you don't want to act or you don't input any actions, a hold action takes place. This action represents your ship staying put for a moment. When you hold, you recover some energy. Use this action wisely.</p>",
+                        "sidebarLabel": "Hold"
+                    },
+                    {
+                        "title": "Loot",
+                        "content":"<p> When you have discovered loot, this how you retrieve it. Looting makes you stationary for just a moment as it takes 2 actions and 3 energy to loot something. Make sure the area is clear before you try for some treasure.</p>",
+                        "sidebarLabel": "Loot"
+                    },
+                    {
+                        "title": "Move",
+                        "content":"<p>This action is how you travel. You can move North, South, East or West. Moving takes only one action spot, so you can move up to 3 spots per turn.</p>",
+                        "sidebarLabel": "Move"
+                    },
+                    {
+                        "title": "Place Wall",
+                        "content":"<p> Placing walls is essential for defending bases. Walls can be placed on any base tile that is owned by the team the player is on (and if the team leader allows the player to). To place a wall, press 'r' and click where you want to place it. Walls do need to be placed directly beside the player and it takes one action slot to place a wall. Note you will need a wall license and walls to actually place the wall. Don't worry though, walls don't drop on death.</p>",
+                        "sidebarLabel": "Place Wall"
+                    },
+                    {
+                        "title": "Scan",
+                        "content":"<p> Scanning is both how you find loot and keep track of your enemies. Scanning takes 5 energy and an entire round to complete. Once done, all treasure in your radar length will be revealed along with all enemies for a set number of turns. Higher levels of the scanner will maintain enemies on screen longer and differentiate loot as well. You can upgrade your scanner at a level 2+ base. </p><table><tr><th>Level</th><th>Action Slots</th><th>Energy Cost</th><th>Uranium Cost</th><th>Loot Revealed</th><th>Enemies Revealed</th></tr><tr><td>1</td><td>3</td><td>5</td><td>0</td><td>Gold</td><td>3 Rounds</td></tr><tr><td>2</td><td>3</td><td>5</td><td>0</td><td>Iron</td><td>4 Rounds</td></tr><tr><td>3</td><td>3</td><td>5</td><td>0</td><td>Uranium</td><td>5 Rounds</td></tr></table>",
+                        "sidebarLabel": "Scan"
+                    }
+                ]
             },
             {
-                "title": "Interface",
-                "content":"This is the screen that you see when you start the game. Enter a name to begin.",
-                "sidebarLabel": "Interface"
+                "title": "Special Actions",
+                "content":"<p> Special Actions are actions acquired by modifying your ship. To acquire a Special action, you simply purchase it from a level 2+ base. Every action works differently and most all of them require uranium to activate. So use them wisely. </p>",
+                "sidebarLabel": "Special Actions",
+                "subSections": [
+                    {
+                        "title": "Blink",
+                        "content":"<p> Blink is purchasable from level 2+ bases. To use, simply equip it to a mod slot and activate it. Once active, click on the screen where you would like to transport to. Upgrading the Blink Module will decrease the overall cost of using it.</p><table><tr><th>Level</th><th>Action Slots</th><th>Energy Cost</th><th>Uranium Cost</th></tr><tr><td>1</td><td>1</td><td>10</td><td>1</td></tr><tr><td>2</td><td>1</td><td>8</td><td>1</td></tr><tr><td>3</td><td>1</td><td>6</td><td>1</td></tr></table>",
+                        "sidebarLabel": "Blink"
+                    },
+                    {
+                        "title": "Cannon",
+                        "content":"<p> The cannon is purchasable from level 2+ bases. To use, simply equip it to a mod slot and activate it. Once active, click on the screen where you would like to attack. All highlighted tiles will be effected by your damage. This is the idea weapon for hurting multiple targets or ensuring your target does not escape.</p><table><tr><th>Level</th><th>Action Slots</th><th>Energy Cost</th><th>Uranium Cost</th><th>Damage Multiplier</th><th>Area of Effect</th></tr><tr><td>1</td><td>2</td><td>10</td><td>1</td><td>1x</td><td>3x3</td></tr><tr><td>2</td><td>2</td><td>10</td><td>1</td><td>1x</td><td>5x5</td></tr><tr><td>3</td><td>2</td><td>10</td><td>1</td><td>1.5x</td><td>5x5</td></tr></table>",
+                        "sidebarLabel": "Cannon"
+                    },
+                    {
+                        "title": "Destealth",
+                        "content":"<p> The destealth action is a required action to take after attempting to perform an action that can not be performed while stealthed. To manually destealh, just activate stealth while stealthed to add a destealth action to the queue. Or perform another action to add it automatically. </p>",
+                        "sidebarLabel": "Destealth"
+                    },
+                    {
+                        "title": "Energy Module",
+                        "content":"<p> The energy module is purchasable from level 2+ bases. To use, simply equip it to a mod slot and activate it. You will recover energy after a single action. Note this requires uranium to active so be sure to have a stockpile around. Upgrading the Energy Module will increase the amount of energy recovered.</p><table><tr><th>Level</th><th>Action Slots</th><th>Uranium Cost</th><th>Energy Recovered</th></tr><tr><td>1</td><td>1</td><td>1</td><td>5</td></tr><tr><td>2</td><td>1</td><td>1</td><td>10</td></tr><tr><td>3</td><td>1</td><td>1</td><td>15</td></tr></table>",
+                        "sidebarLabel": "Energy_Module"
+                    },
+                    {
+                        "title": "Quick Heal",
+                        "content":"<p> The quick heal is purchasable from level 2+ bases. To use, simply equip it to a mod slot and activate it. You will recover all health after a single action. This will consume the quick heal, so use it wisely. </p>",
+                        "sidebarLabel": "Quick_Heal"
+                    },
+                    {
+                        "title": "Railgun",
+                        "content":"<p> The railgun is purchasable from level 2+ bases. To use, simply equip it to a mod slot and activate it. Once active, click on the screen where you would like to attack. This weapon attacks in a straight line from your current location. All highlighted tiles will be effected by your damage. This is the idea weapon for destroying single (and sometimes multiple) targets.</p><table><tr><th>Level</th><th>Action Slots</th><th>Energy Cost</th><th>Uranium Cost</th><th>Damage Multiplier</th><th>Range</th></tr><tr><td>1</td><td>2</td><td>10</td><td>1</td><td>2x</td><td>10</td></tr><tr><td>2</td><td>2</td><td>10</td><td>1</td><td>3x</td><td>10</td></tr><tr><td>3</td><td>2</td><td>10</td><td>1</td><td>4x</td><td>10</td></tr></table>",
+                        "sidebarLabel": "Railgun"
+                    },
+                    {
+                        "title": "Stealth",
+                        "content":"<p> The stealth module is purchasable from level 2+ bases. To use, simply equip it to a mod slot and activate it. It will take an entire round to stealth, but once stealthed you will be removed from enemy scanners and be invisible to all enemies. They will need to scan again to find you. While stealthed you can move and scan freely. Any other action will require you to destealth first. After a set duration, you will automatically lose stealth. Upgrading your stealth increases this duration.</p><table><tr><th>Level</th><th>Action Slots</th><th>Energy Cost</th><th>Uranium Cost</th><th>Duration</th></tr><tr><td>1</td><td>3</td><td>5</td><td>1</td><td>3 rounds</td></tr><tr><td>2</td><td>3</td><td>5</td><td>1</td><td>6 rounds</td></tr><tr><td>3</td><td>3</td><td>5</td><td>1</td><td>9 rounds</td></tr></table>",
+                        "sidebarLabel": "Stealth"
+                    },
+                    {
+                        "title": "Trap",
+                        "content":"<p> The trap is purchasable from level 2+ bases. To use, simply equip it to a mod slot and activate it. You will place a trap where you are located. You and your teammates are immune to your own traps, but not to enemy traps. Once an enemy enters a tile where a trap is located, it will activate and the player will be unable to move or blink for 3 rounds. You will also get a notification of which of your traps went off. So use this to your advantage. Upgrading your traps will increase the size and remove the uranium cost.</p><table><tr><th>Level</th><th>Action Slots</th><th>Energy Cost</th><th>Uranium Cost</th><th>Trap Size</th><th>Rounds Affected</th></tr><tr><td>1</td><td>2</td><td>8</td><td>1</td><td>2x2</td><td>3</td></tr><tr><td>2</td><td>2</td><td>8</td><td>1</td><td>3x3</td><td>3</td></tr><tr><td>3</td><td>2</td><td>8</td><td>0</td><td>3x3</td><td>3</td></tr></table>",
+                        "sidebarLabel": "Trap"
+                    }
+                ]
+            },
+            {
+                "title": "Editing Loadout",
+                "content":"<p>To edit your ship, you can go to a base of level 2+, and click the [Lo]adout tab. In this tab you can equip and unequip your items to modify your ship for whatever task you are trying to complete.</p><img src='images/edit_loadout.png' id='loadout'/>",
+                "sidebarLabel": "Editing Loadout",
+                "subSections": []
             }
         ]
     }
