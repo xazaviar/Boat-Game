@@ -3,7 +3,7 @@ var feedback;
 var version = "Alpha v1.2";
 
 //Globals
-var port = 8081;
+var port = 8080;
 var players = [];
 var playerSize = 0;
 var tokenSize = 200;
@@ -2042,7 +2042,7 @@ function startServer(){
         // console.log("Got a GET request for the Change Log page");
         res.sendFile( __dirname + "/public/log.html" );
     });
-    app.get('', function (req, res) {
+    app.get('*', function (req, res) {
         res.sendFile( __dirname + "/public/home.html" );
     });
     app.get('/*', function (req, res) {
@@ -4365,7 +4365,7 @@ function calculateBaseUpgradeCost(lvl){
     else if(lvl==2)
         return {"gold":10000,"credits":20000,"iron":160,"uranium":30};
     else
-        return {"gold":999999,"credits":999999,"iron":9999,"uranium":999};
+        return {"gold":9999999,"credits":9999999,"iron":99999,"uranium":9999};
 }
 
 function spawnLoot(){

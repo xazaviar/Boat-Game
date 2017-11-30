@@ -1,40 +1,4 @@
 {
-    "playerSize": 7,
-    "nameList": [
-        {
-            "name": "test",
-            "power": 2,
-            "changes": null
-        },
-        {
-            "name": "test me",
-            "power": 7,
-            "changes": null
-        },
-        {
-            "name": "test",
-            "power": 0,
-            "changes": null
-        },
-        {
-            "name": "test",
-            "power": 0,
-            "changes": null
-        },
-        {
-            "name": "test",
-            "power": 0,
-            "changes": null
-        },
-        {
-            "name": "asds",
-            "power": 5,
-            "changes": null
-        },
-        {
-            "name": "asdf",
-            "power": 19,
-            "changes": null
-        }
-    ]
+    "playerSize": 0,
+    "nameList": []
 }
