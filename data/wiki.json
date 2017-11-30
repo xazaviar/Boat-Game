@@ -12,13 +12,13 @@
         "subSections": [
                 {
                     "title": "Controls",
-                    "content": "<table style='width:40%'><tr><th>Action</th><th>Button</th></tr><tr><td>Attack</td><td>Left Mouse Click</td></tr><tr><td>Move</td><td>WASD or <^>v </td></tr><tr><td>Scan</td><td>1</td></tr><tr><td>Loot</td><td>2</td></tr><tr><td>Hold</td><td>3</td></tr><tr><td>Special 1</td><td>q</td></tr><tr><td>Special 2</td><td>e</td></tr><tr><td>Map</td><td>m</td></tr><tr><td>Chat</td><td>enter</td></tr><tr><td>Open Shop</td><td>o</td></tr><tr><td>Respawn</td><td>y</td></tr><tr><td>Menu</td><td>Esc Key</td></tr><tr><td>Other Stats</td><td>i</td></tr><tr><td>Map</td><td>m</td></tr><tr><td>Remove Action</td><td>Click the action</td></tr></table>",
+                    "content": "<table style='width:40%'><tr><th>Action</th><th>Button</th></tr><tr><td>Attack</td><td>Left Click</td></tr><tr><td>Move</td><td>WASD or ←↑→↓ </td></tr><tr><td>Scan</td><td>1</td></tr><tr><td>Loot</td><td>2</td></tr><tr><td>Hold</td><td>3</td></tr><tr><td>Special Action 1</td><td>Q</td></tr><tr><td>Special Action 2</td><td>E</td></tr><tr><td>Place Wall</td><td>R</td></tr><tr><td>Settings</td><td>ESC</td></tr><tr><td>Map</td><td>M</td></tr><tr><td>Join Team Window</td><td>8 or J</td></tr><tr><td>Player List Window</td><td>9 or P</td></tr><tr><td>Team Window</td><td>0 or T</td></tr><tr><td>Close Window</td><td>ESC</td></tr><tr><td>Chat</td><td>ENTER</td></tr><tr><td>Toggle Chat Mode</td><td>CTRL</td></tr><tr><td>Open Shop</td><td>o</td></tr><tr><td>Stats Toggle</td><td>I</td></tr><tr><td>Remove Action</td><td>Click the action</td></tr></table>",
                     "sidebarLabel": "Controls",
                     "subSections": []
                 },
                 {
                     "title": "Interface",
-                    "content":"<p>This is the screen that you see when you start the game. Enter a name to begin.</p><img src='images/start_screen.png' id='startScreen'/><p>This is the main view screen. You are always in the center of the screen. Everything operates on a grid in semi-realtime. The top bar is the round counter, and this tells you how long you have left in a round to put in your actions. The action queue are the actions that will happen this round. If you scan the area, loot will appear. Grab loot to get gold. The battle log is where all messages and chat is shown.</p><img src='images/main_screen.png' id='mainScreen'/>",
+                    "content":"<p>This is the screen that you see when you start the game. Enter a name to begin.</p><img src='images/start_screen.png' id='startScreen'/><p>This is the main view screen. You are always in the center of the screen. Everything operates on a grid in semi-realtime. The top bar is the round counter, and this tells you how long you have left in a round to put in your actions. The action queue are the actions that will happen this round. If you scan the area, loot will appear. Grab loot to get gold. The battle log is where all messages and chat is shown.</p><img src='images/main_screen2.png' id='mainScreen'/>",
                     "sidebarLabel": "Interface",
                     "subSections": []
                 },
@@ -143,6 +143,93 @@
                 "title": "Editing Loadout",
                 "content":"<p>To edit your ship, you can go to a base of level 2+, and click the [Lo]adout tab. In this tab you can equip and unequip your items to modify your ship for whatever task you are trying to complete.</p><img src='images/edit_loadout.png' id='loadout'/>",
                 "sidebarLabel": "Editing Loadout",
+                "subSections": []
+            }
+        ]
+    },
+    {
+        "title": "Teams",
+        "content": "<p>Teams are the basis of this game. Teams come in all shapes and sizes and can be managed however the leader sees fit. Any player can create a new team and most players can join any team. With a team, you can capture bases to bring in income and to seize power. All team data is tracked and can be seen on the homepage leaderboard. When on a team, you can always see where your teammates are located. You can also chat privately with team chat and you will ignore ally traps. Allies will appear on your radar as 'hudColor' players rather than enemy colors. Your attacks will still deal damage to allies, so be careful where you attack.</br></br><b>Red Team</b>, <b>Yellow Team</b>, <b>Blue Team</b>, and <b>Green Team</b> are default teams that always exist with no leadership.</p>",
+        "sidebarLabel": "Teams",
+        "subSections": [
+            {
+                "title": "Joining Teams",
+                "content":"<p>At the start of the game, you are asked to join a team. There are two primary ways to join a team: You can access the Join Team Window and select a team that has an 'open' invite policy </br></br> <img src='images/join_team.png' class='reduceImage'/></br></br> or you can accept an invite from a friend to join their team (message will appear on sidebar). </br><img src='images/invite_example.png' class='reduceImage'/></br></br> You must be on a team to play. If you want to play independently, you can create and run your own one person team. </br></br> To officially join a team, you must have a join token available. You start with 2 join tokens and these tokens increase about every 1 hour of gameplay. Join teams wisely. If you ever get stuck on a team you don't like, you can always create your own team.</p>",
+                "sidebarLabel": "Joining Teams",
+                "subSections": []
+            },
+            {
+                "title": "Creating Teams",
+                "content":"<p>To create a team, go to the Join Team Window and click '+ Create Team'. The create team window will open and you will be able to decide a name (max 20 characters), choose a base shape, choose a base color and area color. Team names must be unique, and colors must be different enough from another base. So you can't make an exact copy of another team.</br> <img src='images/create_team.png' class='reduceImage'/></br></br> After you create your team, the team settings view will open so you can adjust your teams settings. To learn more about these settings look at Settings View.</p>",
+                "sidebarLabel": "Creating Teams",
+                "subSections": []
+            },
+            {
+                "title": "Managing Teams",
+                "content":"",
+                "sidebarLabel": "Managing Teams",
+                "subSections": [
+                    {
+                        "title": "Summary View",
+                        "content":"<p>The summary page is the main view for the Team Window. This view provides you with stats about the team relating to control, rank, and income. From this view, you can look at bases controlled and not controlled by the team. To view bases, hover over the map to gather info. If you are able to ping the map, you can click a base to set the objective for the team. If you select a base that you own, you can upgrade it from this place (provided the settings allow you). Use this view to decide what to capture and what to defend as a team. </br><img src='images/team_menu_summary.png' class='reduceImage'/></p>",
+                        "sidebarLabel": "Summary View"
+                    },
+                    {
+                        "title": "Member View",
+                        "content":"<p>The member view displays all members on the team. Online members are displayed in 'hudColor' while offline members are grayed out. From this view, admins can remove members by clicking the members they wish to kick and removing them. The leader of the team can promote or demote members to Admin or Leader status. There can only ever exist one leader. </br><img src='images/team_menu_members.png' class='reduceImage'/></p>",
+                        "sidebarLabel": "Member View"
+                    },
+                    {
+                        "title": "The Vault",
+                        "content":"<p>Teams bring in income when they control bases. The more bases controlled, the faster the income is brought in. The vault view can display how much loot the team has independent of its members. </br><img src='images/team_menu_vault.png' class='reduceImage'/></p>",
+                        "sidebarLabel": "The Vault"
+                    },
+                    {
+                        "title": "Settings View",
+                        "content":"<img src='images/team_menu_settings.png' class='reduceImage'/></br></br>The settings view is where team settings can be adjusted. Note that only the leader of the team can make adjustments.</br></br><table style='width:100%'><tbody><tr><th>Setting</th><th>Description</th><th>Options</th></tr><tr><td>Membership</td><td>This setting adjusts how new members can join the team.</td><td><ul><li>OPEN -> Anyone can join. Visible in Join Team Window</li><li>INVITE -> Any member can invite new members</li><li>AD INV -> Only admins can invite new members</li></ul></td></tr><tr><td>Can Ping</td><td>This setting adjusts who is allowed to set objectives on the summary page.</td><td><ul><li>TEAM -> All members can ping the map </li><li>ADMIN-> Only admins can ping the map </li><li>LEADER -> Only the leader can ping the map</li></ul></td></tr><tr><td>Can Build</td><td>This setting adjusts who can build walls in base territory.</td><td><ul><li>TEAM -> All members can build walls </li><li>ADMIN-> Only admins can build walls </li><li>LEADER -> Only the leader can build walls</li></ul></td></tr><tr><td>Can Upgrade</td><td>This setting adjust who is allowed to initiate base upgrades.</td><td><ul><li>ADMIN-> Only admins can ping the map </li><li>LEADER -> Only the leader can ping the map</li></ul></td></tr><tr><td>Profit Split</td><td>This setting adjusts how the profit is split amongst the team.</td><td><ul><li>FAIR-> All profits are split equally among all members </li><li>AD 50%-> 50% of profit is split between admins and members </li><li>AD ONLY -> Only admins receive profits </li><li>LD 50%-> 50% of profit is split between leader and members </li><li>LEADER-> Only the leader receive profits</li></ul></td></tr><tr><td>Tax</td><td>This setting adjust how much gold is taken from the shared profit for each member.</td><td>Options are the percentage take from team members that receive profit.</td></tr></tbody></table>",
+                        "sidebarLabel": "Settings View"
+                    },
+                    {
+                        "title": "Inviting New Members",
+                        "content":"<p>To invite new members, open the Player list and click on the player you want to invite to your team.</br><img src='images/player_list.png' class='reduceImage'/></p>",
+                        "sidebarLabel": "Inviting"
+                    },
+                    {
+                        "title": "Merging and Spliting",
+                        "content":"<p>If you are the leader of a team with multiple members, and you decide to join another team, you are given the option to <b>SPLIT</b> from your team or to <b>MERGE</b> your team into the new one. When you split from your team, a new leader will be selected and the team will continue onward without you. When you merge your team, all loot, bases, and members will be added to the new team. This can be useful if you want to join forces with another team to take down a greater foe. If you are a team of one, your team will auto-merge with the new team. NOTE: When merging or splitting you will join the new team as a standard member. Make sure you are prepared for whatever changes come with that decision as merging a team is permanent.</p>",
+                        "sidebarLabel": "Merge and Split"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "title": "Bases",
+        "content": "<p></p>",
+        "sidebarLabel": "Bases",
+        "subSections": [
+            {
+                "title": "Types of Bases",
+                "content":"<p></p>",
+                "sidebarLabel": "Types",
+                "subSections": []
+            },
+            {
+                "title": "Capturing Bases",
+                "content":"<p></p>",
+                "sidebarLabel": "Capturing",
+                "subSections": []
+            },
+            {
+                "title": "Upgrading Bases",
+                "content":"<p></p>",
+                "sidebarLabel": "Upgrading",
+                "subSections": []
+            },
+            {
+                "title": "Gains",
+                "content":"<p></p>",
+                "sidebarLabel": "Gains",
                 "subSections": []
             }
         ]

@@ -1138,7 +1138,7 @@ function handleKeydown(e){
         openWindow = "";
         confirmDialog = -1;
     }
-    else if(keyCode == 56){
+    else if(keyCode == 56 || keyCode == 74){
         if(openWindow !== "joinTeamMenu") openWindow = "joinTeamMenu";
         else openWindow = "";
         confirmDialog = -1;
@@ -1147,12 +1147,12 @@ function handleKeydown(e){
             teamRec = [];
         }
     }
-    else if(keyCode == 57){
+    else if(keyCode == 57 || keyCode == 80){
         if(openWindow !== "playerListMenu") openWindow = "playerListMenu";
         else openWindow = "";
         confirmDialog = -1;
     }
-    else if(keyCode == 48){
+    else if(keyCode == 48 || keyCode == 84){
         if(openWindow !== "teamMenu") openWindow = "teamMenu";
         else openWindow = "";
         confirmDialog = -1;
@@ -1336,21 +1336,28 @@ function handleMousedown(e){
         }
     }
     else if(openWindow === "settingsView"){
-        if (mouseHover === "DEFAULT"){
+        if(typeof mouseHover.tab!=="undefined"){
+            curSettingsTab = mouseHover.tab;
+        }
+
+        else if (mouseHover === "DEFAULT"){
             colors = JSON.parse(JSON.stringify(colorsDefault));
             $("body").css("background-color",colors.hudBackColor);
             saveColorScheme(colors);
         }
 
-       //Check for color click
-       else if(mouseHover!=-1){
-           displayModal(colors[mouseHover], function(color){
-               colors[mouseHover] = color.toHexString();
-               $("body").css("background-color",colors.hudBackColor);
-               saveColorScheme(colors);
-               $(".modal").toggle(false);
-               drawScreen();
-           });
+
+        //Check for color click
+        else if(mouseHover!=-1){
+            valueLock = mouseHover;
+            displayModal(colors[valueLock], function(color){
+                colors[valueLock] = color.toHexString();
+                $("body").css("background-color",colors.hudBackColor);
+                saveColorScheme(colors);
+                $(".modal").toggle(false);
+                drawScreen();
+                valueLock = -1;
+            });
        }
     }
     else if(openWindow === "joinTeamMenu"){

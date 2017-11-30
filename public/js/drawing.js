@@ -8,6 +8,7 @@ var prevWid = 0;
 var openWindow = "";
 
 var curShopTab = 0;
+var curSettingsTab = 0;
 
 //Colors
 //Monitor Colors
@@ -452,7 +453,6 @@ function drawRadarScan(ctx, startX, startY, width, height){
 //  UI Drawing functions
 //*****************************************************************************
 function drawSettings(ctx, startX, startY, width, height){
-    //TODO: MAKE BETTER CLICKABLE
     var sX = startX+width/4;
     var sY = startY+height/10;
     var wid = width-(sX-startX)*2;
@@ -466,56 +466,119 @@ function drawSettings(ctx, startX, startY, width, height){
     ctx.fillRect(sX,sY,wid,hei);
     ctx.stroke();
 
+    mouseHover = -1;
+
     //Settings Labels
     ctx.beginPath();
     ctx.fillStyle = colors.hudColor;
     ctx.font = "30px Courier";
     ctx.fillText("Settings",sX+5,sY+35);
-    ctx.font = "20px Courier";
-    ctx.fillText("Click the color to change it.",sX+5,sY+55);
 
-    var i = 1;
+    //Draw Tabs
+    ctx.strokeStyle=colors.hudColor;
+    ctx.fillStyle=colors.hudBackColor;
     ctx.font = "18px Courier";
-    for(var property in colors){
-        if(colors.hasOwnProperty(property)){
-            if(property!=="timerGradient"){
-                if(mX < sX+365 && mX > sX+20 &&
-                   mY < sY+75+20*i && mY > sY+60+20*i){
-                    ctx.globalAlpha = 0.5;
-                    ctx.fillStyle = colors.hudColor;
-                    ctx.fillRect(sX+15,sY+58+20*i,360,20);
-                    mouseHover = property;
-                }
-                ctx.globalAlpha = 1.0;
+    var tabs = ["CTRL","CLRS"];
+    for(var i = 0; i < tabs.length; i++){
+        ctx.beginPath();
+        var tHei = 60;
+        ctx.globalAlpha = 1.0;
+        if(i==curSettingsTab) ctx.fillStyle=colors.hudColor;
+        else ctx.fillStyle=colors.hudBackColor;
+        ctx.strokeRect(sX+wid+1,sY+tHei*i,50,tHei);
+        ctx.fillRect(sX+wid+1,sY+tHei*i,50,tHei);
 
-                ctx.beginPath();
-                ctx.fillStyle = colors.hudColor;
-                ctx.fillText(property,sX+20,sY+75+20*i);
-                ctx.strokeStyle = colors.hudColor;
-                ctx.fillStyle = colors[property];
-                ctx.strokeRect(sX+350,sY+60+20*i,15,15);
-                ctx.fillRect(sX+350,sY+60+20*i,15,15);
-                i++;
+        ctx.globalAlpha = 1.0;
+        if(i==curSettingsTab) ctx.fillStyle=colors.hudBackColor;
+        else ctx.fillStyle=colors.hudColor;
+        ctx.fillText(tabs[i],sX+wid+3,sY+35+tHei*i);
+        ctx.stroke();
+
+        if(mX > sX+wid+1 && mX < sX+wid+51 &&
+           mY > sY+tHei*i && mY < sY+tHei*i+tHei){
+            mouseHover = {"tab":i};
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle=colors.hudColor;
+            ctx.fillRect(sX+wid+1,sY+tHei*i,50,tHei);
+        }
+
+    }
+
+
+
+    if(curSettingsTab==0){
+        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "20px Courier";
+        ctx.fillText("Attack        -  Left Click",sX+15,sY+65);
+        ctx.fillText("Move          -  WASD or ←↑→↓",sX+15,sY+85);
+        ctx.fillText("Scan          -  1",sX+15,sY+105);
+        ctx.fillText("Loot          -  2",sX+15,sY+125);
+        ctx.fillText("Hold          -  3",sX+15,sY+145);
+        ctx.fillText("Spec Action 1 -  Q",sX+15,sY+165);
+        ctx.fillText("Spec Action 2 -  E",sX+15,sY+185);
+        ctx.fillText("Place Wall    -  R",sX+15,sY+205);
+        ctx.fillText("Settings      -  ESC",sX+15,sY+225);
+        ctx.fillText("Map           -  M",sX+15,sY+245);
+        ctx.fillText("Join Team     -  8 or J",sX+15,sY+265);
+        ctx.fillText("Player List   -  9 or P",sX+15,sY+285);
+        ctx.fillText("Team Window   -  0 or T",sX+15,sY+305);
+        ctx.fillText("Close Window  -  ESC",sX+15,sY+325);
+        ctx.fillText("Remove Action -  Click action",sX+15,sY+345);
+        ctx.fillText("Stats Toggle  -  I",sX+15,sY+365);
+        ctx.fillText("Chat Mode     -  CTRL",sX+15,sY+385);
+        ctx.fillText("Open Chat     -  ENTER",sX+15,sY+405);
+        ctx.fillText("Open Shop     -  o",sX+15,sY+425);
+    }
+    else if(curSettingsTab==1){
+        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = colors.hudColor;
+        ctx.font = "20px Courier";
+        ctx.fillText("Click the color to change it.",sX+5,sY+65);
+
+        var i = 1;
+        ctx.font = "18px Courier";
+        for(var property in colors){
+            if(colors.hasOwnProperty(property)){
+                if(property!=="timerGradient"){
+                    if(mX < sX+365 && mX > sX+20 &&
+                       mY < sY+75+20*i && mY > sY+60+20*i){
+                        ctx.globalAlpha = 0.5;
+                        ctx.fillStyle = colors.hudColor;
+                        ctx.fillRect(sX+15,sY+58+20*i,360,20);
+                        mouseHover = property;
+                    }
+                    ctx.globalAlpha = 1.0;
+
+                    ctx.beginPath();
+                    ctx.fillStyle = colors.hudColor;
+                    ctx.fillText(property,sX+20,sY+75+20*i);
+                    ctx.strokeStyle = colors.hudColor;
+                    ctx.fillStyle = colors[property];
+                    ctx.strokeRect(sX+350,sY+60+20*i,15,15);
+                    ctx.fillRect(sX+350,sY+60+20*i,15,15);
+                    i++;
+                }
             }
         }
-    }
 
-    //Draw return to default button
-    ctx.globalAlpha = 1.0;
-    ctx.font = "25px Courier";
-    if(mX < sX+370 && mX > sX+255 &&
-       mY < sY+120+20*i && mY > sY+80+20*i){
-        ctx.fillStyle = colors.hudColor;
-        ctx.fillRect(sX+255,sY+60+20*i+20,115,40);
-        ctx.fillStyle = colors.hudBackColor;
-        ctx.fillText("DEFAULT",sX+260,sY+107+20*i);
-        mouseHover = "DEFAULT";
-    }
-    else{
-        ctx.strokeStyle = colors.hudColor;
-        ctx.strokeRect(sX+255,sY+60+20*i+20,115,40);
-        ctx.fillStyle = colors.hudColor;
-        ctx.fillText("DEFAULT",sX+260,sY+107+20*i);
+        //Draw return to default button
+        ctx.globalAlpha = 1.0;
+        ctx.font = "25px Courier";
+        if(mX < sX+370 && mX > sX+255 &&
+           mY < sY+120+20*i && mY > sY+80+20*i){
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillRect(sX+255,sY+60+20*i+20,115,40);
+            ctx.fillStyle = colors.hudBackColor;
+            ctx.fillText("DEFAULT",sX+260,sY+107+20*i);
+            mouseHover = "DEFAULT";
+        }
+        else{
+            ctx.strokeStyle = colors.hudColor;
+            ctx.strokeRect(sX+255,sY+60+20*i+20,115,40);
+            ctx.fillStyle = colors.hudColor;
+            ctx.fillText("DEFAULT",sX+260,sY+107+20*i);
+        }
     }
 }
 

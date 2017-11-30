@@ -6,7 +6,7 @@ body {
     position: fixed;
     float: left;
     width: 180px;
-    height: 500px;
+    height: 780px;
 }
 
 .contentBox {
@@ -58,6 +58,10 @@ img {
 
 #specialShop {
     width: 10%;
+}
+
+.reduceImage {
+    width: 50%;
 }
 
 .contentLinkMain {

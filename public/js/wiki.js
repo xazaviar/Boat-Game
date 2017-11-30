@@ -74,17 +74,17 @@ function buildWiki(){
     getWikiInfo(function(data){
         for(var c in data){
             $(".sidebar").append('<a href="#'+data[c].sidebarLabel+'" class="contentLinkMain">'+data[c].sidebarLabel+'</a></br>');
-            $(".contentBox").append('<div id="'+data[c].sidebarLabel+'" class="title">'+data[c].title+'</div>');
+            $(".contentBox").append('<div id="'+data[c].sidebarLabel+'" class="title"><b>'+data[c].title+'</b></div>');
             $(".contentBox").append('<div id="sc'+c+'" class="content">'+data[c].content+'</div>');
 
             for(var s in data[c].subSections){
                 $(".sidebar").append('<a href="#'+data[c].subSections[s].sidebarLabel+'" class="contentLinkSub">'+data[c].subSections[s].sidebarLabel+'</a></br>');
-                $(".contentBox #sc"+c).append('<div id="'+data[c].subSections[s].sidebarLabel+'" class="subtitle">'+data[c].subSections[s].title+'</div>');
+                $(".contentBox #sc"+c).append('<div id="'+data[c].subSections[s].sidebarLabel+'" class="subtitle"><b>'+data[c].subSections[s].title+'</b></div>');
                 $(".contentBox #sc"+c).append(''+data[c].subSections[s].content+'</br>');
 
                 for(var l in data[c].subSections[s].subSections){
                     $(".sidebar").append('<a href="#'+data[c].subSections[s].subSections[l].sidebarLabel+'" class="contentLinkLab">'+data[c].subSections[s].subSections[l].sidebarLabel+'</a></br>');
-                    $(".contentBox #sc"+c).append('<div id="'+data[c].subSections[s].subSections[l].sidebarLabel+'" class="label">'+data[c].subSections[s].subSections[l].title+'</div>');
+                    $(".contentBox #sc"+c).append('<div id="'+data[c].subSections[s].subSections[l].sidebarLabel+'" class="label"><b>'+data[c].subSections[s].subSections[l].title+'</b></div>');
                     $(".contentBox #sc"+c).append(''+data[c].subSections[s].subSections[l].content+'</br>');
                 }
             }
