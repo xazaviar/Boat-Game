@@ -1,7 +1,6 @@
 var mX2, mY2;
 var hover = [-1,-1];
 var gameStart = true;
-var store;
 var statInfo = false;
 var saveOnStartup = true;
 
@@ -109,388 +108,23 @@ function init(){
 // Server Calls Functions
 //******************************************************************************
 function newData(){
-    $.get("/data/"+me.token, function( data ) {
-        //console.log(data);
-        me = data.user;
-        players = data.players;
-        map = data.map;
-        game = data.game;
-        shop = data.shop;
-        baseList = data.baseList;
-        teamList = data.teamList;
-        battleLog = data.user.battleLog;
-        activeAttacks = data.user.activeAttacks;
+    $.when(newUserData(),newBattleLogData(),newBaseData(),newTeamData(),newMapData(),newGameData(),newPlayerData(),newShopData()).done(function(a1,a2,a3,a4,a5,a6,a7,a8){
+        if(game.phase == 0 && lastRound == 3){
+            autoDCCount++;
+        }
+        lastRound = game.phase;
 
         firstData = true;
         if(curSettings==null && me.info.teamID>-1) curSettings = teamList[me.info.teamID].settings;
-
-        //Update Tabs
-        store = [
-            [
-                {
-                    "pLabel":   "hpF",
-                    "label":    "Full Ship Repair",
-                    "canBuy":   shop.hpF.canBuy,
-                    "price":{
-                        "gold":     shop.hpF.price.gold,
-                        "iron":     shop.hpF.price.iron,
-                        "uranium":  shop.hpF.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "hp5",
-                    "label":    "Small Ship Repair",
-                    "canBuy":   shop.hp5.canBuy,
-                    "price":{
-                        "gold":     shop.hp5.price.gold,
-                        "iron":     shop.hp5.price.iron,
-                        "uranium":  shop.hp5.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "insurance",
-                    "label":    "Purchase Insurance  [lv"+me.stats.insurance+"]",
-                    "canBuy":   shop.insurance.canBuy,
-                    "price":{
-                        "gold":     shop.insurance.price.gold,
-                        "iron":     shop.insurance.price.iron,
-                        "uranium":  shop.insurance.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "hpU",
-                    "label":    "Upgrade Health",
-                    "canBuy":   shop.hpU.canBuy,
-                    "price":{
-                        "gold":     shop.hpU.price.gold,
-                        "iron":     shop.hpU.price.iron,
-                        "uranium":  shop.hpU.price.uranium
-                    },
-                    "level":    me.stats.hpUpgrades,
-                    "maxLvl":   me.stats.hpUpgradesMAX
-                },
-                {
-                    "pLabel":   "enU",
-                    "label":    "Upgrade Energy",
-                    "canBuy":   shop.enU.canBuy,
-                    "price":{
-                        "gold":     shop.enU.price.gold,
-                        "iron":     shop.enU.price.iron,
-                        "uranium":  shop.enU.price.uranium
-                    },
-                    "level":    me.stats.energyUpgrades,
-                    "maxLvl":   me.stats.energyUpgradesMAX
-                },
-                {
-                    "pLabel":   "atkU",
-                    "label":    "Upgrade Attack",
-                    "canBuy":   shop.atkU.canBuy,
-                    "price":{
-                        "gold":     shop.atkU.price.gold,
-                        "iron":     shop.atkU.price.iron,
-                        "uranium":  shop.atkU.price.uranium
-                    },
-                    "level":    me.stats.attackUpgrades,
-                    "maxLvl":   me.stats.attackUpgradesMAX
-                },
-                {
-                    "pLabel":   "radU",
-                    "label":    "Upgrade Radar",
-                    "canBuy":   shop.radU.canBuy,
-                    "price":{
-                        "gold":     shop.radU.price.gold,
-                        "iron":     shop.radU.price.iron,
-                        "uranium":  shop.radU.price.uranium
-                    },
-                    "level":    me.stats.radarUpgrades,
-                    "maxLvl":   me.stats.radarUpgradesMAX
-                }
-            ],
-            [
-                {
-                    "pLabel":   "canU",
-                    "label":    (me.stats.cannon==0?"Purchase Cannon.":"Upgrade Cannon."),
-                    "canBuy":   shop.canU.canBuy,
-                    "price":{
-                        "gold":     shop.canU.price.gold,
-                        "iron":     shop.canU.price.iron,
-                        "uranium":  shop.canU.price.uranium
-                    },
-                    "level":    me.stats.cannonUpgrades,
-                    "maxLvl":   me.stats.cannonUpgradesMAX
-                },
-                {
-                    "pLabel":   "railU",
-                    "label":    (me.stats.railgun==0?"Purchase Railgun.":"Upgrade Railgun."),
-                    "canBuy":   shop.railU.canBuy,
-                    "price":{
-                        "gold":     shop.railU.price.gold,
-                        "iron":     shop.railU.price.iron,
-                        "uranium":  shop.railU.price.uranium
-                    },
-                    "level":    me.stats.railgunUpgrades,
-                    "maxLvl":   me.stats.railgunUpgradesMAX
-                },
-                {
-                    "pLabel":   "trapU",
-                    "label":    (me.stats.trap==0?"Purchase Trap Module.":"Upgrade Trap Module."),
-                    "canBuy":   shop.trapU.canBuy,
-                    "price":{
-                        "gold":     shop.trapU.price.gold,
-                        "iron":     shop.trapU.price.iron,
-                        "uranium":  shop.trapU.price.uranium
-                    },
-                    "level":    me.stats.trapUpgrades,
-                    "maxLvl":   me.stats.trapUpgradesMAX
-                },
-                {
-                    "pLabel":   "quickHeal",
-                    "label":    "Purchase Quick Heal (Consumable).",
-                    "canBuy":   shop.quickHeal.canBuy,
-                    "price":{
-                        "gold":     shop.quickHeal.price.gold,
-                        "iron":     shop.quickHeal.price.iron,
-                        "uranium":  shop.quickHeal.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                }
-            ],
-            [
-                {
-                    "pLabel":   "bliU",
-                    "label":    (me.stats.blink==0?"Purchase Blink Module.":"Upgrade Blink Module."),
-                    "canBuy":   shop.bliU.canBuy,
-                    "price":{
-                        "gold":     shop.bliU.price.gold,
-                        "iron":     shop.bliU.price.iron,
-                        "uranium":  shop.bliU.price.uranium
-                    },
-                    "level":    me.stats.blinkUpgrades,
-                    "maxLvl":   me.stats.blinkUpgradesMAX
-                },
-                {
-                    "pLabel":   "steU",
-                    "label":    (me.stats.stealth==0?"Purchase Stealth Module.":"Upgrade Stealth Module."),
-                    "canBuy":   shop.steU.canBuy,
-                    "price":{
-                        "gold":     shop.steU.price.gold,
-                        "iron":     shop.steU.price.iron,
-                        "uranium":  shop.steU.price.uranium
-                    },
-                    "level":    me.stats.stealthUpgrades,
-                    "maxLvl":   me.stats.stealthUpgradesMAX
-                },
-                {
-                    "pLabel":   "engModU",
-                    "label":    (me.stats.engMod==0?"Purchase Energy Module.":"Upgrade Energy Module."),
-                    "canBuy":   shop.engModU.canBuy,
-                    "price":{
-                        "gold":     shop.engModU.price.gold,
-                        "iron":     shop.engModU.price.iron,
-                        "uranium":  shop.engModU.price.uranium
-                    },
-                    "level":    me.stats.engModUpgrades,
-                    "maxLvl":   me.stats.engModUpgradesMAX
-                }
-            ],
-            [
-                {
-                    "pLabel":   "statAtk",
-                    "label":    "Purchase Attack+ Module.",
-                    "canBuy":   shop.statAtk.canBuy,
-                    "price":{
-                        "gold":     shop.statAtk.price.gold,
-                        "iron":     shop.statAtk.price.iron,
-                        "uranium":  shop.statAtk.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "statRdr",
-                    "label":    "Purchase Radar+ Module.",
-                    "canBuy":   shop.statRdr.canBuy,
-                    "price":{
-                        "gold":     shop.statRdr.price.gold,
-                        "iron":     shop.statRdr.price.iron,
-                        "uranium":  shop.statRdr.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "statHP",
-                    "label":    "Purchase HP+ Module.",
-                    "canBuy":   shop.statHP.canBuy,
-                    "price":{
-                        "gold":     shop.statHP.price.gold,
-                        "iron":     shop.statHP.price.iron,
-                        "uranium":  shop.statHP.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "statEng",
-                    "label":    "Purchase Energy+ Module.",
-                    "canBuy":   shop.statEng.canBuy,
-                    "price":{
-                        "gold":     shop.statEng.price.gold,
-                        "iron":     shop.statEng.price.iron,
-                        "uranium":  shop.statEng.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "statDR",
-                    "label":    "Purchase DR Module.",
-                    "canBuy":   shop.statDR.canBuy,
-                    "price":{
-                        "gold":     shop.statDR.price.gold,
-                        "iron":     shop.statDR.price.iron,
-                        "uranium":  shop.statDR.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                }
-            ],
-            [
-                {
-                    "pLabel":   "loadout",
-                    "label":    "Purchase Mod Slot.",
-                    "canBuy":   shop.loadout.canBuy,
-                    "price":{
-                        "gold":     shop.loadout.price.gold,
-                        "iron":     shop.loadout.price.iron,
-                        "uranium":  shop.loadout.price.uranium
-                    },
-                    "level":    me.stats.loadoutSize,
-                    "maxLvl":   2
-                },
-                {
-                    "pLabel":   "carryU",
-                    "label":    "Upgrade Uranium Carry Capacity.",
-                    "canBuy":   shop.carryU.canBuy,
-                    "price":{
-                        "gold":     shop.carryU.price.gold,
-                        "iron":     shop.carryU.price.iron,
-                        "uranium":  shop.carryU.price.uranium
-                    },
-                    "level":    me.stats.urCarryUpgrades,
-                    "maxLvl":   me.stats.urCarryUpgradesMAX
-                },
-                {
-                    "pLabel":   "scanU",
-                    "label":    "Upgrade Scanner",
-                    "canBuy":   shop.scanU.canBuy,
-                    "price":{
-                        "gold":     shop.scanU.price.gold,
-                        "iron":     shop.scanU.price.iron,
-                        "uranium":  shop.scanU.price.uranium
-                    },
-                    "level":    me.stats.scannerUpgrades,
-                    "maxLvl":   me.stats.scannerUpgradesMAX
-                },
-                {
-                    "pLabel":   "wallU",
-                    "label":    (me.stats.wall>0?"Upgrade Wall License":"Purchase Wall License."),
-                    "canBuy":   shop.wallU.canBuy,
-                    "price":{
-                        "gold":     shop.wallU.price.gold,
-                        "iron":     shop.wallU.price.iron,
-                        "uranium":  shop.wallU.price.uranium
-                    },
-                    "level":    me.stats.wallUpgrades,
-                    "maxLvl":   me.stats.wallUpgradesMAX
-                },
-                {
-                    "pLabel":   "insuranceU",
-                    "label":    "Upgrade Insurance.",
-                    "canBuy":   shop.insuranceU.canBuy,
-                    "price":{
-                        "gold":     shop.insuranceU.price.gold,
-                        "iron":     shop.insuranceU.price.iron,
-                        "uranium":  shop.insuranceU.price.uranium
-                    },
-                    "level":    me.stats.insuranceUpgrades,
-                    "maxLvl":   me.stats.insuranceUpgradesMAX
-                },
-                {
-                    "pLabel":   "uranium",
-                    "label":    "Purchase Uranium.",
-                    "canBuy":   shop.uranium.canBuy,
-                    "price":{
-                        "gold":     shop.uranium.price.gold,
-                        "iron":     shop.uranium.price.iron,
-                        "uranium":  shop.uranium.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "wall",
-                    "label":    "Purchase Wall.",
-                    "canBuy":   shop.wall.canBuy,
-                    "price":{
-                        "gold":     shop.wall.price.gold,
-                        "iron":     shop.wall.price.iron,
-                        "uranium":  shop.wall.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "wall5",
-                    "label":    "Purchase 5 Walls.",
-                    "canBuy":   shop.wall5.canBuy,
-                    "price":{
-                        "gold":     shop.wall5.price.gold,
-                        "iron":     shop.wall5.price.iron,
-                        "uranium":  shop.wall5.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                },
-                {
-                    "pLabel":   "wall10",
-                    "label":    "Purchase 10 Walls.",
-                    "canBuy":   shop.wall10.canBuy,
-                    "price":{
-                        "gold":     shop.wall10.price.gold,
-                        "iron":     shop.wall10.price.iron,
-                        "uranium":  shop.wall10.price.uranium
-                    },
-                    "level":    0,
-                    "maxLvl":   0
-                }
-            ]
-        ];
-
-        //Check for screen resize
-        if($( document ).width()!=prevWid) screenResize();
 
         if(me.info.teamID == -1){
             if(openWindow!=="createTeamMenu")
                 openWindow = "joinTeamMenu";
         }
 
-        drawScreen();
         drawTimer();
         drawSideBar();
-
-
-        if(game.phase == 0 && lastRound == 3){
-            autoDCCount++;
-        }
-        lastRound = game.phase;
+        drawScreen();
     });
 
 
@@ -500,6 +134,7 @@ function newData(){
         drawScreen();
     }
 }
+
 
 
 //******************************************************************************
@@ -533,6 +168,8 @@ function handleKeypress(e){
 
 function handleKeydown(e){
     var keyCode = e.which || e.keyCode;
+
+    console.log(keyCode);
 
     if (keyCode == 27 && openWindow===""){ //Open Menu (esc)
         openWindow = "settingsView";

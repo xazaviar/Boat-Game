@@ -279,27 +279,27 @@ function drawMonitor(ctx, width, height){
                     }
 
                 }
-                else if(map[cX][cY].type==="PLAYER" && !(me.loc[0]==cX && me.loc[1]==cY)){ //Players
-                    ctx.beginPath();
-                    var pid = map[cX][cY].id;
-                    if(players[pid].team==me.info.teamID){
-                        ctx.fillStyle=colors.hudColor;
-                        ctx.strokeStyle=colors.hudColor;
-                    }
-                    else {
-                        ctx.fillStyle=colors.enemyColor;
-                        ctx.strokeStyle=colors.enemyColor;
-                    }
-
-                    ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
-                    if(!players[pid].stealthed)
-                        ctx.fill();
-                    else
-                        ctx.stroke();
-                    ctx.font = "14px Courier";
-                    ctx.fillText(players[pid].name,x*tileSize+tileSize/2-(players[pid].name.length*4),y*tileSize+tileSize/2-tileSize/4);
-
-                }
+                // else if(map[cX][cY].type==="PLAYER" && !(me.loc[0]==cX && me.loc[1]==cY)){ //Players
+                //     ctx.beginPath();
+                //     var pid = map[cX][cY].id;
+                //     if(players[pid].team==me.info.teamID){
+                //         ctx.fillStyle=colors.hudColor;
+                //         ctx.strokeStyle=colors.hudColor;
+                //     }
+                //     else {
+                //         ctx.fillStyle=colors.enemyColor;
+                //         ctx.strokeStyle=colors.enemyColor;
+                //     }
+                //
+                //     ctx.arc(x*tileSize+tileSize/2,y*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
+                //     if(!players[pid].stealthed)
+                //         ctx.fill();
+                //     else
+                //         ctx.stroke();
+                //     ctx.font = "14px Courier";
+                //     ctx.fillText(players[pid].name,x*tileSize+tileSize/2-(players[pid].name.length*4),y*tileSize+tileSize/2-tileSize/4);
+                //
+                // }
                 else if(typeof map[cX][cY].loot!=="undefined"){ //Loot
                     if(map[cX][cY].loot.uranium){
                         ctx.fillStyle=colors.uraniumColor;
@@ -329,6 +329,37 @@ function drawMonitor(ctx, width, height){
                     ctx.fill();
                 }
 
+            }
+        }
+
+        //Draw other players
+        for(var a = 0; a < players.length; a++){
+            if(typeof players[a].loc!=="undefined"){
+                var t = parseInt(me.stats.radar/2);
+                var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
+                var cX = (players[a].loc[0] + xAdj)%map.length, cY = (players[a].loc[1] + yAdj)%map.length;
+
+                if(cX<0)cX+=map.length;
+                if(cY<0)cY+=map.length;
+
+                ctx.beginPath();
+                var pid = players[a].id;
+                if(players[pid].team==me.info.teamID){
+                    ctx.fillStyle=colors.hudColor;
+                    ctx.strokeStyle=colors.hudColor;
+                }
+                else {
+                    ctx.fillStyle=colors.enemyColor;
+                    ctx.strokeStyle=colors.enemyColor;
+                }
+
+                ctx.arc(cX*tileSize+tileSize/2,cY*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
+                if(!players[pid].stealthed)
+                    ctx.fill();
+                else
+                    ctx.stroke();
+                ctx.font = "14px Courier";
+                ctx.fillText(players[pid].name,cX*tileSize+tileSize/2-(players[pid].name.length*4),cY*tileSize+tileSize/2-tileSize/4);
             }
         }
 
@@ -762,19 +793,19 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me,
                     drawBase(ctx, sX+x*tileSize, sY+y*tileSize, tileSize, "DIAMOND", baseList[map[x][y].id].lvl, colors.shopColor);
                 }
             }
-            else if(map[x][y].type==="PLAYER" && !(me.loc[0]==x && me.loc[1]==y)){ //Players
-                if(players[map[x][y].id].team==me.info.teamID){
-                    ctx.fillStyle=colors.hudColor;
-                    ctx.strokeStyle=colors.hudColor;
-                }
-                else {
-                    ctx.fillStyle=colors.enemyColor;
-                    ctx.strokeStyle=colors.enemyColor;
-                }
-
-                ctx.arc(sX+x*tileSize+tileSize/2,sY+y*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
-                ctx.fill();
-            }
+            // else if(map[x][y].type==="PLAYER" && !(me.loc[0]==x && me.loc[1]==y)){ //Players
+            //     if(players[map[x][y].id].team==me.info.teamID){
+            //         ctx.fillStyle=colors.hudColor;
+            //         ctx.strokeStyle=colors.hudColor;
+            //     }
+            //     else {
+            //         ctx.fillStyle=colors.enemyColor;
+            //         ctx.strokeStyle=colors.enemyColor;
+            //     }
+            //
+            //     ctx.arc(sX+x*tileSize+tileSize/2,sY+y*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
+            //     ctx.fill();
+            // }
             else if(typeof map[x][y].loot!=="undefined" && !dead){ //Loot
                 if(map[x][y].loot.uranium) ctx.fillStyle=colors.uraniumColor;
                 else if(map[x][y].loot.iron) ctx.fillStyle=colors.ironColor;
@@ -807,6 +838,35 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me,
 
             }
         }
+    }
+
+    //Draw other players
+    for(var a = 0; a < players.length; a++){
+        var t = parseInt(me.stats.radar/2);
+        var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
+        var cX = (players[a].loc[0] + xAdj)%map.length, cY = (players[a].loc[1] + yAdj)%map.length;
+
+        if(cX<0)cX+=map.length;
+        if(cY<0)cY+=map.length;
+
+        ctx.beginPath();
+        var pid = map[cX][cY].id;
+        if(players[pid].team==me.info.teamID){
+            ctx.fillStyle=colors.hudColor;
+            ctx.strokeStyle=colors.hudColor;
+        }
+        else {
+            ctx.fillStyle=colors.enemyColor;
+            ctx.strokeStyle=colors.enemyColor;
+        }
+
+        ctx.arc(cX*tileSize+tileSize/2,cY*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
+        if(!players[pid].stealthed)
+            ctx.fill();
+        else
+            ctx.stroke();
+        ctx.font = "14px Courier";
+        ctx.fillText(players[pid].name,cX*tileSize+tileSize/2-(players[pid].name.length*4),cY*tileSize+tileSize/2-tileSize/4);
     }
 
     ctx.globalAlpha = 1.0;

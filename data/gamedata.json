@@ -1,8 +1,128 @@
 {
-    "playerSize": 1,
+    "playerSize": 25,
     "nameList": [
         {
             "name": "test",
+            "power": 2,
+            "changes": null
+        },
+        {
+            "name": "test me",
+            "power": 7,
+            "changes": null
+        },
+        {
+            "name": "test",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "test",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "test",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "test",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "Test player",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "testddd",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "test",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdffdd",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "ddasdf",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "dddf",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "adsddd",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdfff",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdfff",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "aasssdd",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "udududud",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "dddafsdf",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "aasdf",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdf",
+            "power": 5,
+            "changes": null
+        },
+        {
+            "name": "asdddd",
             "power": 0,
             "changes": null
         }
