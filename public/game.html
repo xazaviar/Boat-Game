@@ -1,11 +1,19 @@
 <html>
 
 <head>
-    <title>Boat Game</title>
+    <title>Game</title>
     <script src="js/jquery-3.1.1.min.js"></script>
     <script src='js/spectrum.js'></script>
+    <script src="js/jquery-ui.min.js"></script>
+    <script src="js/jquery-hex-colorpicker.min.js"></script>
+	<script src="js/server_calls.js"></script>
+	<script src="js/drawing.js"></script>
+	<script src="js/utility.js"></script>
 	<script src="js/game.js"></script>
+    <link rel="stylesheet" href="css/jquery-ui.min.css" />
+    <link rel="stylesheet" href="css/jquery-hex-colorpicker.css">
 	<link rel="stylesheet" href="css/main.css"/>
+	<link rel="stylesheet" href="css/game.css"/>
     <link rel='stylesheet' href='css/spectrum.css'/>
 </head>
 
@@ -26,6 +34,13 @@
 
     <div class='modal'>
         <input type='text' id='custom'/>
+    </div>
+
+    <div class='input1'>
+        <input type='text' id='color-picker1'/>
+    </div>
+    <div class="input2">
+        <input type='text' id='color-picker2'/>
     </div>
 
     <div id="bg"></div>

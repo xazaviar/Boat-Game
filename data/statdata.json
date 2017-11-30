@@ -57,5 +57,9 @@
 
     "insuranceStart":    0,
     "insuranceMAX"  :    3,
-    "insuranceINC"  :    1
+    "insuranceINC"  :    1,
+
+    "wallStart"     :    0,
+    "wallMAX"       :    5,
+    "wallINC"       :    1
  }

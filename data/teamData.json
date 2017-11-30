@@ -1,0 +1,162 @@
+[
+    {
+        "id": 0,
+        "name": "Red Team",
+        "colors": {
+            "baseColor": "#f20d0d",
+            "areaColor": "#faa79e",
+            "baseShape": "DIAMOND"
+        },
+        "leader": {
+            "token": "----",
+            "id": -1,
+            "name": "BOAT_GAME",
+            "powerLevel": 999,
+            "online": false
+        },
+        "admins": [],
+        "members": [],
+        "vault": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "income": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "rank": 999,
+        "power": 0,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 1,
+        "name": "Blue Team",
+        "colors": {
+            "baseColor": "#0d65f2",
+            "areaColor": "#5181e1",
+            "baseShape": "DIAMOND"
+        },
+        "leader": {
+            "token": "----",
+            "id": -1,
+            "name": "BOAT_GAME",
+            "powerLevel": 999,
+            "online": false
+        },
+        "admins": [],
+        "members": [],
+        "vault": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "income": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "rank": 999,
+        "power": 0,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 2,
+        "name": "Green Team",
+        "colors": {
+            "baseColor": "#19e625",
+            "areaColor": "#76ed45",
+            "baseShape": "DIAMOND"
+        },
+        "leader": {
+            "token": "----",
+            "id": -1,
+            "name": "BOAT_GAME",
+            "powerLevel": 999,
+            "online": false
+        },
+        "admins": [],
+        "members": [],
+        "vault": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "income": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "rank": 999,
+        "power": 0,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    },
+    {
+        "id": 3,
+        "name": "Yellow Team",
+        "colors": {
+            "baseColor": "#dae619",
+            "areaColor": "#e9f075",
+            "baseShape": "DIAMOND"
+        },
+        "leader": {
+            "token": "----",
+            "id": -1,
+            "name": "BOAT_GAME",
+            "powerLevel": 999,
+            "online": false
+        },
+        "admins": [],
+        "members": [],
+        "vault": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "income": {
+            "gold": 0,
+            "credits": 0,
+            "iron": 0,
+            "uranium": 0
+        },
+        "rank": 999,
+        "power": 0,
+        "settings": {
+            "building": "TEAM",
+            "ping": "ADMIN",
+            "upgrading": "ADMIN",
+            "membership": "OPEN",
+            "profitDivide": "FAIR",
+            "tax": 0
+        }
+    }
+]

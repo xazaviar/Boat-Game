@@ -154,21 +154,112 @@
         }
     },
 
-    "loadoutUpgrades": {
+
+    "wallUpgrades": {
         "gold":{
             "cap":10000,
-            "model": 3,
-            "mod": 3000,
-            "mod2": 0
+            "model": 4,
+            "mod": 1500,
+            "mod2": 1000
         },
         "iron":{
-            "cap":10000,"model": 3,
-            "threshold": 2,
+            "cap":10000,
+            "model": 3,
+            "threshold": 40,
             "mod": 3,
             "mod2": 0
         },
         "uranium":{
-            "cap":10000,"model": 3,
+            "cap":10000,
+            "model": 3,
+            "threshold": 40,
+            "mod": 1,
+            "mod2": 0
+        }
+    },
+    "wall": {
+        "gold":{
+            "cap":0,
+            "model": 3,
+            "mod": 0,
+            "mod2": 0
+        },
+        "iron":{
+            "cap":5,
+            "model": 3,
+            "threshold": 1,
+            "mod": 5,
+            "mod2": 0
+        },
+        "uranium":{
+            "cap":10000,
+            "model": 3,
+            "threshold": 20,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "wall5": {
+        "gold":{
+            "cap":0,
+            "model": 3,
+            "mod": 0,
+            "mod2": 0
+        },
+        "iron":{
+            "cap":25,
+            "model": 3,
+            "threshold": 1,
+            "mod": 25,
+            "mod2": 0
+        },
+        "uranium":{
+            "cap":10000,
+            "model": 3,
+            "threshold": 20,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "wall10": {
+        "gold":{
+            "cap":0,
+            "model": 3,
+            "mod": 0,
+            "mod2": 0
+        },
+        "iron":{
+            "cap":50,
+            "model": 3,
+            "threshold": 1,
+            "mod": 50,
+            "mod2": 0
+        },
+        "uranium":{
+            "cap":10000,
+            "model": 3,
+            "threshold": 20,
+            "mod": 0,
+            "mod2": 0
+        }
+    },
+    "loadoutUpgrades": {
+        "gold":{
+            "cap":10000,
+            "model": 3,
+            "mod": 5000,
+            "mod2": 0
+        },
+        "iron":{
+            "cap":10000,
+            "model": 3,
+            "threshold": 2,
+            "mod": 5,
+            "mod2": 0
+        },
+        "uranium":{
+            "cap":10000,
+            "model": 3,
             "threshold": 2,
             "mod": 1,
             "mod2": 0

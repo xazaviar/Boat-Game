@@ -1,18 +1,6 @@
-body {
-    background-color: black;
-    color: green;
-    font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
-}
-.logArea {
+#logArea {
     position: relative;
     width: 100%;
-}
-
-#pageTitle {
-    margin: auto;
-    text-align: center;
-    font-size: 50px;
-    margin-bottom: 40px;
 }
 
 .change {
@@ -21,15 +9,15 @@ body {
 }
 
 .change .title{
-
+    font-size: 18pt;
 }
 .change .date{
-    margin-left: 10px;
+    margin-left: 15px;
 }
 .change .version{
-    margin-left: 10px;
+    margin-left: 15px;
 }
 .change .description{
-    margin-left: 10px;
+    margin-left: 15px;
     word-wrap: break-word;
 }
