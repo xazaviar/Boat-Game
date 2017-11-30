@@ -11,7 +11,7 @@ var playerNameMaxLength = 16;
 var teamNameMaxLength = 25;
 
 //Map Building
-var mapSize = 70;
+var mapSize = 20;
 var minMapSize = 30;
 var rockSpread = .04;   //decimal as percent
 var shopSpread = .007;  //decimal as percent

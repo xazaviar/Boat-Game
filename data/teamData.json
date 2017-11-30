@@ -28,7 +28,7 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 999,
+        "rank": 2,
         "power": 0,
         "settings": {
             "building": "TEAM",
@@ -68,7 +68,7 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 999,
+        "rank": 2,
         "power": 0,
         "settings": {
             "building": "TEAM",
@@ -108,7 +108,7 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 999,
+        "rank": 2,
         "power": 0,
         "settings": {
             "building": "TEAM",
@@ -135,7 +135,15 @@
             "online": false
         },
         "admins": [],
-        "members": [],
+        "members": [
+            {
+                "token": "afJPACfREq4OQxLhRxp9Yja1nrfVN5Yvazy3RVs2N44xCDz2o5p6RtKeWk7z4MqA2QOWmaDkdeQsskAv6q4v6bJXiv6YH2GkqiMBxOLuPK3lqNTcSQs7AG2RJdfvaseRXwJQHqLKgxRP8hGMfe4pmWd5wsjrvAoNcWhzqCkZx8RvxIG9jPokfp8WOPSaScCbGpMR8PcW",
+                "id": 0,
+                "name": "test",
+                "powerLevel": 0,
+                "online": false
+            }
+        ],
         "vault": {
             "gold": 0,
             "credits": 0,
@@ -148,8 +156,8 @@
             "iron": 0,
             "uranium": 0
         },
-        "rank": 999,
-        "power": 0,
+        "rank": 1,
+        "power": 5,
         "settings": {
             "building": "TEAM",
             "ping": "ADMIN",

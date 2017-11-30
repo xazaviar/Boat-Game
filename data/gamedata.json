@@ -1,4 +1,10 @@
 {
-    "playerSize": 0,
-    "nameList": []
+    "playerSize": 1,
+    "nameList": [
+        {
+            "name": "test",
+            "power": 0,
+            "changes": null
+        }
+    ]
 }
