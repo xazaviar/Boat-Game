@@ -1,4 +1,30 @@
 {
-    "playerSize": 0,
-    "nameList": []
+    "playerSize": 5,
+    "nameList": [
+        {
+            "name": "tdddds",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "dasdf",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdffdfd",
+            "power": 0,
+            "changes": null
+        },
+        {
+            "name": "asdfas",
+            "power": 8,
+            "changes": null
+        },
+        {
+            "name": "ddd",
+            "power": 0,
+            "changes": null
+        }
+    ]
 }
