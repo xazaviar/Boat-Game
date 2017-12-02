@@ -1,6 +1,6 @@
 var jsonfile = require('jsonfile');
 var feedback;
-var version = "Alpha v1.2";
+var version = "Alpha v1.2.1";
 
 //Globals
 var port = 8080;
@@ -11,7 +11,7 @@ var playerNameMaxLength = 16;
 var teamNameMaxLength = 25;
 
 //Map Building
-var mapSize = 70;
+var mapSize = 60;
 var minMapSize = 30;
 var rockSpread = .04;   //decimal as percent
 var shopSpread = .007;  //decimal as percent
@@ -36,8 +36,8 @@ var lootSpawns = [];
 var phase = 0; //0 -> setup , 1,2,3 -> action x
 var countdownMax = 100; //always 100
 var countdown = countdownMax;
-var cTick = 25; //countdownMax * tick =~ 3 secs
-var aTick = 800; //action tick
+var cTick = 20; //countdownMax * tick =~ 2 secs
+var aTick = 700; //action tick
 var combatCooldown = 4; //Number of rounds
 var dcCountdown = 2; //d/c cooldown
 var profitCountdown = 0;
@@ -221,6 +221,7 @@ function startServer(){
                 map[players[id].loc[0]][players[id].loc[1]].type = "PLAYER";
                 map[players[id].loc[0]][players[id].loc[1]].id = id;
                 name = players[id].info.name;
+                players[id].info.connected = 0;
 
                 var msg;
                 if(changes!=null){
@@ -239,8 +240,7 @@ function startServer(){
                 }
 
                 data = {
-                    "token": obj.token,
-                    "id": id,
+                    "user": players[id],
                     "error":""
                 }
             }
@@ -382,8 +382,7 @@ function startServer(){
         console.log("New user "+name+" joined.");
 
         var data = {
-            "token": token,
-            "id": id
+            "user": newP
         }
 
         players[id] = newP;
@@ -580,13 +579,10 @@ function startServer(){
     });
 
     app.get('/userdata/:token/:id',function(req,res){
-        //TODO: reduce player data sent
-
         //Get token
         var token = req.params.token
         var id = req.params.id
         var data;
-
 
         var p;
         if(players[id].status!=="OFFLINE")
@@ -597,13 +593,72 @@ function startServer(){
             p.info.connected = 0;
 
             //Update canUse
-            p.info.powerLevel = calculateIndividualPower(p);
-            updatePower(p);
             p.abilitySlots[0].canUse = canUseMod(p, p.abilitySlots[0].type);
             p.abilitySlots[1].canUse = canUseMod(p, p.abilitySlots[1].type);
 
+            var sendP = {
+                "abilitySlots": p.abilitySlots,
+                "activeAttacks": p.activeAttacks,
+                "loc": p.loc
+            };
+
             data = {
-                "user": p
+                "user": sendP
+            }
+        }
+        else{
+            data = {
+                "error": "Invalid token"
+            }
+        }
+
+        res.send(data);
+    });
+    app.get('/queuedata/:token/:id',function(req,res){
+        //Get token
+        var token = req.params.token
+        var id = req.params.id
+        var data;
+
+        var p;
+        if(players[id].status!=="OFFLINE")
+            if(players[id].token===token)
+                p = players[id];
+
+        if(p!=null){
+            data = {
+                "queue": p.queue
+            }
+        }
+        else{
+            data = {
+                "error": "Invalid token"
+            }
+        }
+
+        res.send(data);
+    });
+    app.get('/userstatdata/:token/:id',function(req,res){
+        //Get token
+        var token = req.params.token
+        var id = req.params.id
+        var data;
+
+        var p;
+        if(players[id].status!=="OFFLINE")
+            if(players[id].token===token)
+                p = players[id];
+
+        if(p!=null){
+            var sendP = {
+                "info": p.info,
+                "invites": p.invites,
+                "storage": p.storage,
+                "stats": p.stats
+            };
+
+            data = {
+                "user": sendP
             }
         }
         else{
@@ -842,7 +897,7 @@ function startServer(){
                         },
                         "owner": baseList[b].owner,
                         "special": baseList[b].special,
-                        "tiles": baseList[b].tiles,
+                        //"tiles": baseList[b].tiles,
                         "upgrade": baseList[b].upgrade,
                         "upgradeCost": baseList[b].upgradeCost,
                         "upgradeMAX": baseList[b].upgradeMAX,
@@ -860,11 +915,12 @@ function startServer(){
                             "cTier": baseList[b].output.cTier
                         },
                         "owner": baseList[b].owner,
-                        "special": baseList[b].special,
-                        "tiles": baseList[b].tiles,
-                        "upgrade": baseList[b].upgrade,
-                        "upgradeMAX": baseList[b].upgradeMAX,
-                        "upgrading": baseList[b].upgrading
+                        "special": baseList[b].special
+                        //,
+                        //"tiles": baseList[b].tiles,
+                        //"upgrade": baseList[b].upgrade,
+                        //"upgradeMAX": baseList[b].upgradeMAX,
+                        //"upgrading": baseList[b].upgrading
                     };
                 }
             }
@@ -944,9 +1000,288 @@ function startServer(){
         res.send(data);
     });
 
+    app.get('/lowchangedata/:token/:id',function(req,res){
+        //Get token
+        var token = req.params.token
+        var id = req.params.id
+        var data;
+
+        var p;
+        if(players[id].status!=="OFFLINE")
+            if(players[id].token===token)
+                p = players[id];
+
+        if(p!=null){
+            var sendMap = [];
+            for(var x = 0; x < mapSize; x++){
+                sendMap[x] = [];
+                for(var y = 0; y < mapSize; y++){
+                    sendMap[x][y] = {
+                        "type": map[x][y].type,
+                        "baseID": map[x][y].baseID,
+                        "loot":{
+                            "gold": map[x][y].loot.gold > 0,
+                            "iron": p.stats.scanner > 1 && map[x][y].loot.iron > 0,
+                            "uranium": p.stats.scanner > 2 && map[x][y].loot.uranium > 0
+                        },
+                        "id": map[x][y].id,
+                        "trap": map[x][y].trap,
+                        "spawn": map[x][y].zone == 0
+                    };
+                    if(!isKnown(p.knownLocs,x,y)) delete sendMap[x][y].loot;
+                    if(sendMap[x][y].trap>-1){
+                        if(!isKnownTrap(p,sendMap[x][y].trap)) sendMap[x][y].trap = -1;
+                        else sendMap[x][y].trap = players[trapList[map[x][y].trap].owner].info.teamID;
+                    }
+
+                    if(sendMap[x][y].type==="PLAYER"){
+                        sendMap[x][y].id = -1;
+                        sendMap[x][y].type = "OPEN";
+                    }
+                    else if(sendMap[x][y].type==="ROCK"){
+                        sendMap[x][y]["hp"] = rockList[sendMap[x][y].id].hp;
+                        sendMap[x][y]["hpMAX"] = rockList[sendMap[x][y].id].hpMAX;
+                    }
+                    else if(sendMap[x][y].type==="WALL"){
+                        sendMap[x][y]["hp"] = wallList[sendMap[x][y].id].hp;
+                        sendMap[x][y]["hpMAX"] = wallList[sendMap[x][y].id].hpMAX;
+                        sendMap[x][y]["lvl"] = wallList[sendMap[x][y].id].lvl;
+                    }
+
+                }
+            }
+
+            var sendBase = [];
+            for(var b in baseList){
+                if(baseList[b].owner===p.info.teamID){
+                    sendBase[b] = {
+                        "hp": baseList[b].hp,
+                        "hpMAX": baseList[b].hpMAX,
+                        "id": baseList[b].id,
+                        "lvl": baseList[b].lvl,
+                        "output": {
+                            "gold": baseList[b].output.gold,
+                            "credits": baseList[b].output.credits
+                        },
+                        "owner": baseList[b].owner,
+                        "special": baseList[b].special,
+                        //"tiles": baseList[b].tiles,
+                        "upgrade": baseList[b].upgrade,
+                        "upgradeCost": baseList[b].upgradeCost,
+                        "upgradeMAX": baseList[b].upgradeMAX,
+                        "upgrading": baseList[b].upgrading
+                    };
+                }
+                else{
+                    sendBase[b] = {
+                        "hp": baseList[b].hp,
+                        "hpMAX": baseList[b].hpMAX,
+                        "id": baseList[b].id,
+                        "lvl": baseList[b].lvl,
+                        "output": {
+                            "gTier": baseList[b].output.gTier,
+                            "cTier": baseList[b].output.cTier
+                        },
+                        "owner": baseList[b].owner,
+                        "special": baseList[b].special
+                        //,
+                        //"tiles": baseList[b].tiles,
+                        //"upgrade": baseList[b].upgrade,
+                        //"upgradeMAX": baseList[b].upgradeMAX,
+                        //"upgrading": baseList[b].upgrading
+                    };
+                }
+            }
+
+            //Update canUse
+            p.abilitySlots[0].canUse = canUseMod(p, p.abilitySlots[0].type);
+            p.abilitySlots[1].canUse = canUseMod(p, p.abilitySlots[1].type);
+
+            var sendP = {
+                "abilitySlots": p.abilitySlots,
+                "activeAttacks": p.activeAttacks,
+                "loc": p.loc,
+                "info": p.info
+            };
+
+            data = {
+                "map": sendMap,
+                "baseList": sendBase,
+                "user": sendP
+            }
+        }
+        else{
+            data = {
+                "error": "Invalid token"
+            }
+        }
+        res.send(data);
+    });
+    app.get('/medchangedata/:token/:id',function(req,res){
+        //Get token
+        var token = req.params.token
+        var sendPlayers = [];
+        var data;
+
+        var p;
+        for(var i = 0; i < players.length; i++){
+            if(players[i].status!=="OFFLINE"){
+                if(players[i].token===token){
+                    p = players[i];
+                    p.info.connected = 0;
+                    sendPlayers[i] = {};
+                }
+                else{
+                    sendPlayers[i] = {
+                        "id":players[i].id,
+                        "name":players[i].info.name,
+                        "loc":players[i].loc,
+                        "stealthed":players[i].info.stealthed,
+                        "team":players[i].info.teamID,
+                        "powerLevel":players[i].info.powerLevel,
+                        "ping":players[i].info.ping,
+                        "hp": players[i].stats.hp
+                    };
+                }
+            }
+            else{
+                sendPlayers[i] = {"id":players[i].id,"name":players[i].name};
+            }
+        }
+
+        if(p!=null){
+            for(var pl in sendPlayers){
+                if(sendPlayers[pl].id!=p.id && typeof sendPlayers[pl].loc!=="undefined"){
+                    var pid = sendPlayers[pl].id;
+                    var isScanned = inScanned(p, sendPlayers[pid].id);
+                    var inVision = visionDistance(p.loc, sendPlayers[pid].loc);
+                    var sameTeam = sendPlayers[pid].team == p.info.teamID;
+                    var onTurf = false;
+                    if(map[sendPlayers[pid].loc[0]][sendPlayers[pid].loc[1]].baseID>-1)
+                        onTurf = baseList[map[sendPlayers[pid].loc[0]][sendPlayers[pid].loc[1]].baseID].owner == p.info.teamID;
+                    var canSee = (inVision || onTurf) && !sendPlayers[pid].stealthed;
+
+                    if((!isScanned && !canSee && !sameTeam) || sendPlayers[pid].hp <= 0){
+                        delete sendPlayers[pid].loc;
+                        delete sendPlayers[pid].stealthed;
+                    }
+                    delete sendPlayers[pid].hp;
+                }
+            }
+
+            var sendTeam = [];
+            for(var t in teamData){
+                if(t == p.info.teamID){
+                    var admins = [];
+                    var members = [];
+                    for(var a in teamData[t].admins){
+                        admins.push({
+                            "id":teamData[t].admins[a].id,
+                            "name":teamData[t].admins[a].name,
+                            "powerLevel":teamData[t].admins[a].powerLevel,
+                            "online": teamData[t].admins[a].online
+                        });
+                    }
+                    for(var m in teamData[t].members){
+                        members.push({
+                            "id":teamData[t].members[m].id,
+                            "name":teamData[t].members[m].name,
+                            "powerLevel":teamData[t].members[m].powerLevel,
+                            "online":teamData[t].members[m].online
+                        });
+                    }
+                    sendTeam[teamData[t].id] = {
+                        "id": teamData[t].id,
+                        "name": teamData[t].name,
+                        "colors": teamData[t].colors,
+                        "leader": {
+                            "id":teamData[t].leader.id,
+                            "name":teamData[t].leader.name,
+                            "powerLevel":teamData[t].leader.powerLevel,
+                            "online":teamData[t].leader.online,
+                        },
+                        "admins": admins,
+                        "members": members,
+                        "vault": teamData[t].vault,
+                        "income": teamData[t].income,
+                        "settings": teamData[t].settings,
+                        "power": teamData[t].power,
+                        "mapControl": calculateMapControl(t),
+                        "rank": teamData[t].rank,
+                        "objective": teamData[t].objective
+                    };
+                }
+                else if(teamData[t].status==="DELETED"){
+                    sendTeam[teamData[t].id] = {};
+                }
+                else{
+                    sendTeam[teamData[t].id] = {
+                        "id": teamData[t].id,
+                        "name": teamData[t].name,
+                        "colors": teamData[t].colors,
+                        "size": teamData[t].members.length,
+                        "joinStatus": teamData[t].settings.membership,
+                        "profitDivide": teamData[t].settings.profitDivide,
+                        "tax": teamData[t].settings.tax,
+                        "power": teamData[t].power,
+                        "mapControl": calculateMapControl(t)
+                    };
+                }
+            }
+
+
+            sendP = {
+                "invites": p.invites,
+                "storage": p.storage,
+                "stats": p.stats
+            };
+
+            data = {
+                "players": sendPlayers,
+                "user": sendP,
+                "teamList": sendTeam
+            }
+        }
+        else{
+            data = {
+                "error": "Invalid token"
+            }
+        }
+
+        res.send(data);
+    });
+    app.get('/highchangedata/:token/:id',function(req,res){
+        //Get token
+        var token = req.params.token
+        var id = req.params.id
+        var data;
+
+        var p;
+        if(players[id].status!=="OFFLINE")
+            if(players[id].token===token)
+                p = players[id];
+
+        if(p!=null){
+            p.info.connected = 0;
+
+            data = {
+                // "battleLog": p.battleLog,
+                "queue": p.queue,
+                "game": {"countdown":countdown,"phase":phase,"version":version}
+            }
+        }
+        else{
+            data = {
+                "error": "Invalid token"
+            }
+        }
+
+        res.send(data);
+    });
+
+
     //Actions
     app.post('/updateQueue', function(req, res){
-        console.log("GOT "+req.body.action);
         //Get token
         var token = req.body.token;
         var id = req.body.id;
@@ -2288,10 +2623,10 @@ function startServer(){
                 };
 
                 if(sendMap[x][y].type==="WALL"){
-                    sendMap[x][y]["lvl"] = wallList[sendMap[x][y].id].lvl;
+                    sendMap[x][y]["lvl"] = wallList[map[x][y].id].lvl;
                 }
                 else if(sendMap[x][y].type==="BASE"){
-                    sendMap[x][y]["lvl"] = baseList[sendMap[x][y].baseID].lvl;
+                    sendMap[x][y]["lvl"] = baseList[map[x][y].baseID].lvl;
                 }
 
             }
@@ -2698,6 +3033,8 @@ function roundCleanup(){
                 savePlayer(players[i], true);
             }
             else{
+                players[i].info.powerLevel = calculateIndividualPower(players[i]);
+                updatePower(players[i]);
                 players[i].queue = [];
                 players[i].activeAttacks = [];
                 players[i].info.inCombat--;

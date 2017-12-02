@@ -11,6 +11,7 @@ var intervalTimer;
 var tick = 50;
 var lastRound = -1;
 
+var medcall = 0;
 
 var displayBlink = false;
 var displayCannon = false;
@@ -67,17 +68,14 @@ setTimeout(function() {
 function tokenInit(token){
     $.get("/returning_user/"+token, function( data ) {
         if(data.error===""){
-            console.log("token: "+data.token);
-            if(data.token!==undefined){
-                me.token = data.token;
-                me.id = data.id;
-                // map = data.map;
+            console.log("token: "+data.user.token);
+            me = data.user;
 
-                if(saveOnStartup)
-                    document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
-                gameStart = false;
-                intervalTimer = setInterval(function(){newData();},tick);
-            }
+            if(saveOnStartup)
+                document.cookie = "token="+me.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
+            gameStart = false;
+            intervalTimer = setInterval(function(){newData();},tick);
+
         }else{
             errorMsg = data.error;
             drawScreen();
@@ -90,17 +88,13 @@ function init(){
     if(name==='') name = "random";
 
     $.get("/new_user/"+encodeURI(name), function( data ) {
-        console.log("token: "+data.token);
-        if(data.token!==undefined){
-            me.token = data.token;
-            me.id = data.id;
-            // map = data.map;
+        console.log("token: "+data.user.token);
+        me = data.user;
 
-            if(saveOnStartup)
-                document.cookie = "token="+data.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
-            gameStart = false;
-            intervalTimer = setInterval(function(){newData();},tick);
-        }
+        if(saveOnStartup)
+            document.cookie = "token="+me.token+"; expires=Mon, 30 Dec 2019 12:00:00 UTC; path=/";
+        gameStart = false;
+        intervalTimer = setInterval(function(){newData();},tick);
     });
 }
 
@@ -108,24 +102,46 @@ function init(){
 // Server Calls Functions
 //******************************************************************************
 function newData(){
-    $.when(newUserData(),newBattleLogData(),newBaseData(),newTeamData(),newMapData(),newGameData(),newPlayerData(),newShopData()).done(function(a1,a2,a3,a4,a5,a6,a7,a8){
+    newShopData(function(){});
+    newBattleLogData(function(){});
+
+    highchangedata(function(){
+
+        if(medcall==0){
+            medchangedata(function(){
+                if(curSettings==null && me.info.teamID>-1) curSettings = teamList[me.info.teamID].settings;
+
+                if(me.info.teamID == -1){
+                    if(openWindow!=="createTeamMenu")
+                        openWindow = "joinTeamMenu";
+                }
+            });
+        }
+        medcall= (medcall+1)%3;
+
+        if(game.phase!=0){
+            lowchangedata(function(){
+                drawScreen();
+            });
+        }
+        else{
+            drawScreen();
+        }
+
         if(game.phase == 0 && lastRound == 3){
             autoDCCount++;
+            lowchangedata(function(){
+                drawScreen();
+            });
         }
         lastRound = game.phase;
 
-        firstData = true;
-        if(curSettings==null && me.info.teamID>-1) curSettings = teamList[me.info.teamID].settings;
-
-        if(me.info.teamID == -1){
-            if(openWindow!=="createTeamMenu")
-                openWindow = "joinTeamMenu";
-        }
-
-        drawTimer();
         drawSideBar();
-        drawScreen();
+        drawTimer();
     });
+
+
+
 
 
     if(autoDCCount > autoDCLimit){
@@ -169,7 +185,6 @@ function handleKeypress(e){
 function handleKeydown(e){
     var keyCode = e.which || e.keyCode;
 
-    console.log(keyCode);
 
     if (keyCode == 27 && openWindow===""){ //Open Menu (esc)
         openWindow = "settingsView";

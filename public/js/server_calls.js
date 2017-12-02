@@ -2,6 +2,7 @@
 var firstData = false;
 var map;
 var players;
+var queue;
 var game;
 var shop;
 var store;
@@ -19,44 +20,67 @@ var chatMsg = '';
 //*****************************************************************************
 //Server Data functions
 //*****************************************************************************
-function newUserData(){
-    return $.get("/userdata/"+me.token+"/"+me.id, function(data) {
-        me = data.user;
+function newUserData(_callback){
+    $.get("/userdata/"+me.token+"/"+me.id, function(data) {
+        me.abilitySlots = data.user.abilitySlots;
+        me.loc = data.user.loc;
         activeAttacks = data.user.activeAttacks
+        _callback();
     });
 }
-function newBattleLogData(){
-    return $.get("/batlelogdata/"+me.token+"/"+me.id, function(data) {
+function newUserStatData(_callback){
+    $.get("/userstatdata/"+me.token+"/"+me.id, function(data) {
+        me.info = data.user.info;
+        me.invites = data.user.invites;
+        me.storage = data.user.storage;
+        me.stats = data.user.stats;
+        _callback();
+    });
+}
+function newqueueData(_callback){
+    $.get("/queuedata/"+me.token+"/"+me.id, function(data) {
+        queue = data.queue;
+        _callback();
+    });
+}
+function newBattleLogData(_callback){
+    $.get("/batlelogdata/"+me.token+"/"+me.id, function(data) {
         battleLog = data.battleLog;
+        _callback();
     });
 }
-function newBaseData(){
-    return $.get("/basedata/"+me.token+"/"+me.id, function(data) {
+function newBaseData(_callback){
+    $.get("/basedata/"+me.token+"/"+me.id, function(data) {
         baseList = data.baseList;
+        _callback();
     });
 }
-function newTeamData(){
-    return $.get("/teamdata/"+me.token+"/"+me.id, function(data) {
+function newTeamData(_callback){
+    $.get("/teamdata/"+me.token+"/"+me.id, function(data) {
         teamList = data.teamList;
+        _callback();
     });
 }
-function newMapData(){
-    return $.get("/mapdata/"+me.token+"/"+me.id, function(data) {
+function newMapData(_callback){
+    $.get("/mapdata/"+me.token+"/"+me.id, function(data) {
         map = data.map;
+        _callback();
     });
 }
-function newGameData(){
-    return $.get("/gamedata", function(data) {
+function newGameData(_callback){
+    $.get("/gamedata", function(data) {
         game = data;
+        _callback();
     });
 }
-function newPlayerData(){
-    return $.get("/playerdata/"+me.token+"/"+me.id, function(data) {
+function newPlayerData(_callback){
+    $.get("/playerdata/"+me.token+"/"+me.id, function(data) {
         players = data.players;
+        _callback();
     });
 }
-function newShopData(){
-    return $.get("/shopdata/"+me.token+"/"+me.id, function(data) {
+function newShopData(_callback){
+    $.get("/shopdata/"+me.token+"/"+me.id, function(data) {
         shop = data.shop;
         store = [
             [
@@ -406,6 +430,37 @@ function newShopData(){
                 }
             ]
         ];
+
+        _callback();
+    });
+}
+
+function lowchangedata(_callback){
+    $.get("/lowchangedata/"+me.token+"/"+me.id, function(data) {
+        map = data.map;
+        baseList = data.baseList;
+        me.abilitySlots = data.user.abilitySlots;
+        me.loc = data.user.loc;
+        me.info = data.user.info;
+        activeAttacks = data.user.activeAttacks
+        _callback();
+    });
+}
+function medchangedata(_callback){
+    $.get("/medchangedata/"+me.token+"/"+me.id, function(data) {
+        players = data.players;
+        me.invites = data.user.invites;
+        me.storage = data.user.storage;
+        me.stats = data.user.stats;
+        teamList = data.teamList;
+        _callback();
+    });
+}
+function highchangedata(_callback){
+    $.get("/highchangedata/"+me.token+"/"+me.id, function(data) {
+        queue = data.queue;
+        game = data.game;
+        _callback();
     });
 }
 

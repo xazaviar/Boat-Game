@@ -273,10 +273,11 @@ function drawMonitor(ctx, width, height){
                     }
 
                     //BASE PROGRESS BAR
-                    if( baseList[map[cX][cY].id].upgrading){
-                        ctx.fillStyle = colors.energyColor;
-                        ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2+5,tileSize*.6*(baseList[map[cX][cY].id].upgrade/ baseList[map[cX][cY].id].upgradeMAX),10);
-                    }
+                    if(typeof baseList[map[cX][cY].id].upgrading !== "undefined")
+                        if(baseList[map[cX][cY].id].upgrading){
+                            ctx.fillStyle = colors.energyColor;
+                            ctx.fillRect(x*tileSize+tileSize/2-tileSize*.3,y*tileSize+tileSize/2+5,tileSize*.6*(baseList[map[cX][cY].id].upgrade/ baseList[map[cX][cY].id].upgradeMAX),10);
+                        }
 
                 }
                 // else if(map[cX][cY].type==="PLAYER" && !(me.loc[0]==cX && me.loc[1]==cY)){ //Players
@@ -307,7 +308,7 @@ function drawMonitor(ctx, width, height){
                     else if(map[cX][cY].loot.iron){
                         ctx.fillStyle=colors.ironColor;
                     }
-                    else if(map[cX][cY].loot.gold){
+                    else {
                         ctx.fillStyle=colors.goldColor;
                     }
                     ctx.beginPath();
@@ -384,45 +385,45 @@ function drawMonitor(ctx, width, height){
         var atk = 1;
         var actions = [];
         var prevLoc = [me.loc[0],me.loc[1]];
-        for(var i = 0; i < me.queue.length; i++){
-            if(me.queue[i].type==="ATTACK"){
-                actions.push({"type":"ATTACK","loc":me.queue[i].location,"num":atk});
+        for(var i = 0; i < queue.length; i++){
+            if(queue[i].type==="ATTACK"){
+                actions.push({"type":"ATTACK","loc":queue[i].location,"num":atk});
                 atk++
-            }else if(me.queue[i].type==="CANNON"){
-                actions.push({"type":"CANNON","loc":me.queue[i].location});
-            }else if(me.queue[i].type==="RAILGUN"){
-                actions.push({"type":"RAILGUN","loc":prevLoc,"dir":me.queue[i].direction});
-            }else if(me.queue[i].type==="BLINK"){
-                actions.push({"type":"BLINK","loc":me.queue[i].location});
-                prevLoc = me.queue[i].location;
-            }else if(me.queue[i].type==="WALL"){
-                actions.push({"type":"WALL","loc":me.queue[i].location});
-            }else if(me.queue[i].type==="MOVE"){
+            }else if(queue[i].type==="CANNON"){
+                actions.push({"type":"CANNON","loc":queue[i].location});
+            }else if(queue[i].type==="RAILGUN"){
+                actions.push({"type":"RAILGUN","loc":prevLoc,"dir":queue[i].direction});
+            }else if(queue[i].type==="BLINK"){
+                actions.push({"type":"BLINK","loc":queue[i].location});
+                prevLoc = queue[i].location;
+            }else if(queue[i].type==="WALL"){
+                actions.push({"type":"WALL","loc":queue[i].location});
+            }else if(queue[i].type==="MOVE"){
                 var loc;
-                if(me.queue[i].direction==="N"){
+                if(queue[i].direction==="N"){
                     var newY = prevLoc[1] - 1;
                     if(newY<0) newY = map.length-1;
                     loc = [prevLoc[0],newY];
-                }else if(me.queue[i].direction==="E"){
+                }else if(queue[i].direction==="E"){
                     var newX = prevLoc[0] + 1;
                     if(newX>=map.length) newX = 0;
                     loc = [newX,prevLoc[1]];
-                }else if(me.queue[i].direction==="S"){
+                }else if(queue[i].direction==="S"){
                     var newY = prevLoc[1] + 1;
                     if(newY>=map.length) newY = 0;
                     loc = [prevLoc[0],newY];
-                }else if(me.queue[i].direction==="W"){
+                }else if(queue[i].direction==="W"){
                     var newX = prevLoc[0] - 1;
                     if(newX<0) newX = map.length-1;
                     loc = [newX,prevLoc[1]];
                 }
                 actions.push({"type":"MOVE","loc":loc});
                 prevLoc = loc;
-            }else if(me.queue[i].type==="LOOT"){
+            }else if(queue[i].type==="LOOT"){
                 actions.push({"type":"LOOT","loc":prevLoc});
-            }else if(me.queue[i].type==="HOLD"){
+            }else if(queue[i].type==="HOLD"){
                 actions.push({"type":"HOLD","loc":prevLoc});
-            }else if(me.queue[i].type==="SCAN"){
+            }else if(queue[i].type==="SCAN"){
                 drawRadarScan(ctx, 0, 0, width, height);
             }
         }
@@ -809,7 +810,7 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me,
             else if(typeof map[x][y].loot!=="undefined" && !dead){ //Loot
                 if(map[x][y].loot.uranium) ctx.fillStyle=colors.uraniumColor;
                 else if(map[x][y].loot.iron) ctx.fillStyle=colors.ironColor;
-                else if(map[x][y].loot.gold) ctx.fillStyle=colors.goldColor;
+                else ctx.fillStyle=colors.goldColor;
 
                 ctx.beginPath();
                 ctx.arc(sX+x*tileSize+tileSize/2-tileSize/8,sY+y*tileSize+tileSize/2+tileSize/10,tileSize/6,0,2*Math.PI);
@@ -842,31 +843,33 @@ function drawMap(ctx, startX, startY, width, height, map, baseList, players, me,
 
     //Draw other players
     for(var a = 0; a < players.length; a++){
-        var t = parseInt(me.stats.radar/2);
-        var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
-        var cX = (players[a].loc[0] + xAdj)%map.length, cY = (players[a].loc[1] + yAdj)%map.length;
+        if(typeof players[a].loc!=="undefined"){
+            var t = parseInt(me.stats.radar/2);
+            var xAdj = t-me.loc[0], yAdj = t-me.loc[1];
+            var cX = (players[a].loc[0] + xAdj)%map.length, cY = (players[a].loc[1] + yAdj)%map.length;
 
-        if(cX<0)cX+=map.length;
-        if(cY<0)cY+=map.length;
+            if(cX<0)cX+=map.length;
+            if(cY<0)cY+=map.length;
 
-        ctx.beginPath();
-        var pid = map[cX][cY].id;
-        if(players[pid].team==me.info.teamID){
-            ctx.fillStyle=colors.hudColor;
-            ctx.strokeStyle=colors.hudColor;
+            ctx.beginPath();
+            var pid = map[cX][cY].id;
+            if(players[pid].team==me.info.teamID){
+                ctx.fillStyle=colors.hudColor;
+                ctx.strokeStyle=colors.hudColor;
+            }
+            else {
+                ctx.fillStyle=colors.enemyColor;
+                ctx.strokeStyle=colors.enemyColor;
+            }
+
+            ctx.arc(cX*tileSize+tileSize/2,cY*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
+            if(!players[pid].stealthed)
+                ctx.fill();
+            else
+                ctx.stroke();
+            ctx.font = "14px Courier";
+            ctx.fillText(players[pid].name,cX*tileSize+tileSize/2-(players[pid].name.length*4),cY*tileSize+tileSize/2-tileSize/4);
         }
-        else {
-            ctx.fillStyle=colors.enemyColor;
-            ctx.strokeStyle=colors.enemyColor;
-        }
-
-        ctx.arc(cX*tileSize+tileSize/2,cY*tileSize+tileSize/2,tileSize/5,0,2*Math.PI);
-        if(!players[pid].stealthed)
-            ctx.fill();
-        else
-            ctx.stroke();
-        ctx.font = "14px Courier";
-        ctx.fillText(players[pid].name,cX*tileSize+tileSize/2-(players[pid].name.length*4),cY*tileSize+tileSize/2-tileSize/4);
     }
 
     ctx.globalAlpha = 1.0;
@@ -2586,7 +2589,7 @@ function drawActionQueue(ctx, startX, startY, width, height, me){
 
     //Queue Card
     //**************************************************************************
-    for(var i = 0; i < me.queue.length; i++){
+    for(var i = 0; i < queue.length; i++){
         if(mX2 > 40 && mX2 < 260 &&
            mY2 >i*45+70 && mY2 < i*45+105){
             mouseHover = i;
@@ -2598,59 +2601,59 @@ function drawActionQueue(ctx, startX, startY, width, height, me){
 
 
         var text;
-        if(me.queue[i].type==="MOVE"){
+        if(queue[i].type==="MOVE"){
             ctx.fillStyle = colors.moveColor;
-            text = "MOVE "+me.queue[i].direction;
+            text = "MOVE "+queue[i].direction;
         }
-        else if(me.queue[i].type==="ATTACK"){
+        else if(queue[i].type==="ATTACK"){
             ctx.fillStyle = colors.attackColor;
-            text = "ATTACK ("+me.queue[i].location[0]+", "+me.queue[i].location[1]+")";
+            text = "ATTACK ("+queue[i].location[0]+", "+queue[i].location[1]+")";
         }
-        else if(me.queue[i].type==="SCAN"){
+        else if(queue[i].type==="SCAN"){
             ctx.fillStyle = colors.scanColor;
             text = "SCAN";
         }
-        else if(me.queue[i].type==="LOOT"){
+        else if(queue[i].type==="LOOT"){
             ctx.fillStyle = colors.lootColor;
             text = "LOOT";
         }
-        else if(me.queue[i].type==="HOLD"){
+        else if(queue[i].type==="HOLD"){
             ctx.fillStyle = colors.holdColor;
             text = "HOLD";
         }
-        else if(me.queue[i].type==="QUICKHEAL"){
+        else if(queue[i].type==="QUICKHEAL"){
             ctx.fillStyle = colors.abilityColor;
             text = "SHIP REPAIR";
         }
-        else if(me.queue[i].type==="BLINK"){
+        else if(queue[i].type==="BLINK"){
             ctx.fillStyle = colors.abilityColor;
-            text = "BLINK ("+me.queue[i].location+")";
+            text = "BLINK ("+queue[i].location+")";
         }
-        else if(me.queue[i].type==="WALL"){
+        else if(queue[i].type==="WALL"){
             ctx.fillStyle = colors.cantBuyColor;
-            text = "WALL ("+me.queue[i].location+")";
+            text = "WALL ("+queue[i].location+")";
         }
-        else if(me.queue[i].type==="ENERGY"){
+        else if(queue[i].type==="ENERGY"){
             ctx.fillStyle = colors.abilityColor;
             text = "ENERGY REGEN";
         }
-        else if(me.queue[i].type==="STEALTH"){
+        else if(queue[i].type==="STEALTH"){
             ctx.fillStyle = colors.abilityColor;
             text = "STEALTH";
         }
-        else if(me.queue[i].type==="DESTEALTH"){
+        else if(queue[i].type==="DESTEALTH"){
             ctx.fillStyle = colors.abilityColor;
             text = "DESTEALTH";
         }
-        else if(me.queue[i].type==="CANNON"){
+        else if(queue[i].type==="CANNON"){
             ctx.fillStyle = colors.abilityColor;
-            text = "CANNON "+me.queue[i].location;
+            text = "CANNON "+queue[i].location;
         }
-        else if(me.queue[i].type==="RAILGUN"){
+        else if(queue[i].type==="RAILGUN"){
             ctx.fillStyle = colors.abilityColor;
-            text = "RAILGUN "+me.queue[i].direction;
+            text = "RAILGUN "+queue[i].direction;
         }
-        else if(me.queue[i].type==="TRAP"){
+        else if(queue[i].type==="TRAP"){
             ctx.fillStyle = colors.abilityColor;
             text = "TRAP";
         }
@@ -2666,7 +2669,7 @@ function drawActionQueue(ctx, startX, startY, width, height, me){
         ctx.fillText(text,43,i*45+95);
     }
     ctx.globalAlpha = 1.0;
-    for(var i = me.queue.length; i < 3; i++){
+    for(var i = queue.length; i < 3; i++){
         ctx.strokeStyle = colors.hudColor;
         ctx.beginPath();
         ctx.strokeRect(40,i*45+70,220,35);
