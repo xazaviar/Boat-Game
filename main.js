@@ -1,6 +1,6 @@
 var jsonfile = require('jsonfile');
 var feedback;
-var version = "Alpha v1.2.1";
+var version = "Alpha v1.2.2";
 
 //Globals
 var port = 8080;
@@ -3093,7 +3093,7 @@ function roundCleanup(){
                 baseList[b].hp = baseList[b].hpMAX;
 
                 messageGroup(teamData[baseList[b].owner].members,
-                             "Base "+baseList[b].id+" has completed its upgrade! All systems are back online.","", "team", p);
+                             "Base "+baseList[b].id+" has completed its upgrade! All systems are back online.","", "team", null);
             }
         }
 

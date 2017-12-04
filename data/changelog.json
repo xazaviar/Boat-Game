@@ -28,5 +28,11 @@
         "version": "Alpha v1.2.1",
         "title": "Server Hot Fixes",
         "description": "> Updated server calls to send data in seperate packets instead of same packet <br>> Decreased Wall license costs <br>> Fixed loot coloring <br>> Sped up game actions"
+    },
+    {
+        "date":"12/3/17",
+        "version": "Alpha v1.2.2",
+        "title": "Server Hot Fixes",
+        "description": "> Fixed game crashing bug where server would crash if a base was upgraded"
     }
 ]
